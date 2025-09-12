@@ -1,4 +1,4 @@
-package com.example.tomatomall.service.impl;
+package com.example.tomatomall.service.serviceImpl;
 
 import com.example.tomatomall.po.UserPO;
 import com.example.tomatomall.repository.UserRepository;
@@ -25,8 +25,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public String login(String username, String password) {
         Optional<UserPO> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()){
+            throw new RuntimeException("用户名不存在");
+        }
         if (userOpt.isEmpty() || !passwordEncoder.matches(password, userOpt.get().getPassword())) {
-            throw new RuntimeException("用户不存在或密码错误");
+            throw new RuntimeException("密码错误");
         }
         return jwtUtil.generateToken(username);
     }

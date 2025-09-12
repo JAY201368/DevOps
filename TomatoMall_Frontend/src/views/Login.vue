@@ -65,16 +65,13 @@ const handleLogin = async () => {
       loading.value = true
       try {
         const response = await login(loginForm.username, loginForm.password)
-        if (response.data.code === '200') {
-          localStorage.setItem('token', response.data.data)
-          localStorage.setItem('username', loginForm.username)
-          ElMessage.success('登录成功')
-          router.push('/profile')
-        } else {
-          ElMessage.error(response.data.msg || '登录失败')
-        }
+        localStorage.setItem('token', response.data.data)
+        localStorage.setItem('username', loginForm.username)
+        ElMessage.success('登录成功')
+        router.push('/profile')
       } catch (error) {
-        ElMessage.error('登录失败，请稍后重试')
+        const errorMsg = error.response?.data?.msg || '登录失败'
+        ElMessage.error(errorMsg)
       } finally {
         loading.value = false
       }
@@ -104,4 +101,4 @@ const handleLogin = async () => {
   color: #409eff;
   text-decoration: none;
 }
-</style> 
+</style>

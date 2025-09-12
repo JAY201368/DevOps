@@ -13,6 +13,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/accounts")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class UserController {
     @Autowired
     private UserService userService;
@@ -20,39 +21,39 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    private ResponseEntity<?> successResponse(Object data) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("code", "200");
+        response.put("msg", null);
+        response.put("data", data);
+        return ResponseEntity.ok(response);
+    }
+
+    private ResponseEntity<?> errorResponse(Exception e) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("code", "400");
+        response.put("msg", e.getMessage());
+        response.put("data", null);
+        return ResponseEntity.badRequest().body(response);
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
         try {
             String token = userService.login(loginRequest.get("username"), loginRequest.get("password"));
-            Map<String, String> response = new HashMap<>();
-            response.put("code", "200");
-            response.put("msg", null);
-            response.put("data", token);
-            return ResponseEntity.ok(response);
+            return successResponse(token);
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("code", "400");
-            response.put("msg", e.getMessage());
-            response.put("data", null);
-            return ResponseEntity.badRequest().body(response);
+            return errorResponse(e);
         }
     }
 
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserVO userVO) {
         try {
             userService.register(userVO);
-            Map<String, String> response = new HashMap<>();
-            response.put("code", "200");
-            response.put("msg", null);
-            response.put("data", "注册成功");
-            return ResponseEntity.ok(response);
+            return successResponse("注册成功");
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("code", "400");
-            response.put("msg", e.getMessage());
-            response.put("data", null);
-            return ResponseEntity.badRequest().body(response);
+            return errorResponse(e);
         }
     }
 
@@ -64,17 +65,9 @@ public class UserController {
                 return ResponseEntity.status(401).build();
             }
             UserVO userVO = userService.getUserByUsername(username);
-            Map<String, Object> response = new HashMap<>();
-            response.put("code", "200");
-            response.put("msg", null);
-            response.put("data", userVO);
-            return ResponseEntity.ok(response);
+            return successResponse(userVO);
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("code", "400");
-            response.put("msg", e.getMessage());
-            response.put("data", null);
-            return ResponseEntity.badRequest().body(response);
+            return errorResponse(e);
         }
     }
 
@@ -86,17 +79,9 @@ public class UserController {
                 return ResponseEntity.status(401).build();
             }
             userService.updateUser(userVO);
-            Map<String, String> response = new HashMap<>();
-            response.put("code", "200");
-            response.put("msg", null);
-            response.put("data", "更新成功");
-            return ResponseEntity.ok(response);
+            return successResponse("更新成功");
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("code", "400");
-            response.put("msg", e.getMessage());
-            response.put("data", null);
-            return ResponseEntity.badRequest().body(response);
+            return errorResponse(e);
         }
     }
-} 
+}

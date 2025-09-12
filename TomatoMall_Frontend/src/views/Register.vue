@@ -107,14 +107,12 @@ const handleRegister = async () => {
       loading.value = true
       try {
         const response = await register(registerForm)
-        if (response.data.code === '200') {
-          ElMessage.success('注册成功')
-          router.push('/login')
-        } else {
-          ElMessage.error(response.data.msg || '注册失败')
-        }
+        ElMessage.success('注册成功')
+        router.push('/login')
       } catch (error) {
-        ElMessage.error('注册失败，请稍后重试')
+        // When backend returns 400, the error message is in error.response.data
+        const errorMsg = error.response?.data?.msg || '注册失败'
+        ElMessage.error(errorMsg)
       } finally {
         loading.value = false
       }
@@ -145,4 +143,4 @@ const handleRegister = async () => {
   color: #409eff;
   text-decoration: none;
 }
-</style> 
+</style>

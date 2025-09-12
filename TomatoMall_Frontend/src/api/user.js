@@ -17,7 +17,7 @@ export const login = (username, password) => {
 }
 
 export const register = (userData) => {
-  return api.post('/accounts', userData)
+  return api.post('/accounts/register', userData)
 }
 
 export const getUserInfo = (username) => {
