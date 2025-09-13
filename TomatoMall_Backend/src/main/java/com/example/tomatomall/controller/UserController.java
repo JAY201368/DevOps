@@ -3,12 +3,11 @@ package com.example.tomatomall.controller;
 import com.example.tomatomall.service.UserService;
 import com.example.tomatomall.util.JwtUtil;
 import com.example.tomatomall.vo.UserVO;
+import com.example.tomatomall.vo.ResultVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -21,67 +20,51 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    private ResponseEntity<?> successResponse(Object data) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("code", "200");
-        response.put("msg", null);
-        response.put("data", data);
-        return ResponseEntity.ok(response);
-    }
-
-    private ResponseEntity<?> errorResponse(Exception e) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("code", "400");
-        response.put("msg", e.getMessage());
-        response.put("data", null);
-        return ResponseEntity.badRequest().body(response);
-    }
-
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
+    public ResultVO<String> login(@RequestBody Map<String, String> loginRequest) {
         try {
             String token = userService.login(loginRequest.get("username"), loginRequest.get("password"));
-            return successResponse(token);
+            return ResultVO.buildSuccess(token);
         } catch (Exception e) {
-            return errorResponse(e);
+            return ResultVO.buildFailure(e.getMessage(), "400");
         }
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody UserVO userVO) {
+    public ResultVO<String> register(@RequestBody UserVO userVO) {
         try {
             userService.register(userVO);
-            return successResponse("注册成功");
+            return ResultVO.buildSuccess("注册成功");
         } catch (Exception e) {
-            return errorResponse(e);
+            return ResultVO.buildFailure(e.getMessage(), "400");
         }
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<?> getUserInfo(@PathVariable String username, HttpServletRequest request) {
+    public ResultVO<UserVO> getUserInfo(@PathVariable String username, HttpServletRequest request) {
         try {
             String token = request.getHeader("token");
             if (token == null || !jwtUtil.validateToken(token)) {
-                return ResponseEntity.status(401).build();
+                return ResultVO.buildFailure("未授权", "401");
             }
             UserVO userVO = userService.getUserByUsername(username);
-            return successResponse(userVO);
+            return ResultVO.buildSuccess(userVO);
         } catch (Exception e) {
-            return errorResponse(e);
+            return ResultVO.buildFailure(e.getMessage(), "400");
         }
     }
 
     @PutMapping
-    public ResponseEntity<?> updateUser(@RequestBody UserVO userVO, HttpServletRequest request) {
+    public ResultVO<String> updateUser(@RequestBody UserVO userVO, HttpServletRequest request) {
         try {
             String token = request.getHeader("token");
             if (token == null || !jwtUtil.validateToken(token)) {
-                return ResponseEntity.status(401).build();
+                return ResultVO.buildFailure("未授权", "401");
             }
             userService.updateUser(userVO);
-            return successResponse("更新成功");
+            return ResultVO.buildSuccess("更新成功");
         } catch (Exception e) {
-            return errorResponse(e);
+            return ResultVO.buildFailure(e.getMessage(), "400");
         }
     }
 }
