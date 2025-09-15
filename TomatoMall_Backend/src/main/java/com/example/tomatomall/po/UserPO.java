@@ -1,6 +1,8 @@
 package com.example.tomatomall.po;
 
 import lombok.Data;
+import lombok.Setter;
+import lombok.Getter;
 import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -8,6 +10,8 @@ import javax.validation.constraints.Pattern;
 
 @Data
 @Entity
+@Setter
+@Getter
 @Table(name = "users")
 public class UserPO {
     @Id

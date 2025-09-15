@@ -1,4 +1,9 @@
 # Apple's Shit
 .DS_Store
+
+# IDE Config
 .vscode
+.idea
+
+# Personal Config(temporary)
 TomatoMall_Backend/src/main/resources/application.yml
