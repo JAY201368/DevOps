@@ -5,9 +5,6 @@
 .vscode
 .idea
 
-# Personal Config(temporary)
-TomatoMall_Backend/src/main/resources/application.yml
-
 # class files
-TomatoMall_Backend/target/
 *.class
+/TomatoMall_Backend/target/
