@@ -63,8 +63,8 @@ const registerForm = reactive({
 })
 
 const validatePhone = (rule, value, callback) => {
-  if (value && !/^1[0-9]{10}$/.test(value)) {
-    callback(new Error('请输入正确的手机号'))
+  if (value && !/^1(3[0-9]|4[579]|5[0-35-9]|6[2567]|7[0-8]|8[0-9]|9[189])\d{8}$/.test(value)) {
+    callback(new Error('手机号不合法, 请输入正确的手机号'))
   } else {
     callback()
   }

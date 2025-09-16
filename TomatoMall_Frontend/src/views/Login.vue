@@ -59,22 +59,25 @@ const rules = {
 
 const handleLogin = async () => {
   if (!loginFormRef.value) return
-  
+
   await loginFormRef.value.validate(async (valid) => {
     if (valid) {
       loading.value = true
-      try {
-        const response = await login(loginForm.username, loginForm.password)
-        localStorage.setItem('token', response.data.data)
-        localStorage.setItem('username', loginForm.username)
-        ElMessage.success('登录成功')
-        router.push('/profile')
-      } catch (error) {
-        const errorMsg = error.response?.data?.msg || '登录失败'
-        ElMessage.error(errorMsg)
-      } finally {
-        loading.value = false
-      }
+      login(
+          loginForm.username,
+          loginForm.password
+      ).then(res => {
+            if (res.data.code === '000') {
+              ElMessage.success('登录成功')
+              localStorage.setItem('token', res.data.data)
+              localStorage.setItem('username', loginForm.username)
+              router.push('/profile')
+            } else if (res.data.code === '400') {
+              ElMessage.error('登录失败')
+            }
+            loading.value = false;
+          }
+      )
     }
   })
 }
