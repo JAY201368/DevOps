@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import UserProfile from '../views/UserProfile.vue'
-import DbTest from '../views/DbTest.vue'
 
 const routes = [
   {
@@ -24,11 +23,6 @@ const routes = [
     name: 'UserProfile',
     component: UserProfile,
     meta: { requiresAuth: true }
-  },
-  {
-    path: '/dbtest',
-    name: 'DbTest',
-    component: DbTest
   }
 ]
 

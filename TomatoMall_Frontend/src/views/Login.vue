@@ -67,7 +67,7 @@ const handleLogin = async () => {
           loginForm.username,
           loginForm.password
       ).then(res => {
-            if (res.data.code === '000') {
+            if (res.data.code === '200') {
               ElMessage.success('登录成功')
               localStorage.setItem('token', res.data.data)
               localStorage.setItem('username', loginForm.username)
