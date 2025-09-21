@@ -1,14 +1,16 @@
 <template>
-  <div class="app-container">
-    <app-header />
-    <main class="main-content">
-      <router-view></router-view>
-    </main>
+  <div class="app">
+    <AppHeader ref="appHeaderRef" />
+    <router-view />
   </div>
 </template>
 
 <script setup>
+import { ref, provide } from 'vue'
 import AppHeader from './components/AppHeader.vue'
+
+const appHeaderRef = ref(null)
+provide('appHeaderRef', appHeaderRef)
 </script>
 
 <style>
@@ -25,10 +27,10 @@ body {
   background-color: #f5f7fa;
 }
 
-.app-container {
+.app {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
 }
 
 .main-content {

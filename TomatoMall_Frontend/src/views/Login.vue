@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
@@ -42,6 +42,7 @@ import { login } from '../api/user'
 const router = useRouter()
 const loginFormRef = ref(null)
 const loading = ref(false)
+const appHeaderRef = inject('appHeaderRef')
 
 const loginForm = reactive({
   username: '',
@@ -57,27 +58,37 @@ const rules = {
   ]
 }
 
+// 组件挂载时将logined设置为false
+onMounted(() => {
+  if (appHeaderRef && appHeaderRef.value) {
+    appHeaderRef.value.setLogined(false)
+  }
+})
+
 const handleLogin = async () => {
   if (!loginFormRef.value) return
 
   await loginFormRef.value.validate(async (valid) => {
     if (valid) {
       loading.value = true
-      login(
-          loginForm.username,
-          loginForm.password
-      ).then(res => {
-            if (res.data.code === '200') {
-              ElMessage.success('登录成功')
-              localStorage.setItem('token', res.data.data)
-              localStorage.setItem('username', loginForm.username)
-              router.push('/profile')
-            } else if (res.data.code === '400') {
-              ElMessage.error('登录失败')
-            }
-            loading.value = false;
-          }
-      )
+      try {
+        const res = await login(loginForm.username, loginForm.password)
+        ElMessage.success('登录成功')
+        // 保存token和用户名
+        localStorage.setItem('token', res.data.token || res.data)
+        localStorage.setItem('username', loginForm.username)
+        
+        // 设置登录状态为true
+        if (appHeaderRef && appHeaderRef.value) {
+          appHeaderRef.value.setLogined(true)
+        }
+        // 确保在设置登录状态后再跳转
+        await router.push('/products')
+      } catch (error) {
+        // 错误已经在拦截器中处理
+      } finally {
+        loading.value = false
+      }
     }
   })
 }

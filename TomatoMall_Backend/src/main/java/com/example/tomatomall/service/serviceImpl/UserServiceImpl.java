@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserVO register(UserVO userVO) {
         if (userRepository.existsByUsername(userVO.getUsername())) {
-            throw TomatoMallException.nameAlreadyExists();
+            throw TomatoMallException.userAlreadyExists();
         }
 
         // 验证手机号格式

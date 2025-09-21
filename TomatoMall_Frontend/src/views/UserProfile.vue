@@ -106,17 +106,40 @@ const rules = {
 };
 
 const fetchUserInfo = async () => {
-  getUserInfo(userForm.username)
-    .then((res) => {
-      if (res.data.code === "200") {
-        Object.assign(userForm, res.data.data);
-      } else if (res.data.code === "400") {
-        ElMessage.error(res.data.msg || "获取用户信息失败");
-      }
-    });
-    // .catch((error) => {
-    //   ElMessage.error("获取用户信息失败，请稍后重试");
-    // });
+  try {
+    // 从localStorage获取用户名
+    const username = localStorage.getItem("username");
+    
+    if (!username) {
+      ElMessage.error("未找到登录信息");
+      router.push("/login");
+      return;
+    }
+    
+    // 使用用户名向后端请求数据
+    const res = await getUserInfo(username);
+    
+    // 根据接口返回的数据结构进行处理
+    if (res && res.data) {
+      // 清空之前的表单数据，使用后端返回的最新数据
+      Object.keys(userForm).forEach(key => {
+        if (key in res.data) {
+          userForm[key] = res.data[key];
+        } else if (key !== 'password') {
+          // 保持password为空，其他字段重置
+          userForm[key] = '';
+        }
+      });
+      
+      // 确保username字段正确设置
+      userForm.username = username;
+    } else {
+      ElMessage.warning("获取用户信息失败");
+    }
+  } catch (error) {
+    // 错误已经在拦截器中处理
+    ElMessage.error("获取用户信息出错");
+  }
 };
 
 const handleEdit = () => {
@@ -134,38 +157,41 @@ const handleSave = async () => {
   await userFormRef.value.validate(async (valid) => {
     if (valid) {
       loading.value = true;
-      updateUserInfo(userForm)
-        .then((res) => {
-          if (res.data.code === "200") {
-            ElMessage.success("更新成功");
-            isEditing.value = false;
-          } else if (res.data.code === "400") {
-            ElMessage.error(res.data.msg || "更新失败");
-          }
-          loading.value = false;
-        });
-        // .catch((error) => {
-        //   ElMessage.error("更新失败，请稍后重试");
-        //   loading.value = false;
-        // });
+      try {
+        const res = await updateUserInfo(userForm);
+        if (res && res.code === '200') {
+          ElMessage.success("更新成功");
+          isEditing.value = false;
+          // 更新用户信息
+          fetchUserInfo();
+        }
+      } catch (error) {
+        // 错误已经在拦截器中处理
+      } finally {
+        loading.value = false;
+      }
     }
   });
 };
 
 const handleLogout = () => {
+  // 清除所有本地存储的用户信息
   localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  localStorage.removeItem("userId");
+  sessionStorage.removeItem("logined");
+  
+  // 更新Header中的登录状态
+  const appHeaderRef = document.querySelector('app-header');
+  if (appHeaderRef && appHeaderRef.__vueParentComponent && appHeaderRef.__vueParentComponent.exposed) {
+    appHeaderRef.__vueParentComponent.exposed.setLogined(false);
+  }
   router.push("/login");
 };
 
 onMounted(() => {
-  // 从localStorage获取用户名
-  const username = localStorage.getItem("username");
-  if (username) {
-    userForm.username = username;
-    fetchUserInfo();
-  } else {
-    router.push("/login");
-  }
+  // 直接尝试从后端获取用户信息
+  fetchUserInfo();
 });
 </script>
 

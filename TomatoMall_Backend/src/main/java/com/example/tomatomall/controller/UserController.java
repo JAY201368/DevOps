@@ -4,6 +4,7 @@ import com.example.tomatomall.service.UserService;
 import com.example.tomatomall.util.JwtUtil;
 import com.example.tomatomall.vo.UserVO;
 import com.example.tomatomall.vo.ResultVO;
+import com.example.tomatomall.exception.TomatoMallException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,8 +26,11 @@ public class UserController {
         try {
             String token = userService.login(loginRequest.get("username"), loginRequest.get("password"));
             return ResultVO.buildSuccess(token);
+        } catch (TomatoMallException e) {
+            System.out.println(e.getMessage());
+            return ResultVO.buildFailure(e.getMessage(), e.getCode().toString());
         } catch (Exception e) {
-            return ResultVO.buildFailure(e.getMessage(), "400");
+            return ResultVO.buildFailure("服务器内部错误", "500");
         }
     }
 
@@ -35,8 +39,10 @@ public class UserController {
         try {
             userService.register(userVO);
             return ResultVO.buildSuccess("注册成功");
+        } catch (TomatoMallException e) {
+            return ResultVO.buildFailure(e.getMessage(), e.getCode().toString());
         } catch (Exception e) {
-            return ResultVO.buildFailure(e.getMessage(), "400");
+            return ResultVO.buildFailure("服务器内部错误", "500");
         }
     }
 
@@ -49,8 +55,10 @@ public class UserController {
             }
             UserVO userVO = userService.getUserByUsername(username);
             return ResultVO.buildSuccess(userVO);
+        } catch (TomatoMallException e) {
+            return ResultVO.buildFailure(e.getMessage(), e.getCode().toString());
         } catch (Exception e) {
-            return ResultVO.buildFailure(e.getMessage(), "400");
+            return ResultVO.buildFailure("服务器内部错误", "500");
         }
     }
 
@@ -63,8 +71,10 @@ public class UserController {
             }
             userService.updateUser(userVO);
             return ResultVO.buildSuccess("更新成功");
+        } catch (TomatoMallException e) {
+            return ResultVO.buildFailure(e.getMessage(), e.getCode().toString());
         } catch (Exception e) {
-            return ResultVO.buildFailure(e.getMessage(), "400");
+            return ResultVO.buildFailure("服务器内部错误", "500");
         }
     }
 }

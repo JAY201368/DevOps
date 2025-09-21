@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import UserProfile from '../views/UserProfile.vue'
+import ProductList from '../views/ProductList.vue'
+import ProductDetail from '../views/ProductDetail.vue'
 import DbTest from '../views/DbTest.vue'
 
 const routes = [
@@ -29,6 +31,18 @@ const routes = [
     path: '/dbtest',
     name: 'DbTest',
     component: DbTest
+  },
+  {
+    path: '/products',
+    name: 'ProductList',
+    component: ProductList,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/products/:id',
+    name: 'ProductDetail',
+    component: ProductDetail,
+    meta: { requiresAuth: true }
   }
 ]
 
