@@ -86,12 +86,9 @@ const registerForm = reactive({
 });
 
 const validatePhone = (rule, value, callback) => {
-  if (
-    value &&
-    !/^1(3[0-9]|4[579]|5[0-35-9]|6[2567]|7[0-8]|8[0-9]|9[189])\d{8}$/.test(
-      value
-    )
-  ) {
+  if (!value) {
+    callback();
+  } else if (!/^1(3[0-9]|4[579]|5[0-35-9]|6[2567]|7[0-8]|8[0-9]|9[189])\d{8}$/.test(value)) {
     callback(new Error("手机号不合法, 请输入正确的手机号"));
   } else {
     callback();
@@ -99,7 +96,9 @@ const validatePhone = (rule, value, callback) => {
 };
 
 const validateEmail = (rule, value, callback) => {
-  if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+  if (!value) {
+    callback();
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
     callback(new Error("请输入正确的邮箱地址"));
   } else {
     callback();
@@ -113,6 +112,7 @@ const rules = {
   role: [{ required: true, message: "请选择角色", trigger: "change" }],
   telephone: [{ validator: validatePhone, trigger: "blur" }],
   email: [{ validator: validateEmail, trigger: "blur" }],
+  location: [{ required: false }],
 };
 
 const handleRegister = async () => {

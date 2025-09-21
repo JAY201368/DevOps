@@ -35,11 +35,12 @@ public class UserPO {
     @NotBlank(message = "角色不能为空")
     private String role;
 
-    @Pattern(regexp = "^1[0-9]{10}$", message = "手机号格式不正确")
+    @Column(nullable = true)
     private String telephone;
 
-    @Email(message = "邮箱格式不正确")
+    @Column(nullable = true)
     private String email;
 
+    @Column(nullable = true)
     private String location;
 } 
