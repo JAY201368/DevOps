@@ -7,11 +7,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
-        format_sql: true
+        format_sql: false
 
 jwt:
   secret: your-secret-key
@@ -22,6 +22,9 @@ server:
 
 logging:
   level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    com.example.tomatomall: DEBUG
+    root: OFF
+    org.hibernate.SQL: OFF
+    org.hibernate.type.descriptor.sql.BasicBinder: OFF
+    com.example.tomatomall: OFF
+    com.zaxxer.hikari: INFO
+    org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator: INFO
