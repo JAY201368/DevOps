@@ -55,14 +55,6 @@
             <artifactId>spring-security-crypto</artifactId>
             <version>5.8.0</version> <!-- Use the appropriate version -->
         </dependency>
-        
-        <!-- Add Spring Boot DevTools -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
-        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
@@ -94,12 +86,11 @@
                 <version>${spring-boot.version}</version>
                 <configuration>
                     <mainClass>com.example.tomatomall.TomatoMallApplication</mainClass>
-                    <fork>true</fork>
-                    <addResources>true</addResources>
-                    <quiet>true</quiet>
+                    <skip>true</skip>
                 </configuration>
                 <executions>
                     <execution>
+                        <id>repackage</id>
                         <goals>
                             <goal>repackage</goal>
                         </goals>
