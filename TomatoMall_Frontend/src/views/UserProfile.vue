@@ -179,6 +179,7 @@ const handleLogout = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("username");
   localStorage.removeItem("userId");
+  localStorage.removeItem("userRole");
   sessionStorage.removeItem("logined");
   
   // 更新Header中的登录状态

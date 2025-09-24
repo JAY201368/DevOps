@@ -40,7 +40,7 @@ import { ref, reactive, inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
-import { login } from '../api/user'
+import { login, getUserInfo } from '../api/user'
 import Live2D from '../components/Live2D.vue'
 
 const router = useRouter()
@@ -77,10 +77,21 @@ const handleLogin = async () => {
       loading.value = true
       try {
         const res = await login(loginForm.username, loginForm.password)
-        ElMessage.success('登录成功')
         // 保存token和用户名
         localStorage.setItem('token', res.data.token || res.data)
         localStorage.setItem('username', loginForm.username)
+        
+        // 获取用户信息，保存角色
+        try {
+          const userInfo = await getUserInfo(loginForm.username)
+          if (userInfo && userInfo.data) {
+            localStorage.setItem('userRole', userInfo.data.role)
+          }
+        } catch (error) {
+          console.error('获取用户信息失败', error)
+        }
+        
+        ElMessage.success('登录成功')
         
         // 设置登录状态为true
         if (appHeaderRef && appHeaderRef.value) {

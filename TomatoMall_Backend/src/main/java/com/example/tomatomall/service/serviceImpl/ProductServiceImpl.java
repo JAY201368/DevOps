@@ -39,6 +39,8 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductVO createProduct(ProductVO productVO) {
+        System.out.println("开始创建商品: " + productVO.getTitle());
+        
         ProductPO productPO = new ProductPO();
         updateProductFromVO(productPO, productVO);
         
@@ -49,8 +51,15 @@ public class ProductServiceImpl implements ProductService {
         stockpilePO.setProduct(productPO);
         productPO.setStockpile(stockpilePO);
 
-        ProductPO savedProduct = productRepository.save(productPO);
-        return ProductVO.fromPO(savedProduct);
+        try {
+            ProductPO savedProduct = productRepository.save(productPO);
+            System.out.println("商品创建成功: " + savedProduct.getId());
+            return ProductVO.fromPO(savedProduct);
+        } catch (Exception e) {
+            System.err.println("创建商品时出错: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @Override

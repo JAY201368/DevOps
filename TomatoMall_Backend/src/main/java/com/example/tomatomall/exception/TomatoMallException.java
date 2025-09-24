@@ -23,7 +23,7 @@ public class TomatoMallException extends RuntimeException {
     }
 
     public static TomatoMallException userAlreadyExists() {
-        return new TomatoMallException(400, "用户已存在");
+        return new TomatoMallException(400, "用户名已被使用，请尝试其他用户名");
     }
 
     public static TomatoMallException productNotExists() {

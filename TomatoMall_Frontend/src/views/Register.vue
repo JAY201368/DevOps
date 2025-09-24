@@ -121,20 +121,25 @@ const handleRegister = async () => {
   await registerFormRef.value.validate(async (valid) => {
     if (valid) {
       loading.value = true;
-      register(registerForm)
-        .then((res) => {
-          if (res.data.code === "200") {
-            ElMessage.success("注册成功");
-            router.push("/login");
-          } else if (res.data.code === "400") {
-            ElMessage.error(res.data.msg || "注册失败");
-          }
-          loading.value = false;
-        });
-        // .catch((error) => {
-        //   ElMessage.error("注册失败，请稍后重试");
-        //   loading.value = false;
-        // });
+      try {
+        console.log("开始注册，提交数据:", JSON.stringify(registerForm));
+        const res = await register(registerForm);
+        console.log("服务器响应:", res);
+        
+        if (res.code === 200 || res.code === "200") {
+          ElMessage.success("注册成功");
+          router.push("/login");
+        } else {
+          const errorMsg = res.msg || "注册失败";
+          console.error("注册失败，错误信息:", errorMsg);
+          ElMessage.error(errorMsg);
+        }
+      } catch (error) {
+        console.error("注册请求异常:", error);
+        ElMessage.error(error.message || "注册失败，请稍后重试");
+      } finally {
+        loading.value = false;
+      }
     }
   });
 };
