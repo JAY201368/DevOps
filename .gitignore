@@ -1,10 +1,41 @@
 # Apple's Shit
 .DS_Store
 
-# IDE Config
-.vscode
-.idea
+# IDE files
+**/.vscode
+**/.idea
+**/*.iml
+**/.project
+**/.classpath
+**/.settings
+**/.factorypath
 
-# class files
-*.class
-/TomatoMall_Backend/target/
+# Dependencies and build output
+/TomatoMall_Frontend/node_modules/
+/TomatoMall_Frontend/dist/
+/TomatoMall_Frontend/.env
+/TomatoMall_Frontend/npm-debug.log*
+/TomatoMall_Frontend/yarn-debug.log*
+/TomatoMall_Frontend/yarn-error.log*
+
+# Java build files
+**/*.class
+**/target/
+**/build/
+**/.gradle/
+**/out/
+**/bin/
+**/logs/
+
+# Package files
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Local environment files
+.env
+.env.local
+.env.*.local
