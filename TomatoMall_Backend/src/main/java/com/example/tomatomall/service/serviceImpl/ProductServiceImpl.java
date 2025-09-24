@@ -75,6 +75,26 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    public ProductVO updateProductBasicInfo(ProductVO productVO) {
+        // 获取现有商品
+        ProductPO existingProduct = productRepository.findById(productVO.getId())
+                .orElseThrow(() -> new EntityNotFoundException("商品不存在"));
+        
+        // 仅更新基本字段，不处理规格集合
+        existingProduct.setTitle(productVO.getTitle());
+        existingProduct.setPrice(productVO.getPrice());
+        existingProduct.setRate(productVO.getRate());
+        existingProduct.setDescription(productVO.getDescription());
+        existingProduct.setCover(productVO.getCover());
+        existingProduct.setDetail(productVO.getDetail());
+        
+        // 保存并返回更新后的商品
+        ProductPO updatedProduct = productRepository.save(existingProduct);
+        return ProductVO.fromPO(updatedProduct);
+    }
+
+    @Override
+    @Transactional
     public void deleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
             throw new EntityNotFoundException("商品不存在");

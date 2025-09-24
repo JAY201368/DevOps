@@ -59,6 +59,17 @@ public class ProductController {
         }
     }
 
+    @PostMapping("/basic")
+    public ResultVO<String> updateProductBasicInfo(@RequestBody ProductVO productVO, HttpServletRequest request) {
+        try {
+            // TODO: 检查用户权限是否为管理员
+            productService.updateProductBasicInfo(productVO);
+            return ResultVO.buildSuccess("更新商品基本信息成功");
+        } catch (Exception e) {
+            return ResultVO.buildFailure(e.getMessage(), "400");
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResultVO<String> deleteProduct(@PathVariable Long id, HttpServletRequest request) {
         try {

@@ -9,6 +9,7 @@ public interface ProductService {
     ProductVO getProductById(Long id);
     ProductVO createProduct(ProductVO productVO);
     ProductVO updateProduct(ProductVO productVO);
+    ProductVO updateProductBasicInfo(ProductVO productVO);
     void deleteProduct(Long id);
     StockpileVO updateStockpile(Long productId, Integer amount);
     StockpileVO getStockpile(Long productId);
