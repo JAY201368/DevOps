@@ -40,6 +40,8 @@ public class ProductPO {
 
     private String detail;
 
+    private String imageUrl;
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<SpecificationPO> specifications;
 

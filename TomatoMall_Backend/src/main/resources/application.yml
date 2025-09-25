@@ -28,3 +28,10 @@ logging:
     com.example.tomatomall: OFF
     com.zaxxer.hikari: INFO
     org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator: INFO
+
+aliyun:
+  oss:
+    endpoint: oss-cn-nanjing.aliyuncs.com
+    accessKeyId: LTAI5tQjoMbKFGEUonEhyJww
+    accessKeySecret: qLAz9MfZo0LIJNpFMKIpJLjiNL7jOz
+    bucketName: blue-whale-231250120

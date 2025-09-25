@@ -34,6 +34,10 @@ public class TomatoMallException extends RuntimeException {
         return new TomatoMallException(400, "手机号格式不正确");
     }
 
+    public static TomatoMallException fileUploadFail() {
+        return new TomatoMallException(400, "文件上传失败");
+    }
+
     public Integer getCode() {
         return code;
     }
