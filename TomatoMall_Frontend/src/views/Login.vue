@@ -1,8 +1,5 @@
 <template>
   <div class="login-container">
-    <div class="live2d-container">
-      <Live2D />
-    </div>
     <el-card class="login-card">
       <template #header>
         <h2>登录</h2>
@@ -41,7 +38,6 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
 import { login, getUserInfo } from '../api/user'
-import Live2D from '../components/Live2D.vue'
 
 const router = useRouter()
 const loginFormRef = ref(null)
@@ -97,6 +93,10 @@ const handleLogin = async () => {
         if (appHeaderRef && appHeaderRef.value) {
           appHeaderRef.value.setLogined(true)
         }
+        
+        // 触发自定义登录事件，通知Live2D组件用户已登录
+        window.dispatchEvent(new CustomEvent('user-logged-in'))
+        
         // 确保在设置登录状态后再跳转
         await router.push('/products')
       } catch (error) {
@@ -116,15 +116,6 @@ const handleLogin = async () => {
   align-items: center;
   min-height: calc(100vh - 120px);
   position: relative;
-}
-
-.live2d-container {
-  position: absolute;
-  bottom: 0;
-  right: 20px;
-  z-index: 1;
-  width: 400px;
-  height: 500px;
 }
 
 .login-card {

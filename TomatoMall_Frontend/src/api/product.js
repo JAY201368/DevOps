@@ -30,6 +30,22 @@ export function updateProduct(data) {
   });
 }
 
+export function updateProductBasicInfo(data) {
+  return request({
+    url: '/products/basic',
+    method: 'post',
+    data
+  });
+}
+
+export function updateProductBasicOnly(data) {
+  return request({
+    url: '/products/basic-only',
+    method: 'post',
+    data
+  });
+}
+
 export function deleteProduct(id) {
   return request({
     url: `/products/${id}`,
@@ -49,5 +65,16 @@ export function getStockpile(productId) {
   return request({
     url: `/products/stockpile/${productId}`,
     method: 'get'
+  });
+}
+
+export function getProductDetails(id) {
+  return request({
+    url: `/products/${id}`,
+    method: 'get',
+    headers: {
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
+    }
   });
 } 
