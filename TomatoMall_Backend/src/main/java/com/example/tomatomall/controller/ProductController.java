@@ -82,10 +82,10 @@ public class ProductController {
     }
 
     @PatchMapping("/stockpile/{productId}")
-    public ResultVO<String> updateStockpile(@PathVariable Long productId, @RequestParam Integer amount, HttpServletRequest request) {
+    public ResultVO<String> updateStockpile(@PathVariable Long productId, @RequestBody StockpileVO stockpileVO, HttpServletRequest request) {
         try {
-            // TODO: 检查用户权限是否为管理员
-            productService.updateStockpile(productId, amount);
+            
+            productService.updateStockpile(productId, stockpileVO.getAmount());
             return ResultVO.buildSuccess("调整库存成功");
         } catch (Exception e) {
             return ResultVO.buildFailure(e.getMessage(), "400");

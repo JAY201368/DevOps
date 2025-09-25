@@ -57,7 +57,7 @@ export function updateStockpile(productId, amount) {
   return request({
     url: `/products/stockpile/${productId}`,
     method: 'patch',
-    params: { amount }
+    data: { amount }
   });
 }
 

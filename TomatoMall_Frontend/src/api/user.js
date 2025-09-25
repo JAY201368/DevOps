@@ -5,7 +5,7 @@ export const login = (username, password) => {
 }
 
 export const register = (userData) => {
-  return request.post('/accounts/register', userData)
+  return request.post('/accounts', userData)
 }
 
 export const getUserInfo = (username) => {

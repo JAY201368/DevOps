@@ -34,7 +34,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/register")
+    @PostMapping
     public ResultVO<String> register(@RequestBody UserVO userVO) {
         try {
             userService.register(userVO);
