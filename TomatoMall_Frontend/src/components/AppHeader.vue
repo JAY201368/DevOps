@@ -6,6 +6,10 @@
     </div>
     <div class="nav-buttons" v-if="logined">
       <el-button type="text" @click="goToProducts">商品列表</el-button>
+      <el-button type="text" @click="goToCart">
+        <el-icon class="cart-icon"><ShoppingCart /></el-icon> 购物车
+        <el-badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" />
+      </el-button>
       <el-button type="text" @click="goToProfile">个人信息</el-button>
     </div>
     <div class="user-actions" v-if="logined">
@@ -15,20 +19,51 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { getCartItems } from '../api/cart'
+import { ShoppingCart } from '@element-plus/icons-vue'
 
 const router = useRouter()
+const route = useRoute()
 const logined = ref(false)
+const cartCount = ref(0)
 
 // 组件挂载时检查sessionStorage中的登录状态
 onMounted(() => {
   const loginStatus = sessionStorage.getItem('logined')
   logined.value = loginStatus === 'true'
+  
+  if (logined.value) {
+    fetchCartCount();
+  }
 })
+
+// 监听路由变化，在每次路由变化时更新购物车数量
+watch(() => route.path, () => {
+  if (logined.value) {
+    fetchCartCount();
+  }
+})
+
+// 获取购物车商品数量
+const fetchCartCount = async () => {
+  try {
+    const response = await getCartItems();
+    if (response.code === '200' && response.data && response.data.items) {
+      cartCount.value = response.data.items.length;
+    }
+  } catch (error) {
+    console.error('获取购物车数量失败:', error);
+  }
+}
 
 const goToProducts = () => {
   router.push('/products')
+}
+
+const goToCart = () => {
+  router.push('/cart')
 }
 
 const goToProfile = () => {
@@ -50,6 +85,10 @@ defineExpose({
   setLogined: (value) => {
     logined.value = value
     sessionStorage.setItem('logined', value.toString())
+    
+    if (value) {
+      fetchCartCount();
+    }
   }
 })
 </script>
@@ -92,6 +131,16 @@ defineExpose({
 .nav-buttons .el-button {
   font-size: 16px;
   padding: 0 10px;
+  display: flex;
+  align-items: center;
+}
+
+.cart-icon {
+  margin-right: 5px;
+}
+
+.cart-badge {
+  margin-left: 5px;
 }
 
 .user-actions {

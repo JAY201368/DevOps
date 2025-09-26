@@ -4,6 +4,7 @@ import Register from '../views/Register.vue'
 import UserProfile from '../views/UserProfile.vue'
 import ProductList from '../views/ProductList.vue'
 import ProductDetail from '../views/ProductDetail.vue'
+import Cart from '../views/Cart.vue'
 import DbTest from '../views/DbTest.vue'
 
 const routes = [
@@ -42,6 +43,12 @@ const routes = [
     path: '/products/:id',
     name: 'ProductDetail',
     component: ProductDetail,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/cart',
+    name: 'Cart',
+    component: Cart,
     meta: { requiresAuth: true }
   }
 ]

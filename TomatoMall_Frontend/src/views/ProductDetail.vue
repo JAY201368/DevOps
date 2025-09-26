@@ -96,6 +96,32 @@
               </span>
             </div>
           </div>
+          
+          <!-- 添加购买数量和加入购物车按钮 -->
+          <div class="product-actions">
+            <div class="quantity-selector">
+              <span class="quantity-label">数量：</span>
+              <el-input-number 
+                v-model="purchaseQuantity" 
+                :min="1" 
+                :max="product.stockpile?.amount || 1"
+                size="large" />
+            </div>
+            <div class="action-buttons">
+              <el-button 
+                type="primary" 
+                size="large" 
+                :disabled="product.stockpile?.amount <= 0"
+                @click="addToCart">
+                <el-icon><ShoppingCart /></el-icon> 加入购物车
+              </el-button>
+              <el-button 
+                size="large" 
+                @click="goToCart">
+                查看购物车
+              </el-button>
+            </div>
+          </div>
 
           <el-divider content-position="left">
             <el-icon class="divider-icon"><InfoFilled /></el-icon> 商品介绍
@@ -337,6 +363,7 @@ import {
   createProduct,
   deleteProduct,
 } from "../api/product";
+import { addToCart as addProductToCart } from "../api/cart";
 import { getUserInfo } from "../api/user";
 import {
   Edit,
@@ -346,6 +373,7 @@ import {
   List,
   PriceTag,
   Picture,
+  ShoppingCart,
 } from "@element-plus/icons-vue";
 import ImageUploader from "../components/ImageUploader.vue";
 
@@ -357,6 +385,7 @@ const dialogVisible = ref(false);
 const stockDialogVisible = ref(false);
 const productFormRef = ref(null);
 const stockFormRef = ref(null);
+const purchaseQuantity = ref(1);
 
 const productForm = ref({
   id: "",
@@ -675,6 +704,32 @@ const handleImageUploadSuccess = (url) => {
 const handleImageUploadError = (error) => {
   console.error("图片上传失败：", error);
   ElMessage.error("图片上传失败：" + (error.message || "未知错误"));
+};
+
+// 加入购物车方法
+const addToCart = async () => {
+  if (!product.value) return;
+  
+  try {
+    const response = await addProductToCart({
+      productId: product.value.id,
+      quantity: purchaseQuantity.value
+    });
+    
+    if (response.code === '200') {
+      ElMessage.success('成功加入购物车');
+    } else {
+      ElMessage.error(response.msg || '加入购物车失败');
+    }
+  } catch (error) {
+    console.error('加入购物车出错:', error);
+    ElMessage.error('加入购物车失败，请稍后重试');
+  }
+};
+
+// 前往购物车页面
+const goToCart = () => {
+  router.push('/cart');
 };
 
 onMounted(() => {
@@ -1177,6 +1232,39 @@ onMounted(() => {
   .product-cover-container {
     width: 100%;
     height: 300px;
+  }
+}
+
+.product-actions {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quantity-label {
+  font-weight: bold;
+  color: #606266;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+  .action-buttons {
+    flex-direction: column;
   }
 }
 </style>
