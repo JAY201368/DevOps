@@ -193,6 +193,15 @@
                 <el-tag v-if="Number(product.price) < 15" type="danger" size="small" effect="dark" class="price-tag">特惠</el-tag>
               </div>
               
+              <!-- 添加商品封面图片 -->
+              <div class="product-card-image" v-if="product.cover">
+                <img :src="product.cover" :alt="product.title" class="product-image" />
+              </div>
+              <div class="product-card-image placeholder" v-else>
+                <el-icon class="no-image-icon"><Picture /></el-icon>
+                <span class="no-image-text">暂无图片</span>
+              </div>
+              
               <div class="product-card-content">
                 <div class="product-card-price">
                   <span class="price-label">价格：</span>
@@ -1262,6 +1271,44 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 商品封面图片样式 */
+.product-card-image {
+  height: 180px;
+  width: 100%;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: #f5f7fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.05);
+}
+
+.placeholder {
+  flex-direction: column;
+  gap: 10px;
+  color: #909399;
+}
+
+.no-image-icon {
+  font-size: 36px;
+}
+
+.no-image-text {
+  font-size: 14px;
 }
 
 .product-card-content {
