@@ -571,81 +571,44 @@ const handleSubmit = async () => {
         console.log("当前商品ID:", currentId);
         console.log("当前商品数据:", JSON.stringify(product.value));
 
-        // 准备新商品数据
-        const newProductData = {
+        // 准备更新商品数据
+        const updateData = {
+          id: currentId,
           title: productForm.value.title,
           price: productForm.value.price,
           rate: Number(productForm.value.rate) * 2, // 半颗星代表1分，转换为10分制
           description: productForm.value.description,
           cover: productForm.value.cover,
           detail: productForm.value.detail,
-          // 非常重要：保留原有的规格信息
-          specifications: product.value.specifications || [],
+          // 确保传递完整的规格信息
+          specifications: product.value.specifications || []
         };
 
-        console.log("准备创建新商品:", JSON.stringify(newProductData));
+        console.log("准备更新商品:", JSON.stringify(updateData));
 
-        // 1. 创建新商品
-        const createRes = await createProduct(newProductData);
-        console.log("创建新商品响应:", createRes);
+        // 直接更新现有商品
+        const updateRes = await updateProduct(updateData);
+        console.log("更新商品响应:", updateRes);
 
         if (
-          createRes.code === 200 ||
-          createRes.code === "200" ||
-          (createRes.data && createRes.data.code === "200")
+          updateRes.code === 200 ||
+          updateRes.code === "200" ||
+          (updateRes.data && updateRes.data.code === "200")
         ) {
-          // 获取新创建的商品ID
-          let newProductId;
-          if (createRes.data && typeof createRes.data === "object") {
-            newProductId = createRes.data.id;
-          } else if (
-            createRes.data &&
-            createRes.data.data &&
-            typeof createRes.data.data === "object"
-          ) {
-            newProductId = createRes.data.data.id;
-          }
-
-          console.log("新商品ID:", newProductId);
-
-          if (newProductId) {
-            // 2. 删除旧商品
-            console.log("删除旧商品:", currentId);
-            await deleteProduct(currentId);
-
-            // 3. 更新路由到新商品
-            console.log("更新路由到新商品:", newProductId);
-
-            // 保存当前页面的滚动位置
-            const scrollPosition = window.scrollY;
-            console.log("保存滚动位置:", scrollPosition);
-
-            // 更新路由但不刷新整个页面
-            router.replace(`/products/${newProductId}`).then(() => {
-              // 4. 清除缓存
-              localStorage.removeItem(`product_${currentId}`);
-              localStorage.removeItem(`product_${newProductId}`);
-
-              // 5. 立即获取新商品数据
-              console.log("重新获取新商品数据:", newProductId);
-              fetchProduct().then(() => {
-                // 成功获取数据后显示成功消息
-                ElMessage.success("更新成功");
-                // 关闭编辑对话框
-                dialogVisible.value = false;
-
-                // 恢复滚动位置
-                setTimeout(() => {
-                  window.scrollTo(0, scrollPosition);
-                  console.log("恢复到滚动位置:", scrollPosition);
-                }, 100);
-              });
-            });
-          } else {
-            throw new Error("未能获取新创建的商品ID");
-          }
+          // 清除缓存
+          localStorage.removeItem(`product_${currentId}`);
+          
+          // 重新获取商品数据
+          console.log("重新获取商品数据:", currentId);
+          await fetchProduct();
+          
+          // 显示成功消息
+          ElMessage.success("更新成功");
+          
+          // 关闭编辑对话框
+          dialogVisible.value = false;
         } else {
-          throw new Error(createRes.msg || "更新失败");
+          throw new Error(updateRes.msg || "更新失败");
         }
       } catch (error) {
         console.error("提交商品表单失败:", error);

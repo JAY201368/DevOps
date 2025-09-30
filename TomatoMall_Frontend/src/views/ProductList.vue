@@ -759,8 +759,9 @@ const handleSubmit = async () => {
             console.warn('警告: 未找到原始商品的规格信息!');
           }
           
-          // 准备新商品数据
-          const newProductData = {
+          // 准备更新商品数据
+          const updateData = {
+            id: currentId,
             title: productForm.value.title,
             price: productForm.value.price,
             rate: Number(productForm.value.rate) * 2, // 半颗星代表1分，转换为10分制
@@ -772,35 +773,11 @@ const handleSubmit = async () => {
               currentProduct.value.specifications : []
           };
           
-          console.log('准备创建新商品:', JSON.stringify(newProductData));
+          console.log('准备更新商品:', JSON.stringify(updateData));
           
-          // 1. 创建新商品
-          const createRes = await createProduct(newProductData);
-          console.log('创建新商品响应:', createRes);
-          
-          if (createRes.code === 200 || createRes.code === '200' || (createRes.data && createRes.data.code === '200')) {
-            // 获取新创建的商品ID
-            let newProductId;
-            if (createRes.data && typeof createRes.data === 'object') {
-              newProductId = createRes.data.id;
-            } else if (createRes.data && createRes.data.data && typeof createRes.data.data === 'object') {
-              newProductId = createRes.data.data.id;
-            }
-            
-            console.log('新商品ID:', newProductId);
-            
-            if (newProductId) {
-              // 2. 删除旧商品
-              console.log('删除旧商品:', currentId);
-              await deleteProduct(currentId);
-              
-              res = createRes; // 使用创建响应作为结果
-            } else {
-              throw new Error('未能获取新创建的商品ID');
-            }
-          } else {
-            throw new Error(createRes.msg || '更新失败');
-          }
+          // 直接更新现有商品
+          res = await updateProduct(updateData);
+          console.log('更新商品响应:', res);
         }
         
         console.log('提交商品响应:', res);
