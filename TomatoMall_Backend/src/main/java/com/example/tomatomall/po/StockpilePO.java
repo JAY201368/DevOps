@@ -27,4 +27,4 @@ public class StockpilePO {
     @OneToOne
     @JoinColumn(name = "product_id", nullable = false)
     private ProductPO product;
-} 
+}

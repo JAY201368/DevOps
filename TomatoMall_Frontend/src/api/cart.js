@@ -51,4 +51,12 @@ export function getCartItems() {
       'Cache-Control': 'no-cache' // 禁用缓存，确保获取最新数据
     }
   });
-} 
+}
+
+export function checkoutCart(data) {
+  return request({
+    url: '/cart/checkout',
+    method: 'post',
+    data
+  });
+}
