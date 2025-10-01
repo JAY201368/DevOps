@@ -8,15 +8,6 @@
             <el-tag type="info" effect="plain" class="product-count">共 {{ totalItems }} 个商品</el-tag>
           </div>
           <div class="header-right">
-            <el-radio-group v-model="viewMode" size="small" class="view-mode-switch">
-              <el-radio-button label="table">
-                <el-icon><List /></el-icon> 表格视图
-              </el-radio-button>
-              <el-radio-button label="card">
-                <el-icon><Grid /></el-icon> 卡片视图
-              </el-radio-button>
-            </el-radio-group>
-            
             <el-button
               v-if="isAdmin"
               type="primary"
@@ -54,128 +45,8 @@
         <el-skeleton :rows="6" animated />
       </div>
       
-      <!-- 表格视图 -->
-      <el-table
-        v-if="viewMode === 'table'"
-        v-loading="loading && products.length > 0"
-        :data="products"
-        style="width: 100%"
-        v-show="!loading || products.length > 0"
-        :default-sort="{ prop: 'id', order: 'ascending' }"
-        class="product-table"
-        border
-        stripe
-        highlight-current-row
-      >
-        <el-table-column
-          prop="id"
-          label="ID"
-          width="80"
-          align="center"
-        />
-        <el-table-column
-          prop="title"
-          label="商品名称"
-          min-width="200"
-          show-overflow-tooltip
-        >
-          <template #default="scope">
-            <div class="product-title-cell">
-              <span>{{ scope.row.title }}</span>
-              <el-tag v-if="Number(scope.row.price) < 15" type="danger" size="small" effect="dark" class="price-tag">特惠</el-tag>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="price"
-          label="价格"
-          width="120"
-          align="center"
-        >
-          <template #default="scope">
-            <span class="price-value">¥{{ scope.row.price }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="rate"
-          label="评分"
-          width="180"
-          align="center"
-        >
-          <template #default="scope">
-            <div class="rate-cell">
-              <el-rate
-                :model-value="Number(scope.row.rate) / 2"
-                disabled
-                text-color="#ff9900"
-                :allow-half="true"
-              />
-              <span class="rate-value">{{ Number(scope.row.rate).toFixed(1) }}分</span>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="description"
-          label="描述"
-          min-width="200"
-          show-overflow-tooltip
-        >
-          <template #default="scope">
-            <div class="description-cell">
-              {{ scope.row.description || '暂无描述' }}
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column
-          label="操作"
-          width="280"
-          fixed="right"
-          align="center"
-        >
-          <template #default="scope">
-            <div class="action-buttons">
-              <el-button
-                type="primary"
-                link
-                @click="handleView(scope.row)"
-                class="table-action-button"
-              >
-                <el-icon><View /></el-icon> 查看
-              </el-button>
-              <el-button
-                v-if="isAdmin"
-                type="success"
-                link
-                @click="handleEdit(scope.row)"
-                class="table-action-button"
-              >
-                <el-icon><Edit /></el-icon> 编辑
-              </el-button>
-              <el-button
-                v-if="isAdmin"
-                type="warning"
-                link
-                @click="handleStock(scope.row)"
-                class="table-action-button"
-              >
-                <el-icon><Box /></el-icon> 库存
-              </el-button>
-              <el-button
-                v-if="isAdmin"
-                type="danger"
-                link
-                @click="handleDelete(scope.row)"
-                class="table-action-button"
-              >
-                <el-icon><Delete /></el-icon> 删除
-              </el-button>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
-      
       <!-- 卡片视图 -->
-      <div v-else-if="viewMode === 'card'" class="card-view-container">
+      <div class="card-view-container">
         <el-row :gutter="20">
           <el-col 
             v-for="product in products" 
@@ -190,15 +61,18 @@
             <el-card class="product-card" shadow="hover">
               <div class="product-card-header">
                 <h3 class="product-card-title">{{ product.title }}</h3>
-                <el-tag v-if="Number(product.price) < 15" type="danger" size="small" effect="dark" class="price-tag">特惠</el-tag>
+              </div>
+              
+              <!-- 添加商品封面图片 -->
+              <div class="product-card-image" v-if="product.cover">
+                <img :src="product.cover" :alt="product.title" class="product-image" />
+              </div>
+              <div class="product-card-image placeholder" v-else>
+                <el-icon class="no-image-icon"><Picture /></el-icon>
+                <span class="no-image-text">暂无图片</span>
               </div>
               
               <div class="product-card-content">
-                <div class="product-card-price">
-                  <span class="price-label">价格：</span>
-                  <span class="price-value">¥{{ product.price }}</span>
-                </div>
-                
                 <div class="product-card-rating">
                   <el-rate
                     :model-value="Number(product.rate) / 2"
@@ -215,7 +89,8 @@
                 </div>
               </div>
               
-              <div class="product-card-footer">
+              <!-- 操作按钮 - 移到卡片外部并使用绝对定位 -->
+              <div class="product-card-actions">
                 <el-button
                   type="primary"
                   link
@@ -477,7 +352,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Refresh, Picture, List, Grid, View, Edit, Box, Delete, Plus } from '@element-plus/icons-vue';
+import { Refresh, Picture, View, Edit, Box, Delete, Plus } from '@element-plus/icons-vue';
 import {
   getAllProducts,
   createProduct,
@@ -500,7 +375,6 @@ const dialogType = ref('add');
 const currentProduct = ref(null);
 const productFormRef = ref(null);
 const stockFormRef = ref(null);
-const viewMode = ref('table'); // 新增视图模式，默认为表格视图
 
 const productForm = ref({
   title: '',
@@ -885,8 +759,9 @@ const handleSubmit = async () => {
             console.warn('警告: 未找到原始商品的规格信息!');
           }
           
-          // 准备新商品数据
-          const newProductData = {
+          // 准备更新商品数据
+          const updateData = {
+            id: currentId,
             title: productForm.value.title,
             price: productForm.value.price,
             rate: Number(productForm.value.rate) * 2, // 半颗星代表1分，转换为10分制
@@ -898,35 +773,11 @@ const handleSubmit = async () => {
               currentProduct.value.specifications : []
           };
           
-          console.log('准备创建新商品:', JSON.stringify(newProductData));
+          console.log('准备更新商品:', JSON.stringify(updateData));
           
-          // 1. 创建新商品
-          const createRes = await createProduct(newProductData);
-          console.log('创建新商品响应:', createRes);
-          
-          if (createRes.code === 200 || createRes.code === '200' || (createRes.data && createRes.data.code === '200')) {
-            // 获取新创建的商品ID
-            let newProductId;
-            if (createRes.data && typeof createRes.data === 'object') {
-              newProductId = createRes.data.id;
-            } else if (createRes.data && createRes.data.data && typeof createRes.data.data === 'object') {
-              newProductId = createRes.data.data.id;
-            }
-            
-            console.log('新商品ID:', newProductId);
-            
-            if (newProductId) {
-              // 2. 删除旧商品
-              console.log('删除旧商品:', currentId);
-              await deleteProduct(currentId);
-              
-              res = createRes; // 使用创建响应作为结果
-            } else {
-              throw new Error('未能获取新创建的商品ID');
-            }
-          } else {
-            throw new Error(createRes.msg || '更新失败');
-          }
+          // 直接更新现有商品
+          res = await updateProduct(updateData);
+          console.log('更新商品响应:', res);
         }
         
         console.log('提交商品响应:', res);
@@ -1159,70 +1010,6 @@ onUnmounted(() => {
   padding: 20px;
 }
 
-/* 表格样式 */
-.product-table {
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 20px;
-}
-
-.product-table :deep(.el-table__header) {
-  background-color: #f5f7fa;
-}
-
-.product-table :deep(.el-table__row) {
-  transition: all 0.3s;
-}
-
-.product-table :deep(.el-table__row:hover) {
-  background-color: #f0f7ff !important;
-}
-
-.product-title-cell {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.price-tag {
-  margin-left: 8px;
-}
-
-.price-value {
-  color: #f56c6c;
-  font-weight: bold;
-}
-
-.rate-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-}
-
-.rate-value {
-  color: #ff9900;
-  font-weight: bold;
-}
-
-.description-cell {
-  color: #606266;
-}
-
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-
-.table-action-button {
-  color: inherit;
-}
-
-.table-action-button:hover {
-  opacity: 0.8;
-}
-
 /* 卡片视图样式 */
 .card-view-container {
   margin-bottom: 20px;
@@ -1239,6 +1026,7 @@ onUnmounted(() => {
   transition: all 0.3s;
   border-radius: 8px;
   overflow: hidden;
+  position: relative;
 }
 
 .product-card:hover {
@@ -1264,21 +1052,49 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
+/* 商品封面图片样式 */
+.product-card-image {
+  height: 180px;
+  width: 100%;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: #f5f7fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.05);
+}
+
+.placeholder {
+  flex-direction: column;
+  gap: 10px;
+  color: #909399;
+}
+
+.no-image-icon {
+  font-size: 36px;
+}
+
+.no-image-text {
+  font-size: 14px;
+}
+
 .product-card-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 15px;
-}
-
-.product-card-price {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.price-label {
-  color: #909399;
 }
 
 .product-card-rating {
@@ -1301,14 +1117,29 @@ onUnmounted(() => {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   line-height: 1.5;
+  margin-bottom: 10px;
 }
 
-.product-card-footer {
+.product-card-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
-  justify-content: space-between;
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #ebeef5;
+  justify-content: space-around;
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  padding: 15px;
+  border-radius: 0 0 8px 8px;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  z-index: 1;
+  opacity: 0;
+}
+
+.product-card:hover .product-card-actions {
+  transform: translateY(0);
+  opacity: 1;
 }
 
 .card-action-button {
