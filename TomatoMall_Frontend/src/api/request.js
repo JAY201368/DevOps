@@ -1,0 +1,101 @@
+import axios from 'axios'
+import { ElMessage } from 'element-plus'
+
+// 创建请求实例
+const request = axios.create({
+  baseURL: 'http://localhost:8080/api',
+  timeout: 10000,
+  // 启用HTTP持久连接
+  keepAlive: true,
+  // 允许跨域请求携带cookie
+  withCredentials: false,
+  // 添加HTTP请求头以优化性能
+  headers: {
+    'Cache-Control': 'max-age=60', // 启用缓存
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  }
+})
+
+// 启用简单请求缓存
+const cache = new Map();
+const CACHE_DURATION = 30 * 1000; // 30秒缓存
+
+// 请求拦截器
+request.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.token = token
+    }
+    
+    // 只对GET请求使用缓存
+    if (config.method.toLowerCase() === 'get') {
+      const cacheKey = `${config.url}${JSON.stringify(config.params || {})}`;
+      const cachedData = cache.get(cacheKey);
+      
+      // 检查是否有有效缓存
+      if (cachedData && (Date.now() - cachedData.timestamp < CACHE_DURATION)) {
+        // 将缓存标记附加到配置中，以便响应拦截器使用
+        config._cachedData = cachedData.data;
+        console.log('使用缓存数据:', config.url);
+      }
+    }
+    
+    return config;
+  },
+  error => {
+    return Promise.reject(error)
+  }
+)
+
+// 响应拦截器
+request.interceptors.response.use(
+  response => {
+    // 检查是否有缓存数据
+    if (response.config._cachedData) {
+      return response.config._cachedData;
+    }
+    
+    const res = response.data;
+    console.log("API响应:", res);
+    
+    // 缓存GET请求的成功响应
+    if (response.config.method.toLowerCase() === 'get') {
+      const cacheKey = `${response.config.url}${JSON.stringify(response.config.params || {})}`;
+      cache.set(cacheKey, {
+        data: res,
+        timestamp: Date.now()
+      });
+    }
+    
+    // 直接返回响应数据，在业务代码中处理不同的响应结构
+    return res;
+  },
+  error => {
+    // 网络错误或服务器错误
+    console.error("API请求错误:", error);
+    
+    // 尝试提取错误信息
+    let errorMessage;
+    if (error.response) {
+      // 服务器返回错误
+      errorMessage = error.response.data?.msg || 
+                    error.response.data?.message || 
+                    `服务器错误 (${error.response.status})`;
+      console.error("服务器错误详情:", error.response.data);
+    } else if (error.request) {
+      // 请求已发送但没有响应
+      errorMessage = "服务器无响应，请检查网络连接";
+    } else {
+      // 请求设置时出错
+      errorMessage = error.message || "请求错误";
+    }
+    
+    // 显示错误消息
+    ElMessage.error(errorMessage);
+    return Promise.reject(error);
+  }
+)
+
+export default request

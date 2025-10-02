@@ -3,16 +3,17 @@ package com.example.tomatomall.controller;
 import com.example.tomatomall.service.UserService;
 import com.example.tomatomall.util.JwtUtil;
 import com.example.tomatomall.vo.UserVO;
+import com.example.tomatomall.vo.ResultVO;
+import com.example.tomatomall.exception.TomatoMallException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/accounts")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class UserController {
     @Autowired
     private UserService userService;
@@ -21,82 +22,59 @@ public class UserController {
     private JwtUtil jwtUtil;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
+    public ResultVO<String> login(@RequestBody Map<String, String> loginRequest) {
         try {
             String token = userService.login(loginRequest.get("username"), loginRequest.get("password"));
-            Map<String, String> response = new HashMap<>();
-            response.put("code", "200");
-            response.put("msg", null);
-            response.put("data", token);
-            return ResponseEntity.ok(response);
+            return ResultVO.buildSuccess(token);
+        } catch (TomatoMallException e) {
+            System.out.println(e.getMessage());
+            return ResultVO.buildFailure(e.getMessage(), e.getCode().toString());
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("code", "400");
-            response.put("msg", e.getMessage());
-            response.put("data", null);
-            return ResponseEntity.badRequest().body(response);
+            return ResultVO.buildFailure("服务器内部错误", "500");
         }
     }
 
     @PostMapping
-    public ResponseEntity<?> register(@RequestBody UserVO userVO) {
+    public ResultVO<String> register(@RequestBody UserVO userVO) {
         try {
             userService.register(userVO);
-            Map<String, String> response = new HashMap<>();
-            response.put("code", "200");
-            response.put("msg", null);
-            response.put("data", "注册成功");
-            return ResponseEntity.ok(response);
+            return ResultVO.buildSuccess("注册成功");
+        } catch (TomatoMallException e) {
+            return ResultVO.buildFailure(e.getMessage(), e.getCode().toString());
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("code", "400");
-            response.put("msg", e.getMessage());
-            response.put("data", null);
-            return ResponseEntity.badRequest().body(response);
+            return ResultVO.buildFailure("服务器内部错误", "500");
         }
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<?> getUserInfo(@PathVariable String username, HttpServletRequest request) {
+    public ResultVO<UserVO> getUserInfo(@PathVariable String username, HttpServletRequest request) {
         try {
             String token = request.getHeader("token");
             if (token == null || !jwtUtil.validateToken(token)) {
-                return ResponseEntity.status(401).build();
+                return ResultVO.buildFailure("未授权", "401");
             }
             UserVO userVO = userService.getUserByUsername(username);
-            Map<String, Object> response = new HashMap<>();
-            response.put("code", "200");
-            response.put("msg", null);
-            response.put("data", userVO);
-            return ResponseEntity.ok(response);
+            return ResultVO.buildSuccess(userVO);
+        } catch (TomatoMallException e) {
+            return ResultVO.buildFailure(e.getMessage(), e.getCode().toString());
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("code", "400");
-            response.put("msg", e.getMessage());
-            response.put("data", null);
-            return ResponseEntity.badRequest().body(response);
+            return ResultVO.buildFailure("服务器内部错误", "500");
         }
     }
 
     @PutMapping
-    public ResponseEntity<?> updateUser(@RequestBody UserVO userVO, HttpServletRequest request) {
+    public ResultVO<String> updateUser(@RequestBody UserVO userVO, HttpServletRequest request) {
         try {
             String token = request.getHeader("token");
             if (token == null || !jwtUtil.validateToken(token)) {
-                return ResponseEntity.status(401).build();
+                return ResultVO.buildFailure("未授权", "401");
             }
             userService.updateUser(userVO);
-            Map<String, String> response = new HashMap<>();
-            response.put("code", "200");
-            response.put("msg", null);
-            response.put("data", "更新成功");
-            return ResponseEntity.ok(response);
+            return ResultVO.buildSuccess("更新成功");
+        } catch (TomatoMallException e) {
+            return ResultVO.buildFailure(e.getMessage(), e.getCode().toString());
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("code", "400");
-            response.put("msg", e.getMessage());
-            response.put("data", null);
-            return ResponseEntity.badRequest().body(response);
+            return ResultVO.buildFailure("服务器内部错误", "500");
         }
     }
-} 
+}
