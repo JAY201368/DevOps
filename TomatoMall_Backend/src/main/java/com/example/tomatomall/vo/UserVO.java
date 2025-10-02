@@ -2,15 +2,11 @@ package com.example.tomatomall.vo;
 
 import com.example.tomatomall.po.UserPO;
 import lombok.Data;
-import lombok.Setter;
-import lombok.Getter;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
 @Data
-@Setter
-@Getter
 public class UserVO {
     private Long id;
 
