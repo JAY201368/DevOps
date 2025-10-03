@@ -21,4 +21,9 @@ stop:
 	-pkill -f "node.*vite"
 	-pkill -f "java.*TomatoMallApplication"
 
+clean:
+	@echo "Cleaning up..."
+	@cd TomatoMall_Backend && mvn clean
+	@echo "Cleanup complete."
+
 .PHONY: all run frontend backend stop

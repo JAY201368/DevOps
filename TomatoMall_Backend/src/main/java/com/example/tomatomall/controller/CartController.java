@@ -7,11 +7,14 @@ import com.example.tomatomall.service.CartService;
 import com.example.tomatomall.util.JwtUtil;
 import com.example.tomatomall.vo.CartItemVO;
 import com.example.tomatomall.vo.CartVO;
+import com.example.tomatomall.vo.OrderVO;
 import com.example.tomatomall.vo.ResultVO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -27,6 +30,9 @@ public class CartController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     // 获取当前登录用户
     private UserPO getCurrentUser(HttpServletRequest request) {
@@ -112,4 +118,38 @@ public class CartController {
             return ResultVO.buildFailure("服务器内部错误", "500");
         }
     }
-} 
+
+    /**
+     * 提交订单（结算购物车）
+     */
+    @PostMapping("/checkout")
+    public ResultVO<OrderVO> checkout(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+        try {
+            UserPO currentUser = getCurrentUser(request);
+
+            List<String> cartItemIds = (List<String>) requestBody.get("cartItemIds");
+            Map<String, Object> shippingAddressObj = (Map<String, Object>) requestBody.get("shipping_address");
+            String paymentMethod = requestBody.get("payment_method").toString();
+
+            String receiverName = shippingAddressObj.getOrDefault("name", "").toString();
+            String receiverPhone = shippingAddressObj.getOrDefault("phone", "").toString();
+            String receiverZipcode = shippingAddressObj.getOrDefault("zipcode", "").toString();
+            String receiverAddress = shippingAddressObj.getOrDefault("address", "").toString();
+
+            OrderVO orderVO = cartService.checkout(
+                currentUser.getId(),
+                cartItemIds,
+                receiverName,
+                receiverPhone,
+                receiverZipcode,
+                receiverAddress,
+                paymentMethod
+            );
+            return ResultVO.buildSuccess(orderVO);
+        } catch (TomatoMallException e) {
+            return ResultVO.buildFailure(e.getMessage(), e.getCode().toString());
+        } catch (Exception e) {
+            return ResultVO.buildFailure("服务器内部错误", "500");
+        }
+    }
+}

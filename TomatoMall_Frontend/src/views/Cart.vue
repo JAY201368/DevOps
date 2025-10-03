@@ -128,6 +128,50 @@
         </el-card>
       </div>
     </div>
+
+    <!-- 结算弹窗（简化版） -->
+    <el-dialog v-model="checkoutDialogVisible" title="确认订单" width="400px" :close-on-click-modal="false">
+      <el-form :model="shippingForm" ref="shippingFormRef" label-width="80px" style="margin-bottom: 10px;">
+        <el-form-item label="收货人" prop="name" :rules="[{ required: true, message: '请输入收货人姓名', trigger: 'blur' }]">
+          <el-input v-model="shippingForm.name" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="手机号" prop="phone" :rules="[{ required: true, message: '请输入手机号', trigger: 'blur' }]">
+          <el-input v-model="shippingForm.phone" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="邮编" prop="zipcode">
+          <el-input v-model="shippingForm.zipcode" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="地址" prop="address" :rules="[{ required: true, message: '请输入详细地址', trigger: 'blur' }]">
+          <el-input v-model="shippingForm.address" autocomplete="off" />
+        </el-form-item>
+      </el-form>
+      <div class="order-summary">
+        <div class="order-row">
+          <span class="label">用户名：</span>
+          <span class="value">{{ username }}</span>
+        </div>
+        <div class="order-row">
+          <span class="label">订单内容：</span>
+          <ul class="order-items">
+            <li v-for="item in cartItems" :key="item.cartItemId">
+              {{ item.title }} × {{ item.quantity }}
+            </li>
+          </ul>
+        </div>
+        <div class="order-row">
+          <span class="label">支付总金额：</span>
+          <span class="value price">¥{{ formatPrice(totalAmount) }}</span>
+        </div>
+        <div class="order-row">
+          <span class="label">支付方式：</span>
+          <span class="value">支付宝</span>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="checkoutDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="checkoutLoading" @click="handleCheckoutSubmit">提交订单</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -135,9 +179,10 @@
 import { ref, onMounted, computed, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { getCartItems, removeFromCart, updateCartItemQuantity } from '../api/cart';
+import { getCartItems, removeFromCart, updateCartItemQuantity, checkoutCart } from '../api/cart';
 import { getProductById, getStockpile } from '../api/product';
 import { PictureFilled, ArrowRight, ArrowLeft, ShoppingCart, Delete } from '@element-plus/icons-vue';
+import { initiatePayment } from '../api/order';
 
 export default {
   name: 'Cart',
@@ -152,6 +197,7 @@ export default {
     const router = useRouter();
     const cartItems = ref([]);
     const loading = ref(true);
+    const username = ref('');
     
     const totalItems = computed(() => {
       return cartItems.value.reduce((total, item) => total + item.quantity, 0);
@@ -305,12 +351,83 @@ export default {
       router.push(`/products/${productId}`);
     };
     
+    const checkoutDialogVisible = ref(false);
+    const checkoutLoading = ref(false);
+    const checkoutForm = ref({
+      payment_method: '支付宝'
+    });
+
+    const shippingForm = ref({
+      name: '',
+      phone: '',
+      zipcode: '',
+      address: ''
+    });
+    const shippingFormRef = ref(null);
+
     const checkout = () => {
-      ElMessage.info('订单结算功能将在下一阶段实现');
-      // 后续会实现结算功能
+      if (cartItems.value.length === 0) {
+        ElMessage.warning('购物车为空');
+        return;
+      }
+      checkoutDialogVisible.value = true;
     };
-    
+
+    const handleCheckoutSubmit = async () => {
+      // 校验收货人信息
+      shippingFormRef.value.validate(async (valid) => {
+        if (!valid) return;
+        checkoutLoading.value = true;
+        try {
+          const cartItemIds = cartItems.value.map(item => item.cartItemId.toString());
+          const payment_method = '支付宝';
+          const shipping_address = { ...shippingForm.value };
+          const response = await checkoutCart({
+            cartItemIds,
+            shipping_address,
+            payment_method
+          });
+          
+          if (response.code === '200') {
+            ElMessage.success('订单提交成功');
+            checkoutDialogVisible.value = false;
+            
+            // 发起支付
+            const paymentResponse = await initiatePayment(response.data.orderId);
+            if (paymentResponse.code === '200') {
+              // 创建一个临时div来放置支付表单
+              const div = document.createElement('div');
+              div.innerHTML = paymentResponse.data.paymentForm;
+              document.body.appendChild(div);
+              
+              // 提交支付表单
+              const form = div.getElementsByTagName('form')[0];
+              if (form) {
+                form.submit();
+              } else {
+                ElMessage.error('支付表单生成失败');
+              }
+              
+              // 清空购物车
+              cartItems.value = [];
+            } else {
+              ElMessage.error(paymentResponse.msg || '发起支付失败');
+            }
+          } else {
+            ElMessage.error(response.msg || '订单提交失败');
+          }
+        } catch (e) {
+          console.error('提交订单或发起支付时出错:', e);
+          ElMessage.error('操作失败，请稍后重试');
+        } finally {
+          checkoutLoading.value = false;
+        }
+      });
+    };
+
     onMounted(() => {
+      // 你可以根据实际项目获取用户名
+      username.value = localStorage.getItem('username') || '未登录用户';
       fetchCartItems();
     });
     
@@ -324,7 +441,14 @@ export default {
       calculateSubtotal,
       formatPrice,
       goToProductDetail,
-      checkout
+      checkout,
+      checkoutDialogVisible,
+      checkoutForm,
+      checkoutLoading,
+      handleCheckoutSubmit,
+      username,
+      shippingForm,
+      shippingFormRef
     };
   }
 };
@@ -756,4 +880,30 @@ export default {
     width: 100%;
   }
 }
-</style> 
+
+.order-summary {
+  padding: 10px 0;
+}
+.order-row {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: flex-start;
+}
+.order-row .label {
+  width: 90px;
+  color: #666;
+  font-weight: 500;
+}
+.order-row .value {
+  flex: 1;
+}
+.order-row .price {
+  color: #e4393c;
+  font-weight: bold;
+}
+.order-items {
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+}
+</style>

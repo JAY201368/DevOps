@@ -13,4 +13,5 @@ public interface ProductService {
     void deleteProduct(Long id);
     StockpileVO updateStockpile(Long productId, Integer amount);
     StockpileVO getStockpile(Long productId);
-} 
+    boolean reduceStock(Long productId, Integer quantity);  // Add this method
+}

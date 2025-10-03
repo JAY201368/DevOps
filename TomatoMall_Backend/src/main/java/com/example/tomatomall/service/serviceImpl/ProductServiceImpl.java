@@ -135,6 +135,28 @@ public class ProductServiceImpl implements ProductService {
         return StockpileVO.fromPO(stockpile);
     }
 
+    @Override
+    @Transactional
+    public boolean reduceStock(Long productId, Integer quantity) {
+        ProductPO product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("商品不存在"));
+        
+        StockpilePO stockpile = product.getStockpile();
+        if (stockpile == null || stockpile.getAmount() < quantity) {
+            throw new TomatoMallException(400, "商品库存不足");
+        }
+
+        // 使用乐观锁更新库存
+        stockpile.setAmount(stockpile.getAmount() - quantity);
+        
+        try {
+            productRepository.save(product);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private void updateProductFromVO(ProductPO productPO, ProductVO productVO) {
         productPO.setTitle(productVO.getTitle());
         productPO.setPrice(productVO.getPrice());
@@ -196,4 +218,4 @@ public class ProductServiceImpl implements ProductService {
             productPO.getSpecifications().clear();
         }
     }
-} 
+}

@@ -50,6 +50,16 @@ const routes = [
     name: 'Cart',
     component: Cart,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/payment/:orderId',
+    name: 'Payment',
+    component: () => import('../views/Payment.vue')
+  },
+  {
+    path: '/payment/status',
+    name: 'PaymentStatus',
+    component: () => import('../views/PaymentStatus.vue')
   }
 ]
 
@@ -67,4 +77,4 @@ router.beforeEach((to, from, next) => {
   }
 })
 
-export default router 
+export default router

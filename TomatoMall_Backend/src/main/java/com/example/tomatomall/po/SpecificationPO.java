@@ -27,4 +27,4 @@ public class SpecificationPO {
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     private ProductPO product;
-} 
+}
