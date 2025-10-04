@@ -5,7 +5,9 @@
         <div class="card-header">
           <div class="header-left">
             <h2 class="page-title">商品列表</h2>
-            <el-tag type="info" effect="plain" class="product-count">共 {{ totalItems }} 个商品</el-tag>
+            <el-tag type="info" effect="plain" class="product-count"
+              >共 {{ totalItems }} 个商品</el-tag
+            >
           </div>
           <div class="header-right">
             <el-button
@@ -24,37 +26,44 @@
             >
               <el-icon><Refresh /></el-icon> 重新加载
             </el-button>
-            <el-button v-else type="info" @click="fetchProducts(true)" class="action-button">
+            <el-button
+              v-else
+              type="info"
+              @click="fetchProducts(true)"
+              class="action-button"
+            >
               <el-icon><Refresh /></el-icon> 刷新
             </el-button>
           </div>
         </div>
       </template>
-      
+
       <el-alert
         v-if="loadError"
         type="error"
         :title="loadErrorMessage"
-        :description="isOnline ? '服务器可能暂时无法访问，请稍后再试' : '请检查您的网络连接'"
+        :description="
+          isOnline ? '服务器可能暂时无法访问，请稍后再试' : '请检查您的网络连接'
+        "
         show-icon
         :closable="false"
         class="error-alert"
       />
-      
+
       <div v-if="loading && products.length === 0" class="loading-container">
         <el-skeleton :rows="6" animated />
       </div>
-      
+
       <!-- 卡片视图 -->
       <div class="card-view-container">
         <el-row :gutter="20">
-          <el-col 
-            v-for="product in products" 
-            :key="product.id" 
-            :xs="24" 
-            :sm="12" 
-            :md="8" 
-            :lg="6" 
+          <el-col
+            v-for="product in products"
+            :key="product.id"
+            :xs="24"
+            :sm="12"
+            :md="8"
+            :lg="6"
             :xl="4"
             class="card-col"
           >
@@ -62,16 +71,20 @@
               <div class="product-card-header">
                 <h3 class="product-card-title">{{ product.title }}</h3>
               </div>
-              
+
               <!-- 添加商品封面图片 -->
               <div class="product-card-image" v-if="product.cover">
-                <img :src="product.cover" :alt="product.title" class="product-image" />
+                <img
+                  :src="product.cover"
+                  :alt="product.title"
+                  class="product-image"
+                />
               </div>
               <div class="product-card-image placeholder" v-else>
                 <el-icon class="no-image-icon"><Picture /></el-icon>
                 <span class="no-image-text">暂无图片</span>
               </div>
-              
+
               <div class="product-card-content">
                 <div class="product-card-rating">
                   <el-rate
@@ -81,14 +94,16 @@
                     :allow-half="true"
                     class="card-rate"
                   />
-                  <span class="rate-value">{{ Number(product.rate).toFixed(1) }}分</span>
+                  <span class="rate-value"
+                    >{{ Number(product.rate).toFixed(1) }}分</span
+                  >
                 </div>
-                
+
                 <div class="product-card-description">
-                  {{ product.description || '暂无描述' }}
+                  {{ product.description || "暂无描述" }}
                 </div>
               </div>
-              
+
               <!-- 操作按钮 - 移到卡片外部并使用绝对定位 -->
               <div class="product-card-actions">
                 <el-button
@@ -131,15 +146,15 @@
           </el-col>
         </el-row>
       </div>
-      
+
       <!-- 空状态 -->
-      <el-empty 
-        v-if="!loading && products.length === 0" 
-        description="暂无商品数据" 
+      <el-empty
+        v-if="!loading && products.length === 0"
+        description="暂无商品数据"
         :image-size="200"
         class="empty-state"
       />
-      
+
       <!-- 添加分页组件 -->
       <div class="pagination-container">
         <el-pagination
@@ -163,10 +178,12 @@
       class="product-dialog"
     >
       <div class="form-header">
-        <div class="form-icon">{{ dialogType === 'add' ? '📦' : '✏️' }}</div>
-        <div class="form-title">{{ dialogType === 'add' ? '新增商品信息' : '编辑商品信息' }}</div>
+        <div class="form-icon">{{ dialogType === "add" ? "📦" : "✏️" }}</div>
+        <div class="form-title">
+          {{ dialogType === "add" ? "新增商品信息" : "编辑商品信息" }}
+        </div>
       </div>
-      
+
       <el-form
         ref="productFormRef"
         :model="productForm"
@@ -179,37 +196,32 @@
             <div class="section-title">基本信息</div>
             <div class="section-line"></div>
           </div>
-          
+
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item
-                label="商品名称"
-                prop="title"
-              >
-                <el-input v-model="productForm.title" placeholder="请输入商品名称" />
+              <el-form-item label="商品名称" prop="title">
+                <el-input
+                  v-model="productForm.title"
+                  placeholder="请输入商品名称"
+                />
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item
-                label="价格"
-                prop="price"
-              >
+              <el-form-item label="价格" prop="price">
                 <el-input-number
                   v-model="productForm.price"
                   :precision="2"
                   :step="0.1"
                   :min="0"
+                  :max="999999.99"
                   style="width: 100%"
                   placeholder="请输入商品价格"
                 />
               </el-form-item>
             </el-col>
           </el-row>
-          
-          <el-form-item
-            label="评分"
-            prop="rate"
-          >
+
+          <el-form-item label="评分" prop="rate">
             <div class="rate-edit-container">
               <el-rate
                 v-model="productForm.rate"
@@ -217,22 +229,21 @@
                 :allow-half="true"
                 :colors="['#ffd21e', '#ffd21e', '#ffd21e']"
               />
-              <div class="rate-value-display">{{ (productForm.rate * 2).toFixed(1) }} 分</div>
+              <div class="rate-value-display">
+                {{ (productForm.rate * 2).toFixed(1) }} 分
+              </div>
               <div class="rate-hint">（每半颗星代表1分，满分10分）</div>
             </div>
           </el-form-item>
         </div>
-        
+
         <div class="form-section description-info">
           <div class="section-header">
             <div class="section-title">描述信息</div>
             <div class="section-line"></div>
           </div>
-          
-          <el-form-item
-            label="商品描述"
-            prop="description"
-          >
+
+          <el-form-item label="商品描述" prop="description">
             <el-input
               v-model="productForm.description"
               type="textarea"
@@ -240,11 +251,8 @@
               placeholder="请输入商品描述"
             />
           </el-form-item>
-          
-          <el-form-item
-            label="详细说明"
-            prop="detail"
-          >
+
+          <el-form-item label="详细说明" prop="detail">
             <el-input
               v-model="productForm.detail"
               type="textarea"
@@ -253,17 +261,14 @@
             />
           </el-form-item>
         </div>
-        
+
         <div class="form-section cover-info">
           <div class="section-header">
             <div class="section-title">封面图片</div>
             <div class="section-line"></div>
           </div>
-          
-          <el-form-item
-            label="封面URL"
-            prop="cover"
-          >
+
+          <el-form-item label="封面URL" prop="cover">
             <el-input
               v-model="productForm.cover"
               placeholder="请输入商品封面图片URL"
@@ -275,22 +280,18 @@
               </template>
             </el-input>
           </el-form-item>
-          
+
           <div v-if="productForm.cover" class="cover-preview">
             <img :src="productForm.cover" alt="商品封面预览" />
           </div>
         </div>
       </el-form>
-      
+
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button
-            type="primary"
-            @click="handleSubmit"
-            :loading="submitting"
-          >
-            {{ dialogType === 'add' ? '添加商品' : '保存修改' }}
+          <el-button type="primary" @click="handleSubmit" :loading="submitting">
+            {{ dialogType === "add" ? "添加商品" : "保存修改" }}
           </el-button>
         </span>
       </template>
@@ -309,24 +310,17 @@
         :rules="stockRules"
         label-width="120px"
       >
-        <el-form-item
-          label="商品名称"
-        >
+        <el-form-item label="商品名称">
           <span class="product-name">{{ currentProduct?.title }}</span>
         </el-form-item>
-        <el-form-item
-          label="当前价格"
-        >
+        <el-form-item label="当前价格">
           <span class="product-price">¥{{ currentProduct?.price }}</span>
         </el-form-item>
-        <el-form-item
-          label="库存数量"
-          prop="amount"
-        >
+        <el-form-item label="库存数量" prop="amount">
           <el-input-number
             v-model="stockForm.amount"
             :min="0"
-            :precision="0"
+            :max="999999"
             style="width: 200px"
           />
           <div class="stock-hint">设置为0表示商品售罄</div>
@@ -349,10 +343,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { Refresh, Picture, View, Edit, Box, Delete, Plus } from '@element-plus/icons-vue';
+import { ref, onMounted, onUnmounted, computed } from "vue";
+import { useRouter } from "vue-router";
+import { ElMessage, ElMessageBox } from "element-plus";
+import {
+  Refresh,
+  Picture,
+  View,
+  Edit,
+  Box,
+  Delete,
+  Plus,
+} from "@element-plus/icons-vue";
 import {
   getAllProducts,
   createProduct,
@@ -360,10 +362,10 @@ import {
   updateProductBasicInfo,
   deleteProduct,
   updateStockpile,
-  getProductDetails
-} from '../api/product';
-import { getUserInfo } from '../api/user';
-import { checkBackendHealth, checkProductsAPI } from '../api/health';
+  getProductDetails,
+} from "../api/product";
+import { getUserInfo } from "../api/user";
+import { checkBackendHealth, checkProductsAPI } from "../api/health";
 
 const router = useRouter();
 const loading = ref(false);
@@ -371,33 +373,62 @@ const products = ref([]);
 const allProducts = ref([]);
 const dialogVisible = ref(false);
 const stockDialogVisible = ref(false);
-const dialogType = ref('add');
+const dialogType = ref("add");
 const currentProduct = ref(null);
 const productFormRef = ref(null);
 const stockFormRef = ref(null);
 
 const productForm = ref({
-  title: '',
+  title: "",
   price: 0,
   rate: 0,
-  description: '',
-  cover: '',
-  detail: '',
-  specifications: []
+  description: "",
+  cover: "",
+  detail: "",
+  specifications: [],
 });
 
 const stockForm = ref({
-  amount: 0
+  amount: 0,
 });
 
 const rules = {
-  title: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
-  price: [{ required: true, message: '请输入商品价格', trigger: 'blur' }],
-  rate: [{ required: true, message: '请选择商品评分', trigger: 'change' }]
+  title: [{ required: true, message: "请输入商品名称", trigger: "blur" }],
+  price: [
+    { required: true, message: "请输入商品价格", trigger: "blur" },
+    {
+      type: "number",
+      min: 0,
+      max: 999999.99,
+      message: "价格必须在0-999999.99之间",
+      trigger: "blur",
+    },
+  ],
+  rate: [
+    { required: true, message: "请选择商品评分", trigger: "change" },
+    {
+      type: "number",
+      min: 0,
+      max: 5,
+      message: "评分必须在0-5之间",
+      trigger: "blur",
+    },
+  ],
+  description: [{ required: true, message: "请输入商品描述", trigger: "blur" }],
+  cover: [{ required: true, message: "请输入商品封面URL", trigger: "blur" }],
 };
 
 const stockRules = {
-  amount: [{ required: true, message: '请输入库存数量', trigger: 'blur' }]
+  amount: [
+    { required: true, message: "请输入库存数量", trigger: "blur" },
+    {
+      type: "number",
+      min: 0,
+      max: 999999,
+      message: "库存数量必须在0-999999之间",
+      trigger: "blur",
+    },
+  ],
 };
 
 // 从用户状态获取管理员状态
@@ -406,30 +437,30 @@ const isAdmin = ref(false);
 // 获取用户信息并设置管理员状态
 const fetchUserInfo = async () => {
   // 首先从localStorage中获取角色信息
-  const userRole = localStorage.getItem('userRole');
+  const userRole = localStorage.getItem("userRole");
   if (userRole) {
-    isAdmin.value = userRole === 'admin';
+    isAdmin.value = userRole === "admin";
   }
-  
+
   // 然后尝试从API获取最新的用户信息
   try {
-    const username = localStorage.getItem('username');
+    const username = localStorage.getItem("username");
     if (username) {
       const res = await getUserInfo(username);
       if (res && res.data) {
-        isAdmin.value = res.data.role === 'admin';
+        isAdmin.value = res.data.role === "admin";
         // 更新localStorage中的角色信息
-        localStorage.setItem('userRole', res.data.role);
+        localStorage.setItem("userRole", res.data.role);
       }
     }
   } catch (error) {
-    console.error('获取用户信息失败', error);
+    console.error("获取用户信息失败", error);
   }
 };
 
 // 添加错误状态变量
 const loadError = ref(false);
-const loadErrorMessage = ref('');
+const loadErrorMessage = ref("");
 
 // 在 onMounted 之前添加网络状态检测
 const isOnline = ref(navigator.onLine);
@@ -437,41 +468,41 @@ const isOnline = ref(navigator.onLine);
 // 添加诊断功能
 const diagnoseConnectionIssue = async () => {
   if (!isOnline.value) {
-    return '网络连接已断开，请检查您的网络设置';
+    return "网络连接已断开，请检查您的网络设置";
   }
-  
+
   // 检查后端健康状态
   const healthStatus = await checkBackendHealth();
   if (!healthStatus.status) {
     return healthStatus.message;
   }
-  
+
   // 检查商品API
   const productAPIStatus = await checkProductsAPI();
   if (!productAPIStatus.status) {
     return productAPIStatus.message;
   }
-  
-  return '未知错误，请稍后再试';
+
+  return "未知错误，请稍后再试";
 };
 
 // 添加产品缓存
 const useProductCache = () => {
-  const CACHE_KEY = 'product_cache';
+  const CACHE_KEY = "product_cache";
   const CACHE_EXPIRY = 5 * 60 * 1000; // 5分钟缓存
-  
+
   const saveToCache = (data) => {
     const cache = {
       timestamp: Date.now(),
-      data: data
+      data: data,
     };
     localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
   };
-  
+
   const getFromCache = () => {
     const cacheStr = localStorage.getItem(CACHE_KEY);
     if (!cacheStr) return null;
-    
+
     try {
       const cache = JSON.parse(cacheStr);
       // 检查缓存是否过期
@@ -485,15 +516,15 @@ const useProductCache = () => {
       return null;
     }
   };
-  
+
   const clearCache = () => {
     localStorage.removeItem(CACHE_KEY);
   };
-  
+
   return {
     saveToCache,
     getFromCache,
-    clearCache
+    clearCache,
   };
 };
 
@@ -533,13 +564,13 @@ const updateDisplayedProducts = () => {
 const fetchProducts = async (forceRefresh = false) => {
   loading.value = true;
   loadError.value = false;
-  loadErrorMessage.value = '';
+  loadErrorMessage.value = "";
 
   // 如果不强制刷新，先尝试从缓存获取
   if (!forceRefresh) {
     const cachedProducts = getFromCache();
     if (cachedProducts) {
-      console.log('从缓存获取商品列表');
+      console.log("从缓存获取商品列表");
       allProducts.value = cachedProducts;
       totalItems.value = cachedProducts.length;
       updateDisplayedProducts();
@@ -547,48 +578,54 @@ const fetchProducts = async (forceRefresh = false) => {
       return;
     }
   }
-  
+
   try {
     if (!navigator.onLine) {
-      throw new Error('网络连接已断开');
+      throw new Error("网络连接已断开");
     }
-    
-    console.log('开始获取商品列表');
+
+    console.log("开始获取商品列表");
     const res = await getAllProducts();
-    console.log('获取商品列表响应:', res);
-    
+    console.log("获取商品列表响应:", res);
+
     // 根据响应结构处理数据
-    if (res.code === 200 || res.code === '200') {
+    if (res.code === 200 || res.code === "200") {
       // 确保每个商品的rate字段是数字类型
-      allProducts.value = res.data.map(product => ({
+      allProducts.value = res.data.map((product) => ({
         ...product,
-        rate: product.rate !== null && product.rate !== undefined ? Number(product.rate) : 0
+        rate:
+          product.rate !== null && product.rate !== undefined
+            ? Number(product.rate)
+            : 0,
       }));
       totalItems.value = res.data.length;
       updateDisplayedProducts();
       // 保存到缓存
       saveToCache(allProducts.value);
-      ElMessage.success('商品列表加载成功');
-    } else if (res.data && res.data.code === '200') {
+      ElMessage.success("商品列表加载成功");
+    } else if (res.data && res.data.code === "200") {
       // 确保每个商品的rate字段是数字类型
-      allProducts.value = res.data.data.map(product => ({
+      allProducts.value = res.data.data.map((product) => ({
         ...product,
-        rate: product.rate !== null && product.rate !== undefined ? Number(product.rate) : 0
+        rate:
+          product.rate !== null && product.rate !== undefined
+            ? Number(product.rate)
+            : 0,
       }));
       totalItems.value = res.data.data.length;
       updateDisplayedProducts();
       // 保存到缓存
       saveToCache(allProducts.value);
-      ElMessage.success('商品列表加载成功');
+      ElMessage.success("商品列表加载成功");
     } else {
       loadError.value = true;
-      loadErrorMessage.value = res.msg || '获取商品列表失败';
+      loadErrorMessage.value = res.msg || "获取商品列表失败";
       ElMessage.error(loadErrorMessage.value);
     }
   } catch (error) {
-    console.error('获取商品列表失败:', error);
+    console.error("获取商品列表失败:", error);
     loadError.value = true;
-    
+
     // 使用诊断功能获取更具体的错误信息
     loadErrorMessage.value = await diagnoseConnectionIssue();
     ElMessage.error(loadErrorMessage.value);
@@ -598,43 +635,43 @@ const fetchProducts = async (forceRefresh = false) => {
 };
 
 const handleAdd = () => {
-  dialogType.value = 'add';
+  dialogType.value = "add";
   productForm.value = {
-    title: '',
+    title: "",
     price: 0,
     rate: 0,
-    description: '',
-    cover: '',
-    detail: '',
-    specifications: []
+    description: "",
+    cover: "",
+    detail: "",
+    specifications: [],
   };
   dialogVisible.value = true;
 };
 
 const handleEdit = async (row) => {
   try {
-    console.log('准备编辑商品:', row.id);
-    
+    console.log("准备编辑商品:", row.id);
+
     // 在编辑前先获取完整的商品数据，确保包含specifications
     const productResponse = await getProductDetails(row.id);
-    console.log('获取到的完整商品数据:', productResponse);
-    
+    console.log("获取到的完整商品数据:", productResponse);
+
     // 获取完整的商品数据，包括specifications
     let fullProductData;
-    if (productResponse.code === 200 || productResponse.code === '200') {
+    if (productResponse.code === 200 || productResponse.code === "200") {
       fullProductData = productResponse.data;
-    } else if (productResponse.data && productResponse.data.code === '200') {
+    } else if (productResponse.data && productResponse.data.code === "200") {
       fullProductData = productResponse.data.data;
     }
-    
+
     if (!fullProductData) {
-      throw new Error('获取商品详情失败');
+      throw new Error("获取商品详情失败");
     }
-    
+
     // 保存完整的商品数据，以便在提交时使用
     currentProduct.value = fullProductData;
-    console.log('保存的完整商品数据:', currentProduct.value);
-    
+    console.log("保存的完整商品数据:", currentProduct.value);
+
     // 设置表单数据
     productForm.value = {
       id: row.id,
@@ -643,63 +680,65 @@ const handleEdit = async (row) => {
       rate: row.rate / 2, // 转换为5分制
       description: row.description,
       cover: row.cover,
-      detail: row.detail || ''
+      detail: row.detail || "",
     };
-    
-    dialogType.value = 'edit';
+
+    dialogType.value = "edit";
     dialogVisible.value = true;
   } catch (error) {
-    console.error('获取商品详情失败:', error);
-    ElMessage.error('获取商品详情失败: ' + (error.message || JSON.stringify(error)));
+    console.error("获取商品详情失败:", error);
+    ElMessage.error(
+      "获取商品详情失败: " + (error.message || JSON.stringify(error))
+    );
   }
 };
 
 const handleDelete = (row) => {
-  ElMessageBox.confirm(
-    '确定要删除该商品吗？',
-    '警告',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  ).then(async () => {
+  ElMessageBox.confirm("确定要删除该商品吗？", "警告", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+  }).then(async () => {
     try {
-      console.log('开始删除商品:', row.id);
-      
+      console.log("开始删除商品:", row.id);
+
       // 1. 清除缓存，防止从缓存中读取
       clearCache();
-      console.log('已清除商品缓存');
-      
+      console.log("已清除商品缓存");
+
       // 2. 删除商品
       const res = await deleteProduct(row.id);
-      console.log('删除商品响应:', res);
-      
+      console.log("删除商品响应:", res);
+
       // 3. 根据响应处理结果
-      if (res.code === 200 || res.code === '200' || (res.data && res.data.code === '200')) {
-        ElMessage.success('删除成功');
-        
+      if (
+        res.code === 200 ||
+        res.code === "200" ||
+        (res.data && res.data.code === "200")
+      ) {
+        ElMessage.success("删除成功");
+
         // 4. 直接从本地数组中移除该商品
-        const index = allProducts.value.findIndex(p => p.id === row.id);
+        const index = allProducts.value.findIndex((p) => p.id === row.id);
         if (index !== -1) {
-          console.log('从本地数组中移除商品，索引:', index);
+          console.log("从本地数组中移除商品，索引:", index);
           allProducts.value.splice(index, 1);
           totalItems.value = allProducts.value.length;
           updateDisplayedProducts();
         }
-        
+
         // 5. 再次清除缓存并强制从服务器重新获取数据
-        console.log('再次强制刷新商品列表');
+        console.log("再次强制刷新商品列表");
         setTimeout(async () => {
           await fetchProducts(true);
         }, 300);
       } else {
-        ElMessage.error(res.msg || '删除失败');
+        ElMessage.error(res.msg || "删除失败");
       }
     } catch (error) {
-      console.error('删除商品失败:', error);
-      ElMessage.error('删除失败: ' + (error.message || JSON.stringify(error)));
-      
+      console.error("删除商品失败:", error);
+      ElMessage.error("删除失败: " + (error.message || JSON.stringify(error)));
+
       // 如果删除失败，仍然强制刷新以确保数据同步
       setTimeout(async () => {
         await fetchProducts(true);
@@ -715,7 +754,7 @@ const handleView = (row) => {
 const handleStock = (row) => {
   currentProduct.value = row;
   // 处理不同的库存数据结构
-  if (row.stockpile && typeof row.stockpile === 'object') {
+  if (row.stockpile && typeof row.stockpile === "object") {
     stockForm.value.amount = row.stockpile.amount || 0;
   } else {
     stockForm.value.amount = row.stockpile || 0;
@@ -728,37 +767,37 @@ const stockSubmitting = ref(false);
 
 const handleSubmit = async () => {
   if (!productFormRef.value) return;
-  
+
   await productFormRef.value.validate(async (valid) => {
     if (valid) {
       submitting.value = true;
       try {
         // 检查网络连接
         if (!navigator.onLine) {
-          throw new Error('网络连接已断开，请检查网络设置');
+          throw new Error("网络连接已断开，请检查网络设置");
         }
-        
+
         let res;
-        
-        if (dialogType.value === 'add') {
+
+        if (dialogType.value === "add") {
           // 添加新商品
           const submitData = {
             ...productForm.value,
-            rate: Number(productForm.value.rate) * 2 // 半颗星代表1分，转换为10分制
+            rate: Number(productForm.value.rate) * 2, // 半颗星代表1分，转换为10分制
           };
-          
-          console.log('提交新商品数据:', submitData);
+
+          console.log("提交新商品数据:", submitData);
           res = await createProduct(submitData);
         } else {
           // 编辑商品 - 使用删除后重新创建的方式
           const currentId = productForm.value.id;
-          console.log('当前编辑商品ID:', currentId);
-          console.log('当前保存的完整商品数据:', currentProduct.value);
-          
+          console.log("当前编辑商品ID:", currentId);
+          console.log("当前保存的完整商品数据:", currentProduct.value);
+
           if (!currentProduct.value || !currentProduct.value.specifications) {
-            console.warn('警告: 未找到原始商品的规格信息!');
+            console.warn("警告: 未找到原始商品的规格信息!");
           }
-          
+
           // 准备更新商品数据
           const updateData = {
             id: currentId,
@@ -769,59 +808,69 @@ const handleSubmit = async () => {
             cover: productForm.value.cover,
             detail: productForm.value.detail,
             // 非常重要：保留原有的规格信息
-            specifications: (currentProduct.value && currentProduct.value.specifications) ? 
-              currentProduct.value.specifications : []
+            specifications:
+              currentProduct.value && currentProduct.value.specifications
+                ? currentProduct.value.specifications
+                : [],
           };
-          
-          console.log('准备更新商品:', JSON.stringify(updateData));
-          
+
+          console.log("准备更新商品:", JSON.stringify(updateData));
+
           // 直接更新现有商品
           res = await updateProduct(updateData);
-          console.log('更新商品响应:', res);
+          console.log("更新商品响应:", res);
         }
-        
-        console.log('提交商品响应:', res);
-        
+
+        console.log("提交商品响应:", res);
+
         // 处理不同的响应结构
-        if (res.code === 200 || res.code === '200') {
-          ElMessage.success(dialogType.value === 'add' ? '添加成功' : '更新成功');
+        if (res.code === 200 || res.code === "200") {
+          ElMessage.success(
+            dialogType.value === "add" ? "添加成功" : "更新成功"
+          );
           dialogVisible.value = false;
-          
+
           // 清除缓存并强制刷新数据
           clearCache();
-          console.log('清除缓存，强制刷新数据');
+          console.log("清除缓存，强制刷新数据");
           await fetchProducts(true);
-          
+
           // 只有在添加模式下才跳转到新商品详情页
-          if (dialogType.value === 'add' && res.data?.id) {
-            console.log('跳转到新商品详情页:', res.data.id);
+          if (dialogType.value === "add" && res.data?.id) {
+            console.log("跳转到新商品详情页:", res.data.id);
             router.push(`/products/${res.data.id}`);
           }
-        } else if (res.data && res.data.code === '200') {
-          ElMessage.success(dialogType.value === 'add' ? '添加成功' : '更新成功');
+        } else if (res.data && res.data.code === "200") {
+          ElMessage.success(
+            dialogType.value === "add" ? "添加成功" : "更新成功"
+          );
           dialogVisible.value = false;
-          
+
           // 清除缓存并强制刷新数据
           clearCache();
-          console.log('清除缓存，强制刷新数据');
+          console.log("清除缓存，强制刷新数据");
           await fetchProducts(true);
-          
+
           // 只有在添加模式下才跳转到新商品详情页
-          if (dialogType.value === 'add' && res.data.data?.id) {
-            console.log('跳转到新商品详情页:', res.data.data.id);
+          if (dialogType.value === "add" && res.data.data?.id) {
+            console.log("跳转到新商品详情页:", res.data.data.id);
             router.push(`/products/${res.data.data.id}`);
           }
         } else {
-          ElMessage.error(res.msg || (dialogType.value === 'add' ? '添加失败' : '更新失败'));
+          ElMessage.error(
+            res.msg || (dialogType.value === "add" ? "添加失败" : "更新失败")
+          );
         }
       } catch (error) {
-        console.error('提交商品失败:', error);
-        
-        let errorMessage = error.message || (dialogType.value === 'add' ? '添加失败' : '更新失败');
+        console.error("提交商品失败:", error);
+
+        let errorMessage =
+          error.message ||
+          (dialogType.value === "add" ? "添加失败" : "更新失败");
         if (error.response && error.response.data) {
           errorMessage = error.response.data.msg || errorMessage;
         }
-        
+
         ElMessage.error(errorMessage);
       } finally {
         submitting.value = false;
@@ -832,35 +881,38 @@ const handleSubmit = async () => {
 
 const handleStockSubmit = async () => {
   if (!stockFormRef.value) return;
-  
+
   await stockFormRef.value.validate(async (valid) => {
     if (valid) {
       stockSubmitting.value = true;
       try {
-        console.log('更新库存:', {
-          productId: currentProduct.value.id, 
-          amount: stockForm.value.amount
+        console.log("更新库存:", {
+          productId: currentProduct.value.id,
+          amount: stockForm.value.amount,
         });
-        
-        const res = await updateStockpile(currentProduct.value.id, stockForm.value.amount);
-        console.log('更新库存响应:', res);
-        
-        if (res.code === 200 || res.code === '200') {
-          ElMessage.success('调整库存成功');
+
+        const res = await updateStockpile(
+          currentProduct.value.id,
+          stockForm.value.amount
+        );
+        console.log("更新库存响应:", res);
+
+        if (res.code === 200 || res.code === "200") {
+          ElMessage.success("调整库存成功");
           stockDialogVisible.value = false;
           clearCache();
           fetchProducts(true);
-        } else if (res.data && res.data.code === '200') {
-          ElMessage.success('调整库存成功');
+        } else if (res.data && res.data.code === "200") {
+          ElMessage.success("调整库存成功");
           stockDialogVisible.value = false;
           clearCache();
           fetchProducts(true);
         } else {
-          ElMessage.error(res.msg || '调整库存失败');
+          ElMessage.error(res.msg || "调整库存失败");
         }
       } catch (error) {
-        console.error('调整库存失败:', error);
-        ElMessage.error('调整库存失败');
+        console.error("调整库存失败:", error);
+        ElMessage.error("调整库存失败");
       } finally {
         stockSubmitting.value = false;
       }
@@ -872,9 +924,9 @@ const handleStockSubmit = async () => {
 const handleNetworkChange = () => {
   isOnline.value = navigator.onLine;
   if (!isOnline.value) {
-    ElMessage.warning('网络连接已断开，请检查网络设置');
+    ElMessage.warning("网络连接已断开，请检查网络设置");
   } else {
-    ElMessage.success('网络已连接，正在重新加载数据');
+    ElMessage.success("网络已连接，正在重新加载数据");
     fetchProducts();
   }
 };
@@ -882,16 +934,16 @@ const handleNetworkChange = () => {
 // 添加预加载函数
 const preloadProductAPI = () => {
   // 利用Service Worker或资源预获取
-  const link = document.createElement('link');
-  link.rel = 'prefetch';
-  link.href = 'http://localhost:8080/api/products';
+  const link = document.createElement("link");
+  link.rel = "prefetch";
+  link.href = "http://localhost:8080/api/products";
   document.head.appendChild(link);
-  
+
   // 预热API连接
   setTimeout(() => {
-    fetch('http://localhost:8080/api/products', { 
-      method: 'HEAD',
-      mode: 'no-cors'
+    fetch("http://localhost:8080/api/products", {
+      method: "HEAD",
+      mode: "no-cors",
     }).catch(() => {
       // 忽略错误，这只是预热连接
     });
@@ -901,28 +953,28 @@ const preloadProductAPI = () => {
 // 添加预览封面方法
 const previewCover = () => {
   if (productForm.value.cover) {
-    window.open(productForm.value.cover, '_blank');
+    window.open(productForm.value.cover, "_blank");
   } else {
-    ElMessage.warning('请先输入封面URL');
+    ElMessage.warning("请先输入封面URL");
   }
 };
 
 onMounted(() => {
   fetchProducts();
   fetchUserInfo();
-  
+
   // 添加网络状态监听器
-  window.addEventListener('online', handleNetworkChange);
-  window.addEventListener('offline', handleNetworkChange);
-  
+  window.addEventListener("online", handleNetworkChange);
+  window.addEventListener("offline", handleNetworkChange);
+
   // 预加载API
   preloadProductAPI();
 });
 
 // 在组件卸载时移除事件监听器
 onUnmounted(() => {
-  window.removeEventListener('online', handleNetworkChange);
-  window.removeEventListener('offline', handleNetworkChange);
+  window.removeEventListener("online", handleNetworkChange);
+  window.removeEventListener("offline", handleNetworkChange);
 });
 </script>
 
@@ -986,7 +1038,8 @@ onUnmounted(() => {
   color: white;
 }
 
-.view-mode-switch :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+.view-mode-switch
+  :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
   background-color: rgba(255, 255, 255, 0.3);
   box-shadow: none;
 }
@@ -1187,7 +1240,7 @@ onUnmounted(() => {
   height: 150px;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .cover-preview img {
@@ -1303,14 +1356,14 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 15px;
   }
-  
+
   .header-right {
     width: 100%;
     justify-content: space-between;
   }
-  
+
   .view-mode-switch {
     display: none;
   }
 }
-</style> 
+</style>

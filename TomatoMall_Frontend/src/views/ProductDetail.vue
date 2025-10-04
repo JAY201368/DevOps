@@ -22,7 +22,7 @@
         <div class="product-cover-container">
           <el-image
             v-if="product.cover"
-            :src="product.co ver"
+            :src="product.cover"
             fit="contain"
             class="product-image"
           />
@@ -96,30 +96,28 @@
               </span>
             </div>
           </div>
-          
+
           <!-- 添加购买数量和加入购物车按钮 -->
           <div class="product-actions">
             <div class="quantity-selector">
               <span class="quantity-label">数量：</span>
-              <el-input-number 
-                v-model="purchaseQuantity" 
-                :min="1" 
+              <el-input-number
+                v-model="purchaseQuantity"
+                :min="1"
                 :max="product.stockpile?.amount || 1"
-                size="large" />
+                size="large"
+              />
             </div>
             <div class="action-buttons">
-              <el-button 
-                type="primary" 
-                size="large" 
+              <el-button
+                type="primary"
+                size="large"
                 :disabled="product.stockpile?.amount <= 0"
-                @click="addToCart">
+                @click="addToCart"
+              >
                 <el-icon><ShoppingCart /></el-icon> 加入购物车
               </el-button>
-              <el-button 
-                size="large" 
-                @click="goToCart">
-                查看购物车
-              </el-button>
+              <el-button size="large" @click="goToCart"> 查看购物车 </el-button>
             </div>
           </div>
 
@@ -403,12 +401,39 @@ const stockForm = ref({
 
 const rules = {
   title: [{ required: true, message: "请输入商品名称", trigger: "blur" }],
-  price: [{ required: true, message: "请输入商品价格", trigger: "blur" }],
-  rate: [{ required: true, message: "请选择商品评分", trigger: "change" }],
+  price: [
+    { required: true, message: "请输入商品价格", trigger: "blur" },
+    {
+      type: "number",
+      min: 0,
+      max: 999999.99,
+      message: "价格必须在0-999999.99之间",
+      trigger: "blur",
+    },
+  ],
+  rate: [
+    { required: true, message: "请选择商品评分", trigger: "change" },
+    {
+      type: "number",
+      min: 0,
+      max: 5,
+      message: "评分必须在0-5之间",
+      trigger: "blur",
+    },
+  ],
 };
 
 const stockRules = {
-  amount: [{ required: true, message: "请输入库存数量", trigger: "blur" }],
+  amount: [
+    { required: true, message: "请输入库存数量", trigger: "blur" },
+    {
+      type: "number",
+      min: 0,
+      max: 999999,
+      message: "库存数量必须在0-999999之间",
+      trigger: "blur",
+    },
+  ],
 };
 
 const isAdmin = ref(false);
@@ -581,7 +606,7 @@ const handleSubmit = async () => {
           cover: productForm.value.cover,
           detail: productForm.value.detail,
           // 确保传递完整的规格信息
-          specifications: product.value.specifications || []
+          specifications: product.value.specifications || [],
         };
 
         console.log("准备更新商品:", JSON.stringify(updateData));
@@ -597,14 +622,14 @@ const handleSubmit = async () => {
         ) {
           // 清除缓存
           localStorage.removeItem(`product_${currentId}`);
-          
+
           // 重新获取商品数据
           console.log("重新获取商品数据:", currentId);
           await fetchProduct();
-          
+
           // 显示成功消息
           ElMessage.success("更新成功");
-          
+
           // 关闭编辑对话框
           dialogVisible.value = false;
         } else {
@@ -672,27 +697,27 @@ const handleImageUploadError = (error) => {
 // 加入购物车方法
 const addToCart = async () => {
   if (!product.value) return;
-  
+
   try {
     const response = await addProductToCart({
       productId: product.value.id,
-      quantity: purchaseQuantity.value
+      quantity: purchaseQuantity.value,
     });
-    
-    if (response.code === '200') {
-      ElMessage.success('成功加入购物车');
+
+    if (response.code === "200") {
+      ElMessage.success("成功加入购物车");
     } else {
-      ElMessage.error(response.msg || '加入购物车失败');
+      ElMessage.error(response.msg || "加入购物车失败");
     }
   } catch (error) {
-    console.error('加入购物车出错:', error);
-    ElMessage.error('加入购物车失败，请稍后重试');
+    console.error("加入购物车出错:", error);
+    ElMessage.error("加入购物车失败，请稍后重试");
   }
 };
 
 // 前往购物车页面
 const goToCart = () => {
-  router.push('/cart');
+  router.push("/cart");
 };
 
 onMounted(() => {

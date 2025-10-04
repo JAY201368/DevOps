@@ -14,7 +14,15 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 
-app.use(ElementPlus)
+// 配置 Element Plus
+app.use(ElementPlus, {
+  size: 'default',
+  zIndex: 3000,
+  message: {
+    duration: 1000 // 设置消息提示的默认显示时长为 1000 毫秒
+  }
+})
+
 app.use(createPinia())
 app.use(router)
 

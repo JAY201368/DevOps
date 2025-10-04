@@ -7,36 +7,44 @@
             <h2 class="login-title">欢迎登录</h2>
           </div>
         </template>
-        <el-form :model="loginForm" :rules="rules" ref="loginFormRef" class="login-form">
+        <el-form
+          :model="loginForm"
+          :rules="rules"
+          ref="loginFormRef"
+          class="login-form"
+        >
           <el-form-item prop="username">
-            <el-input 
-              v-model="loginForm.username" 
-              placeholder="请输入用户名" 
+            <el-input
+              v-model="loginForm.username"
+              placeholder="请输入用户名"
               size="large"
-              class="login-input">
+              class="login-input"
+            >
               <template #prefix>
                 <el-icon class="input-icon"><User /></el-icon>
               </template>
             </el-input>
           </el-form-item>
           <el-form-item prop="password">
-            <el-input 
-              v-model="loginForm.password" 
-              type="password" 
+            <el-input
+              v-model="loginForm.password"
+              type="password"
               placeholder="请输入密码"
               size="large"
-              class="login-input">
+              class="login-input"
+            >
               <template #prefix>
                 <el-icon class="input-icon"><Lock /></el-icon>
               </template>
             </el-input>
           </el-form-item>
           <el-form-item>
-            <el-button 
-              type="primary" 
-              @click="handleLogin" 
-              :loading="loading" 
-              class="login-button">
+            <el-button
+              type="primary"
+              @click="handleLogin"
+              :loading="loading"
+              class="login-button"
+            >
               登录
             </el-button>
           </el-form-item>
@@ -50,90 +58,85 @@
 </template>
 
 <script setup>
-import { ref, reactive, inject, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { User, Lock } from '@element-plus/icons-vue'
-import { login, getUserInfo } from '../api/user'
+import { ref, reactive, inject, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+import { User, Lock } from "@element-plus/icons-vue";
+import { login, getUserInfo } from "../api/user";
 
-const router = useRouter()
-const loginFormRef = ref(null)
-const loading = ref(false)
-const appHeaderRef = inject('appHeaderRef')
+const router = useRouter();
+const loginFormRef = ref(null);
+const loading = ref(false);
+const appHeaderRef = inject("appHeaderRef");
 
 const loginForm = reactive({
-  username: '',
-  password: ''
-})
+  username: "",
+  password: "",
+});
 
 const rules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' }
-  ]
-}
+  username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
+  password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+};
 
 // 组件挂载时将logined设置为false
 onMounted(() => {
   if (appHeaderRef && appHeaderRef.value) {
-    appHeaderRef.value.setLogined(false)
+    appHeaderRef.value.setLogined(false);
   }
-})
+});
 
 const handleLogin = async () => {
-  if (!loginFormRef.value) return
+  if (!loginFormRef.value) return;
 
   await loginFormRef.value.validate(async (valid) => {
     if (valid) {
-      loading.value = true
+      loading.value = true;
       try {
-        const res = await login(loginForm.username, loginForm.password)
-        
+        const res = await login(loginForm.username, loginForm.password);
+
         // 检查响应中是否有错误信息
-        if (res.code !== '200' && res.code !== 200) {
-          ElMessage.error(res.msg || '登录失败，请检查用户名和密码');
+        if (res.code !== "200" && res.code !== 200) {
+          ElMessage.error("账号或密码错误");
           return;
         }
-        
+
         // 保存token和用户名
-        localStorage.setItem('token', res.data.token || res.data)
-        localStorage.setItem('username', loginForm.username)
-        
+        localStorage.setItem("token", res.data.token || res.data);
+        localStorage.setItem("username", loginForm.username);
+
         // 获取用户信息，保存角色
         try {
-          const userInfo = await getUserInfo(loginForm.username)
+          const userInfo = await getUserInfo(loginForm.username);
           if (userInfo && userInfo.data) {
-            localStorage.setItem('userRole', userInfo.data.role)
+            localStorage.setItem("userRole", userInfo.data.role);
           }
         } catch (error) {
-          console.error('获取用户信息失败', error)
+          console.error("获取用户信息失败", error);
         }
-        
-        ElMessage.success('登录成功')
-        
+
+        ElMessage.success("登录成功");
+
         // 设置登录状态为true
         if (appHeaderRef && appHeaderRef.value) {
-          appHeaderRef.value.setLogined(true)
+          appHeaderRef.value.setLogined(true);
         }
-        
+
         // 触发自定义登录事件，通知Live2D组件用户已登录
-        window.dispatchEvent(new CustomEvent('user-logged-in'))
-        
+        window.dispatchEvent(new CustomEvent("user-logged-in"));
+
         // 确保在设置登录状态后再跳转
-        await router.push('/products')
+        await router.push("/products");
       } catch (error) {
         // 显示详细的错误信息
-        console.error('登录失败:', error)
-        const errorMsg = error.response?.data?.msg || error.message || '登录失败，请稍后再试'
-        ElMessage.error(errorMsg)
+        console.error("登录失败:", error);
+        ElMessage.error("账号或密码错误");
       } finally {
-        loading.value = false
+        loading.value = false;
       }
     }
-  })
-}
+  });
+};
 </script>
 
 <style scoped>
@@ -268,7 +271,7 @@ const handleLogin = async () => {
   .login-card {
     width: 100%;
   }
-  
+
   .login-form {
     padding: 20px 15px;
   }

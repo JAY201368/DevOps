@@ -3,22 +3,29 @@
     <div class="cart-container">
       <div class="cart-title-container">
         <h2 class="cart-title">我的购物车</h2>
-        <div class="cart-subtitle" v-if="!loading && cartItems.length > 0">共 <span class="highlight">{{ totalItems }}</span> 件商品</div>
+        <div class="cart-subtitle" v-if="!loading && cartItems.length > 0">
+          共 <span class="highlight">{{ totalItems }}</span> 件商品
+        </div>
       </div>
-      
+
       <div v-if="loading" class="loading-container">
         <el-skeleton :rows="5" animated />
       </div>
-      
+
       <div v-else-if="cartItems.length === 0" class="empty-cart">
         <el-empty description="购物车还是空的，去挑选心仪的商品吧~">
-          <el-button type="primary" size="large" class="action-button" @click="$router.push('/products')">
+          <el-button
+            type="primary"
+            size="large"
+            class="action-button"
+            @click="$router.push('/products')"
+          >
             去选购商品
             <el-icon class="el-icon--right"><ArrowRight /></el-icon>
           </el-button>
         </el-empty>
       </div>
-      
+
       <div v-else class="cart-content">
         <div class="cart-header">
           <div class="col product-info">商品信息</div>
@@ -27,16 +34,21 @@
           <div class="col subtotal">小计</div>
           <div class="col operations">操作</div>
         </div>
-        
+
         <transition-group name="cart-item" tag="div" class="cart-items">
-          <el-card v-for="item in cartItems" :key="item.cartItemId" class="cart-item">
+          <el-card
+            v-for="item in cartItems"
+            :key="item.cartItemId"
+            class="cart-item"
+          >
             <div class="cart-item-content">
               <div class="col product-info">
-                <el-image 
-                  :src="item.cover" 
+                <el-image
+                  :src="item.cover"
                   fit="cover"
                   class="product-image"
-                  @click="goToProductDetail(item.productId)">
+                  @click="goToProductDetail(item.productId)"
+                >
                   <template #error>
                     <div class="image-error">
                       <el-icon><picture-filled /></el-icon>
@@ -44,44 +56,73 @@
                   </template>
                 </el-image>
                 <div class="product-details">
-                  <div class="product-title" @click="goToProductDetail(item.productId)">{{ item.title }}</div>
-                  <div class="product-description">{{ item.description || '暂无描述' }}</div>
+                  <div
+                    class="product-title"
+                    @click="goToProductDetail(item.productId)"
+                  >
+                    {{ item.title }}
+                  </div>
+                  <div class="product-description">
+                    {{ item.description || "暂无描述" }}
+                  </div>
                 </div>
               </div>
-              
+
               <div class="col price">
                 <span class="price-label">单价：</span>
-                <span class="price-value"><span class="currency">¥</span>{{ formatPrice(item.price) }}</span>
+                <span class="price-value"
+                  ><span class="currency">¥</span
+                  >{{ formatPrice(item.price) }}</span
+                >
               </div>
-              
+
               <div class="col quantity">
                 <span class="quantity-label">数量：</span>
                 <div class="quantity-control">
-                  <el-input-number 
-                    v-model="item.displayQuantity" 
-                    :min="1" 
+                  <el-input-number
+                    v-model="item.displayQuantity"
+                    :min="1"
                     :max="item.maxStock || 999"
                     :disabled="item.updatingQuantity"
                     size="small"
                     controls-position="right"
-                    @change="(val) => handleQuantityChange(item, val)" />
+                    @change="(val) => handleQuantityChange(item, val)"
+                  />
                   <div class="stock-info">
-                    <el-tag v-if="item.maxStock <= 20" type="danger" size="small" effect="light">
+                    <el-tag
+                      v-if="item.maxStock <= 20"
+                      type="danger"
+                      size="small"
+                      effect="light"
+                    >
                       库存紧张: {{ item.maxStock }}
                     </el-tag>
-                    <el-tag v-else-if="item.maxStock > 0" type="success" size="small" effect="light">
+                    <el-tag
+                      v-else-if="item.maxStock > 0"
+                      type="success"
+                      size="small"
+                      effect="light"
+                    >
                       库存: {{ item.maxStock }}
                     </el-tag>
-                    <el-tag v-if="item.updatingQuantity" type="info" size="small">更新中...</el-tag>
+                    <el-tag
+                      v-if="item.updatingQuantity"
+                      type="info"
+                      size="small"
+                      >更新中...</el-tag
+                    >
                   </div>
                 </div>
               </div>
-              
+
               <div class="col subtotal">
                 <span class="subtotal-label">小计：</span>
-                <span class="subtotal-value"><span class="currency">¥</span>{{ formatPrice(calculateSubtotal(item)) }}</span>
+                <span class="subtotal-value"
+                  ><span class="currency">¥</span
+                  >{{ formatPrice(calculateSubtotal(item)) }}</span
+                >
               </div>
-              
+
               <div class="col operations">
                 <el-popconfirm
                   title="确定要从购物车删除此商品吗?"
@@ -90,12 +131,13 @@
                   @confirm="removeItem(item.cartItemId)"
                 >
                   <template #reference>
-                    <el-button 
-                      type="danger" 
+                    <el-button
+                      type="danger"
                       size="small"
                       :disabled="item.updatingQuantity"
                       class="delete-button"
-                      icon="Delete">
+                      icon="Delete"
+                    >
                       删除
                     </el-button>
                   </template>
@@ -104,7 +146,7 @@
             </div>
           </el-card>
         </transition-group>
-        
+
         <el-card class="cart-footer">
           <div class="cart-summary">
             <div class="summary-item">
@@ -113,15 +155,27 @@
             </div>
             <div class="summary-item total-amount">
               <span class="summary-label">合计金额:</span>
-              <span class="summary-value price-total"><span class="currency">¥</span>{{ formatPrice(totalAmount) }}</span>
+              <span class="summary-value price-total"
+                ><span class="currency">¥</span
+                >{{ formatPrice(totalAmount) }}</span
+              >
             </div>
           </div>
-          
+
           <div class="checkout-actions">
-            <el-button class="continue-shopping" @click="$router.push('/products')">
+            <el-button
+              class="continue-shopping"
+              @click="$router.push('/products')"
+            >
               <el-icon><ArrowLeft /></el-icon> 继续购物
             </el-button>
-            <el-button type="primary" size="large" class="checkout-button" @click="checkout" :disabled="cartItems.length === 0">
+            <el-button
+              type="primary"
+              size="large"
+              class="checkout-button"
+              @click="checkout"
+              :disabled="cartItems.length === 0"
+            >
               <el-icon><ShoppingCart /></el-icon> 去结算
             </el-button>
           </div>
@@ -130,18 +184,29 @@
     </div>
 
     <!-- 结算弹窗（简化版） -->
-    <el-dialog v-model="checkoutDialogVisible" title="确认订单" width="400px" :close-on-click-modal="false">
-      <el-form :model="shippingForm" ref="shippingFormRef" label-width="80px" style="margin-bottom: 10px;">
-        <el-form-item label="收货人" prop="name" :rules="[{ required: true, message: '请输入收货人姓名', trigger: 'blur' }]">
+    <el-dialog
+      v-model="checkoutDialogVisible"
+      title="确认订单"
+      width="400px"
+      :close-on-click-modal="false"
+    >
+      <el-form
+        :model="shippingForm"
+        ref="shippingFormRef"
+        :rules="shippingRules"
+        label-width="80px"
+        style="margin-bottom: 10px"
+      >
+        <el-form-item label="收货人" prop="name">
           <el-input v-model="shippingForm.name" autocomplete="off" />
         </el-form-item>
-        <el-form-item label="手机号" prop="phone" :rules="[{ required: true, message: '请输入手机号', trigger: 'blur' }]">
+        <el-form-item label="手机号" prop="phone">
           <el-input v-model="shippingForm.phone" autocomplete="off" />
         </el-form-item>
         <el-form-item label="邮编" prop="zipcode">
           <el-input v-model="shippingForm.zipcode" autocomplete="off" />
         </el-form-item>
-        <el-form-item label="地址" prop="address" :rules="[{ required: true, message: '请输入详细地址', trigger: 'blur' }]">
+        <el-form-item label="地址" prop="address">
           <el-input v-model="shippingForm.address" autocomplete="off" />
         </el-form-item>
       </el-form>
@@ -169,43 +234,59 @@
       </div>
       <template #footer>
         <el-button @click="checkoutDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="checkoutLoading" @click="handleCheckoutSubmit">提交订单</el-button>
+        <el-button
+          type="primary"
+          :loading="checkoutLoading"
+          @click="handleCheckoutSubmit"
+          >提交订单</el-button
+        >
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, computed, nextTick } from 'vue';
-import { useRouter } from 'vue-router';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { getCartItems, removeFromCart, updateCartItemQuantity, checkoutCart } from '../api/cart';
-import { getProductById, getStockpile } from '../api/product';
-import { PictureFilled, ArrowRight, ArrowLeft, ShoppingCart, Delete } from '@element-plus/icons-vue';
-import { initiatePayment } from '../api/order';
+import { ref, onMounted, computed, nextTick } from "vue";
+import { useRouter } from "vue-router";
+import { ElMessage, ElMessageBox } from "element-plus";
+import {
+  getCartItems,
+  removeFromCart,
+  updateCartItemQuantity,
+  checkoutCart,
+} from "../api/cart";
+import { getProductById, getStockpile } from "../api/product";
+import {
+  PictureFilled,
+  ArrowRight,
+  ArrowLeft,
+  ShoppingCart,
+  Delete,
+} from "@element-plus/icons-vue";
+import { pay } from "../api/order";
 
 export default {
-  name: 'Cart',
+  name: "Cart",
   components: {
     PictureFilled,
     ArrowRight,
     ArrowLeft,
     ShoppingCart,
-    Delete
+    Delete,
   },
   setup() {
     const router = useRouter();
     const cartItems = ref([]);
     const loading = ref(true);
-    const username = ref('');
-    
+    const username = ref("");
+
     const totalItems = computed(() => {
       return cartItems.value.reduce((total, item) => total + item.quantity, 0);
     });
-    
+
     const totalAmount = computed(() => {
       return cartItems.value.reduce((total, item) => {
-        return total + (item.price * item.quantity);
+        return total + item.price * item.quantity;
       }, 0);
     });
 
@@ -214,30 +295,30 @@ export default {
       try {
         // 优先尝试获取库存信息
         const stockResponse = await getStockpile(item.productId);
-        if (stockResponse.code === '200' && stockResponse.data) {
+        if (stockResponse.code === "200" && stockResponse.data) {
           item.maxStock = stockResponse.data.amount || 999;
           return;
         }
-        
+
         // 如果直接获取库存失败，尝试获取商品详情
         const productResponse = await getProductById(item.productId);
-        if (productResponse.code === '200' && productResponse.data) {
+        if (productResponse.code === "200" && productResponse.data) {
           item.maxStock = productResponse.data.stockpile?.amount || 999;
         }
       } catch (e) {
-        console.error('获取商品库存失败:', e);
+        console.error("获取商品库存失败:", e);
         // 设置一个默认值，防止无法添加
         item.maxStock = 999;
       }
     };
-    
+
     const fetchCartItems = async () => {
       try {
         loading.value = true;
         const response = await getCartItems();
-        if (response.code === '200') {
+        if (response.code === "200") {
           const items = response.data.items || [];
-          
+
           // 为每个商品添加显示属性
           for (const item of items) {
             // 添加用于显示的数量字段，与实际数量分开
@@ -246,45 +327,47 @@ export default {
             item.updatingQuantity = false;
             // 加载库存信息
             await loadProductStock(item);
-            
+
             // 自动修正数量超出库存的情况
             if (item.quantity > item.maxStock) {
               // 标记为正在更新
               item.updatingQuantity = true;
-              
+
               try {
                 // 调用API更新实际数量
                 await updateCartItemQuantity(item.cartItemId, item.maxStock);
                 // 更新显示数量和实际数量
                 item.quantity = item.maxStock;
                 item.displayQuantity = item.maxStock;
-                ElMessage.warning(`商品"${item.title}"的数量已自动调整为最大库存: ${item.maxStock}`);
+                ElMessage.warning(
+                  `商品"${item.title}"的数量已自动调整为最大库存: ${item.maxStock}`
+                );
               } catch (e) {
-                console.error('自动调整数量失败:', e);
+                console.error("自动调整数量失败:", e);
               } finally {
                 // 取消更新状态
                 item.updatingQuantity = false;
               }
             }
           }
-          
+
           cartItems.value = items;
         } else {
-          ElMessage.error(response.msg || '获取购物车失败');
+          ElMessage.error(response.msg || "获取购物车失败");
         }
       } catch (error) {
-        console.error('获取购物车出错:', error);
-        ElMessage.error('获取购物车失败，请稍后重试');
+        console.error("获取购物车出错:", error);
+        ElMessage.error("获取购物车失败，请稍后重试");
       } finally {
         loading.value = false;
       }
     };
-    
+
     // 处理数量变更
     const handleQuantityChange = async (item, newQuantity) => {
       // 防止在更新中再次更新
       if (item.updatingQuantity) return;
-      
+
       // 检查库存限制
       if (newQuantity > item.maxStock) {
         // 如果超出库存，调整回库存数量
@@ -292,29 +375,32 @@ export default {
         item.displayQuantity = item.maxStock;
         return;
       }
-      
+
       // 如果数量没有变化，不做处理
       if (newQuantity === item.quantity) return;
-      
+
       // 标记为正在更新
       item.updatingQuantity = true;
-      
+
       try {
         // 调用API更新数量
-        const response = await updateCartItemQuantity(item.cartItemId, newQuantity);
-        
-        if (response.code === '200') {
-          ElMessage.success('更新数量成功');
+        const response = await updateCartItemQuantity(
+          item.cartItemId,
+          newQuantity
+        );
+
+        if (response.code === "200") {
+          ElMessage.success("更新数量成功");
           // 更新实际数量
           item.quantity = newQuantity;
         } else {
           // 如果更新失败，恢复显示数量
-          ElMessage.error(response.msg || '更新数量失败');
+          ElMessage.error(response.msg || "更新数量失败");
           item.displayQuantity = item.quantity;
         }
       } catch (error) {
-        console.error('更新数量出错:', error);
-        ElMessage.error('更新数量失败，请稍后重试');
+        console.error("更新数量出错:", error);
+        ElMessage.error("更新数量失败，请稍后重试");
         // 恢复显示数量
         item.displayQuantity = item.quantity;
       } finally {
@@ -322,52 +408,87 @@ export default {
         item.updatingQuantity = false;
       }
     };
-    
+
     const removeItem = async (cartItemId) => {
       try {
         const response = await removeFromCart(cartItemId);
-        if (response.code === '200') {
-          ElMessage.success('删除成功');
+        if (response.code === "200") {
+          ElMessage.success("删除成功");
           // 直接从本地移除，提高响应速度
-          cartItems.value = cartItems.value.filter(item => item.cartItemId !== cartItemId);
+          cartItems.value = cartItems.value.filter(
+            (item) => item.cartItemId !== cartItemId
+          );
         } else {
-          ElMessage.error(response.msg || '删除失败');
+          ElMessage.error(response.msg || "删除失败");
         }
       } catch (error) {
-        console.error('删除商品出错:', error);
-        ElMessage.error('删除失败，请稍后重试');
+        console.error("删除商品出错:", error);
+        ElMessage.error("删除失败，请稍后重试");
       }
     };
-    
+
     const calculateSubtotal = (item) => {
       return item.price * item.quantity;
     };
-    
+
     const formatPrice = (price) => {
       return parseFloat(price).toFixed(2);
     };
-    
+
     const goToProductDetail = (productId) => {
       router.push(`/products/${productId}`);
     };
-    
+
     const checkoutDialogVisible = ref(false);
     const checkoutLoading = ref(false);
     const checkoutForm = ref({
-      payment_method: '支付宝'
+      payment_method: "支付宝",
     });
 
     const shippingForm = ref({
-      name: '',
-      phone: '',
-      zipcode: '',
-      address: ''
+      name: "",
+      phone: "",
+      zipcode: "",
+      address: "",
     });
     const shippingFormRef = ref(null);
 
+    // 添加表单验证规则
+    const shippingRules = {
+      name: [
+        { required: true, message: "请输入收货人姓名", trigger: "blur" },
+        {
+          min: 2,
+          max: 20,
+          message: "姓名长度在2-20个字符之间",
+          trigger: "blur",
+        },
+      ],
+      phone: [
+        { required: true, message: "请输入手机号", trigger: "blur" },
+        {
+          pattern: /^1[3-9]\d{9}$/,
+          message: "请输入正确的手机号格式",
+          trigger: "blur",
+        },
+      ],
+      zipcode: [
+        { pattern: /^\d{6}$/, message: "邮编必须是6位数字", trigger: "blur" },
+      ],
+      address: [
+        { required: true, message: "请输入详细地址", trigger: "blur" },
+        {
+          min: 5,
+          max: 200,
+          message: "地址长度在5-200个字符之间",
+          trigger: "blur",
+        },
+      ],
+    };
+
     const checkout = () => {
       if (cartItems.value.length === 0) {
-        ElMessage.warning('购物车为空');
+        ElMessage.warning("购物车为空");
         return;
       }
       checkoutDialogVisible.value = true;
@@ -379,46 +500,48 @@ export default {
         if (!valid) return;
         checkoutLoading.value = true;
         try {
-          const cartItemIds = cartItems.value.map(item => item.cartItemId.toString());
-          const payment_method = '支付宝';
+          const cartItemIds = cartItems.value.map((item) =>
+            item.cartItemId.toString()
+          );
+          const payment_method = "支付宝";
           const shipping_address = { ...shippingForm.value };
           const response = await checkoutCart({
             cartItemIds,
             shipping_address,
-            payment_method
+            payment_method,
           });
-          
-          if (response.code === '200') {
-            ElMessage.success('订单提交成功');
+
+          if (response.code === "200") {
+            ElMessage.success("订单提交成功");
             checkoutDialogVisible.value = false;
-            
+
             // 发起支付
-            const paymentResponse = await initiatePayment(response.data.orderId);
-            if (paymentResponse.code === '200') {
+            const paymentResponse = await pay(response.data.orderId);
+            if (paymentResponse.code === "200") {
               // 创建一个临时div来放置支付表单
-              const div = document.createElement('div');
+              const div = document.createElement("div");
               div.innerHTML = paymentResponse.data.paymentForm;
               document.body.appendChild(div);
-              
+
               // 提交支付表单
-              const form = div.getElementsByTagName('form')[0];
+              const form = div.getElementsByTagName("form")[0];
               if (form) {
                 form.submit();
               } else {
-                ElMessage.error('支付表单生成失败');
+                ElMessage.error("支付表单生成失败");
               }
-              
+
               // 清空购物车
               cartItems.value = [];
             } else {
-              ElMessage.error(paymentResponse.msg || '发起支付失败');
+              ElMessage.error(paymentResponse.msg || "发起支付失败");
             }
           } else {
-            ElMessage.error(response.msg || '订单提交失败');
+            ElMessage.error(response.msg || "订单提交失败");
           }
         } catch (e) {
-          console.error('提交订单或发起支付时出错:', e);
-          ElMessage.error('操作失败，请稍后重试');
+          console.error("提交订单或发起支付时出错:", e);
+          ElMessage.error("操作失败，请稍后重试");
         } finally {
           checkoutLoading.value = false;
         }
@@ -427,10 +550,10 @@ export default {
 
     onMounted(() => {
       // 你可以根据实际项目获取用户名
-      username.value = localStorage.getItem('username') || '未登录用户';
+      username.value = localStorage.getItem("username") || "未登录用户";
       fetchCartItems();
     });
-    
+
     return {
       cartItems,
       loading,
@@ -448,9 +571,10 @@ export default {
       handleCheckoutSubmit,
       username,
       shippingForm,
-      shippingFormRef
+      shippingFormRef,
+      shippingRules,
     };
-  }
+  },
 };
 </script>
 
@@ -586,12 +710,16 @@ export default {
   align-items: center;
 }
 
-.price, .quantity, .subtotal, .operations {
+.price,
+.quantity,
+.subtotal,
+.operations {
   flex: 1;
   justify-content: center;
 }
 
-.price, .subtotal {
+.price,
+.subtotal {
   flex-direction: column;
   align-items: flex-start;
 }
@@ -602,14 +730,17 @@ export default {
 }
 
 /* 标签和数值样式 */
-.price-label, .quantity-label, .subtotal-label {
+.price-label,
+.quantity-label,
+.subtotal-label {
   font-size: 14px;
   color: #909399;
   margin-bottom: 5px;
   display: none;
 }
 
-.price-value, .subtotal-value {
+.price-value,
+.subtotal-value {
   font-size: 18px;
   font-weight: 600;
   color: #303133;
@@ -812,26 +943,32 @@ export default {
   .cart-item-content {
     flex-wrap: wrap;
   }
-  
+
   .product-info {
     flex: 100%;
     margin-bottom: 15px;
   }
-  
-  .price, .quantity, .subtotal, .operations {
+
+  .price,
+  .quantity,
+  .subtotal,
+  .operations {
     flex: 1 1 48%;
   }
-  
-  .price-label, .quantity-label, .subtotal-label {
+
+  .price-label,
+  .quantity-label,
+  .subtotal-label {
     display: block;
   }
-  
+
   .cart-footer {
     flex-direction: column;
     gap: 20px;
   }
-  
-  .cart-summary, .checkout-actions {
+
+  .cart-summary,
+  .checkout-actions {
     width: 100%;
   }
 }
@@ -840,43 +977,46 @@ export default {
   .cart-container {
     padding: 15px;
   }
-  
+
   .cart-header {
     display: none;
   }
-  
+
   .cart-item-content {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
   }
-  
+
   .col {
     width: 100%;
     justify-content: flex-start;
     padding: 5px 0;
   }
-  
-  .price-label, .quantity-label, .subtotal-label {
+
+  .price-label,
+  .quantity-label,
+  .subtotal-label {
     display: inline-block;
     width: 70px;
   }
-  
+
   .product-image {
     width: 80px;
     height: 100px;
   }
-  
+
   .product-details {
     width: calc(100% - 100px);
   }
-  
+
   .checkout-actions {
     flex-direction: column;
     width: 100%;
   }
-  
-  .continue-shopping, .checkout-button {
+
+  .continue-shopping,
+  .checkout-button {
     width: 100%;
   }
 }
