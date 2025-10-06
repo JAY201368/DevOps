@@ -11,6 +11,10 @@
         <el-badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" />
       </el-button>
       <el-button type="text" @click="goToProfile">个人信息</el-button>
+      
+      <!-- 根据用户角色显示不同的广告相关菜单 -->
+      <el-button v-if="isAdmin" type="text" @click="goToAdvertisements">广告管理</el-button>
+      <el-button v-else type="text" @click="goToAdsRecommend">广告推荐</el-button>
     </div>
     <div class="user-actions" v-if="logined">
       <el-button type="text" @click="logout">退出登录</el-button>
@@ -19,7 +23,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getCartItems } from '../api/cart'
 import { ShoppingCart } from '@element-plus/icons-vue'
@@ -29,6 +33,10 @@ const route = useRoute()
 const logined = ref(false)
 const cartCount = ref(0)
 
+// 从localStorage获取用户角色
+const userRole = ref('')
+const isAdmin = computed(() => userRole.value === 'admin')
+
 // 组件挂载时检查sessionStorage中的登录状态
 onMounted(() => {
   const loginStatus = sessionStorage.getItem('logined')
@@ -36,6 +44,8 @@ onMounted(() => {
   
   if (logined.value) {
     fetchCartCount();
+    // 获取用户角色
+    userRole.value = localStorage.getItem('userRole') || '';
   }
 })
 
@@ -70,8 +80,17 @@ const goToProfile = () => {
   router.push('/profile')
 }
 
+const goToAdvertisements = () => {
+  router.push('/advertisements')
+}
+
+const goToAdsRecommend = () => {
+  router.push('/ads-recommend')
+}
+
 const logout = () => {
   logined.value = false
+  userRole.value = ''
   sessionStorage.removeItem('logined')
   localStorage.removeItem('token')
   localStorage.removeItem('username')
@@ -87,6 +106,8 @@ defineExpose({
     sessionStorage.setItem('logined', value.toString())
     
     if (value) {
+      // 登录时获取用户角色
+      userRole.value = localStorage.getItem('userRole') || '';
       fetchCartCount();
     }
   }

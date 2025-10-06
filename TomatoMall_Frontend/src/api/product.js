@@ -1,11 +1,17 @@
 import request from './request';
+import axios from 'axios';
 
-export function getAllProducts() {
-  return request({
-    url: '/products',
-    method: 'get'
-  });
-}
+const BASE_URL = 'http://localhost:8080/api/products';
+
+export const getAllProducts = async () => {
+  try {
+    const response = await axios.get(BASE_URL);
+    return response.data;
+  } catch (error) {
+    console.error('获取商品列表失败', error);
+    return { code: '500', msg: '获取商品列表失败' };
+  }
+};
 
 export function getProductById(id) {
   return request({

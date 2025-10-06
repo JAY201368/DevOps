@@ -19,7 +19,7 @@ app.use(ElementPlus, {
   size: 'default',
   zIndex: 3000,
   message: {
-    duration: 1000 // 设置消息提示的默认显示时长为 1000 毫秒
+    duration: 500 // 设置消息提示的默认显示时长为 500 毫秒
   }
 })
 

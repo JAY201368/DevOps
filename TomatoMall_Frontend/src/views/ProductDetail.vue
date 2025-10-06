@@ -705,7 +705,10 @@ const addToCart = async () => {
     });
 
     if (response.code === "200") {
-      ElMessage.success("成功加入购物车");
+      ElMessage.success({
+        message: "成功加入购物车",
+        duration: 300
+      });
     } else {
       ElMessage.error(response.msg || "加入购物车失败");
     }
