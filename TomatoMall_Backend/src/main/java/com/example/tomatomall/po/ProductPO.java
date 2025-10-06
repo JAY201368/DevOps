@@ -40,10 +40,16 @@ public class ProductPO {
 
     private String detail;
 
-
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<SpecificationPO> specifications;
 
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private StockpilePO stockpile;
-} 
+
+    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private SpecificationPO specification;
+
+    public SpecificationPO getSpecification() {
+        return specification;
+    }
+}

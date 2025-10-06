@@ -40,10 +40,10 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductVO createProduct(ProductVO productVO) {
         System.out.println("开始创建商品: " + productVO.getTitle());
-        
+
         ProductPO productPO = new ProductPO();
         updateProductFromVO(productPO, productVO);
-        
+
         // 创建库存
         StockpilePO stockpilePO = new StockpilePO();
         stockpilePO.setAmount(0);
@@ -64,10 +64,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public ProductVO updateProduct(ProductVO productVO) {
-        ProductPO existingProduct = productRepository.findById(productVO.getId())
+    public ProductVO updateProduct(Long id, ProductVO productVO) {
+        ProductPO existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("商品不存在"));
-        
+
         updateProductFromVO(existingProduct, productVO);
         ProductPO updatedProduct = productRepository.save(existingProduct);
         return ProductVO.fromPO(updatedProduct);
@@ -79,7 +79,7 @@ public class ProductServiceImpl implements ProductService {
         // 获取现有商品
         ProductPO existingProduct = productRepository.findById(productVO.getId())
                 .orElseThrow(() -> new EntityNotFoundException("商品不存在"));
-        
+
         // 仅更新基本字段，不处理规格集合
         existingProduct.setTitle(productVO.getTitle());
         existingProduct.setPrice(productVO.getPrice());
@@ -87,7 +87,7 @@ public class ProductServiceImpl implements ProductService {
         existingProduct.setDescription(productVO.getDescription());
         existingProduct.setCover(productVO.getCover());
         existingProduct.setDetail(productVO.getDetail());
-        
+
         // 保存并返回更新后的商品
         ProductPO updatedProduct = productRepository.save(existingProduct);
         return ProductVO.fromPO(updatedProduct);
@@ -107,17 +107,17 @@ public class ProductServiceImpl implements ProductService {
     public StockpileVO updateStockpile(Long productId, Integer amount) {
         ProductPO product = productRepository.findById(productId)
                 .orElseThrow(() -> new EntityNotFoundException("商品不存在"));
-        
+
         StockpilePO stockpile = product.getStockpile();
         if (stockpile == null) {
             stockpile = new StockpilePO();
             stockpile.setProduct(product);
             product.setStockpile(stockpile);
         }
-        
+
         stockpile.setAmount(amount);
         stockpile.setFrozen(0);
-        
+
         ProductPO savedProduct = productRepository.save(product);
         return StockpileVO.fromPO(savedProduct.getStockpile());
     }
@@ -126,12 +126,12 @@ public class ProductServiceImpl implements ProductService {
     public StockpileVO getStockpile(Long productId) {
         ProductPO product = productRepository.findById(productId)
                 .orElseThrow(() -> new EntityNotFoundException("商品不存在"));
-        
+
         StockpilePO stockpile = product.getStockpile();
         if (stockpile == null) {
             throw TomatoMallException.productNotExists();
         }
-        
+
         return StockpileVO.fromPO(stockpile);
     }
 
@@ -140,7 +140,7 @@ public class ProductServiceImpl implements ProductService {
     public boolean reduceStock(Long productId, Integer quantity) {
         ProductPO product = productRepository.findById(productId)
                 .orElseThrow(() -> new EntityNotFoundException("商品不存在"));
-        
+
         StockpilePO stockpile = product.getStockpile();
         if (stockpile == null || stockpile.getAmount() < quantity) {
             throw new TomatoMallException(400, "商品库存不足");
@@ -148,13 +148,43 @@ public class ProductServiceImpl implements ProductService {
 
         // 使用乐观锁更新库存
         stockpile.setAmount(stockpile.getAmount() - quantity);
-        
+
         try {
             productRepository.save(product);
             return true;
         } catch (Exception e) {
             return false;
         }
+    }
+
+    @Override
+    @Transactional
+    public boolean restoreStock(Long productId, Integer quantity) {
+        try {
+            ProductPO product = productRepository.findById(productId)
+                    .orElseThrow(() -> new TomatoMallException(404, "商品不存在"));
+
+            StockpilePO stockpile = product.getStockpile();
+            if (stockpile == null) {
+                stockpile = new StockpilePO();
+                stockpile.setProduct(product);
+                product.setStockpile(stockpile);
+            }
+
+            stockpile.setAmount(stockpile.getAmount() + quantity);
+            productRepository.save(product);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public SpecificationVO getSpecification(Long productId) {
+        ProductPO product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("商品不存在"));
+
+        return SpecificationVO.fromPO(product.getSpecification());
     }
 
     private void updateProductFromVO(ProductPO productPO, ProductVO productVO) {
@@ -172,13 +202,13 @@ public class ProductServiceImpl implements ProductService {
                 if (productPO.getSpecifications() == null) {
                     productPO.setSpecifications(new java.util.HashSet<>());
                 }
-                
+
                 // 保存已经存在的规格项
                 java.util.Map<String, SpecificationPO> existingSpecs = new java.util.HashMap<>();
                 for (SpecificationPO spec : productPO.getSpecifications()) {
                     existingSpecs.put(spec.getItem(), spec);
                 }
-                
+
                 // 使用新值更新或创建规格项
                 java.util.Set<SpecificationPO> updatedSpecs = new java.util.HashSet<>();
                 for (SpecificationVO specVO : productVO.getSpecifications()) {
@@ -196,7 +226,7 @@ public class ProductServiceImpl implements ProductService {
                         updatedSpecs.add(newSpec);
                     }
                 }
-                
+
                 // 更新商品的规格集合 - 使用clear()和addAll()而不是直接替换集合
                 productPO.getSpecifications().clear();
                 productPO.getSpecifications().addAll(updatedSpecs);

@@ -124,7 +124,7 @@ public class CartServiceImpl implements CartService {
         // 更新数量
         cartItem.setQuantity(quantity);
         cartItemRepository.save(cartItem);
-        
+
         return "修改数量成功";
     }
 
@@ -132,35 +132,35 @@ public class CartServiceImpl implements CartService {
     public CartVO getCartItems(Long userId) {
         // 查询该用户的所有购物车项
         List<CartItemPO> cartItems = cartItemRepository.findByUserId(userId);
-        
+
         List<CartItemVO> cartItemVOs = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
-        
+
         // 转换为VO列表并计算总金额
         for (CartItemPO cartItem : cartItems) {
             ProductPO product = productRepository.findById(cartItem.getProductId())
                     .orElseThrow(() -> new TomatoMallException(404, "商品不存在"));
-            
+
             CartItemVO cartItemVO = convertToCartItemVO(cartItem, product);
             cartItemVOs.add(cartItemVO);
-            
+
             // 计算该商品总价并累加到购物车总金额
             BigDecimal itemTotal = product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
             totalAmount = totalAmount.add(itemTotal);
         }
-        
+
         // 构建购物车VO
         CartVO cartVO = new CartVO();
         cartVO.setItems(cartItemVOs);
         cartVO.setTotal(cartItemVOs.size());
         cartVO.setTotalAmount(totalAmount);
-        
+
         return cartVO;
     }
 
     @Override
     @Transactional
-    public OrderVO checkout(Long userId, List<String> cartItemIds, String receiverName, 
+    public OrderVO checkout(Long userId, List<String> cartItemIds, String receiverName,
             String receiverPhone, String receiverZipcode, String receiverAddress, String paymentMethod) {
         // 1. 查询购物车商品
         List<Long> cartItemIdList = cartItemIds.stream().map(Long::parseLong).collect(Collectors.toList());
@@ -179,7 +179,7 @@ public class CartServiceImpl implements CartService {
             }
             totalAmount = totalAmount.add(product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         }
-        
+
         // 3. 扣减库存
         for (CartItemPO item : cartItems) {
             ProductPO product = productRepository.findById(item.getProductId()).get();
@@ -195,6 +195,8 @@ public class CartServiceImpl implements CartService {
         order.setPaymentMethod(paymentMethod);
         order.setStatus("PENDING");
         order.setCreateTime(new Timestamp(System.currentTimeMillis()));
+        // 设置订单15分钟后超时
+        order.setExpireTime(new Timestamp(System.currentTimeMillis() + 15 * 60 * 1000));
         order.setReceiverName(receiverName);
         order.setReceiverPhone(receiverPhone);
         order.setReceiverZipcode(receiverZipcode);
@@ -203,7 +205,7 @@ public class CartServiceImpl implements CartService {
         List<OrderItemVO> orderItemVOs = new ArrayList<>();
         for (CartItemPO cartItem : cartItems) {
             ProductPO product = productRepository.findById(cartItem.getProductId()).get();
-            
+
             // 创建订单项
             OrderItemPO orderItem = new OrderItemPO();
             orderItem.setOrder(order);
@@ -213,7 +215,7 @@ public class CartServiceImpl implements CartService {
             orderItem.setProductTitle(product.getTitle());
             orderItem.setProductCover(product.getCover());
             order.addOrderItem(orderItem);
-            
+
             // 创建VO
             OrderItemVO itemVO = new OrderItemVO();
             BeanUtils.copyProperties(orderItem, itemVO);
@@ -235,7 +237,7 @@ public class CartServiceImpl implements CartService {
         orderVO.setOrderItems(orderItemVOs);
         return orderVO;
     }
-    
+
     private CartItemVO convertToCartItemVO(CartItemPO cartItem, ProductPO product) {
         CartItemVO cartItemVO = new CartItemVO();
         cartItemVO.setCartItemId(cartItem.getCartItemId());

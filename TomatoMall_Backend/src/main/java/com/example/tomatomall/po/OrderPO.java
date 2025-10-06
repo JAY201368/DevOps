@@ -56,7 +56,10 @@ public class OrderPO {
 
     @Column(name = "update_time")
     private Timestamp updateTime;
-    
+
+    @Column(name = "expire_time")
+    private Timestamp expireTime;
+
     // Add helper method to add order items
     public void addOrderItem(OrderItemPO item) {
         orderItems.add(item);

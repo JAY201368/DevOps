@@ -13,6 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
+import java.util.List;
+
 @Service
 public class OrderServiceImpl implements OrderService {
 
@@ -106,6 +109,23 @@ public class OrderServiceImpl implements OrderService {
         if ("TRADE_SUCCESS".equals(tradeStatus)) {
             updateOrderStatus(orderId, alipayTradeNo, amount);
             reduceStock(Long.parseLong(orderId));
+        }
+    }
+
+    @Override
+    @Transactional
+    public void handleExpiredOrders() {
+        // 获取所有已超时的待支付订单
+        List<OrderPO> expiredOrders = orderRepository.findExpiredOrders(new Timestamp(System.currentTimeMillis()));
+
+        for (OrderPO order : expiredOrders) {
+            // 恢复库存
+            for (OrderItemPO item : order.getOrderItems()) {
+                productService.restoreStock(item.getProductId(), item.getQuantity());
+            }
+            // 更新订单状态为已取消
+            order.setStatus("CANCELLED");
+            orderRepository.save(order);
         }
     }
 }
