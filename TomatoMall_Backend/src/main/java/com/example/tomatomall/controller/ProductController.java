@@ -52,7 +52,7 @@ public class ProductController {
     public ResultVO<String> updateProduct(@RequestBody ProductVO productVO, HttpServletRequest request) {
         try {
             // TODO: 检查用户权限是否为管理员
-            productService.updateProduct(productVO);
+            productService.updateProduct(productVO.getId(), productVO);
             return ResultVO.buildSuccess("更新成功");
         } catch (Exception e) {
             return ResultVO.buildFailure(e.getMessage(), "400");
@@ -82,9 +82,10 @@ public class ProductController {
     }
 
     @PatchMapping("/stockpile/{productId}")
-    public ResultVO<String> updateStockpile(@PathVariable Long productId, @RequestBody StockpileVO stockpileVO, HttpServletRequest request) {
+    public ResultVO<String> updateStockpile(@PathVariable Long productId, @RequestBody StockpileVO stockpileVO,
+            HttpServletRequest request) {
         try {
-            
+
             productService.updateStockpile(productId, stockpileVO.getAmount());
             return ResultVO.buildSuccess("调整库存成功");
         } catch (Exception e) {
@@ -101,4 +102,4 @@ public class ProductController {
             return ResultVO.buildFailure(e.getMessage(), "400");
         }
     }
-} 
+}
