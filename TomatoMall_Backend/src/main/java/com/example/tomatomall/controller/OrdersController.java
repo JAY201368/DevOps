@@ -31,7 +31,7 @@ public class OrdersController {
         }
     }
 
-    @PostMapping("/api/orders/notify")
+    @PostMapping("/notify")
     public void handleAlipayNotify(HttpServletRequest request, HttpServletResponse response) throws IOException{
         // 1. 解析支付宝回调参数（通常是 application/x-www-form-urlencoded）
         Map<String, String> params = request.getParameterMap().entrySet().stream()
