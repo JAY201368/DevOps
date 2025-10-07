@@ -42,9 +42,11 @@ request.interceptors.request.use(
       }
     }
     
+    console.log('发送请求:', config.method.toUpperCase(), config.url, config.data || config.params);
     return config;
   },
   error => {
+    console.error('请求配置错误:', error);
     return Promise.reject(error)
   }
 )
@@ -54,11 +56,12 @@ request.interceptors.response.use(
   response => {
     // 检查是否有缓存数据
     if (response.config._cachedData) {
+      console.log('返回缓存响应:', response.config.url);
       return response.config._cachedData;
     }
     
     const res = response.data;
-    console.log("API响应:", res);
+    console.log("API响应:", response.config.url, res);
     
     // 缓存GET请求的成功响应
     if (response.config.method.toLowerCase() === 'get') {
@@ -76,14 +79,34 @@ request.interceptors.response.use(
     // 网络错误或服务器错误
     console.error("API请求错误:", error);
     
+    if (error.code === 'ERR_NETWORK') {
+      ElMessage.error('网络连接失败，请检查您的网络连接');
+      return Promise.reject(error);
+    }
+    
     // 尝试提取错误信息
     let errorMessage;
     if (error.response) {
       // 服务器返回错误
-      errorMessage = error.response.data?.msg || 
-                    error.response.data?.message || 
-                    `服务器错误 (${error.response.status})`;
-      console.error("服务器错误详情:", error.response.data);
+      const responseData = error.response.data;
+      
+      console.error("服务器错误详情:", responseData);
+      
+      // 尝试解析不同格式的错误响应
+      if (responseData) {
+        if (responseData.msg) {
+          errorMessage = responseData.msg;
+        } else if (responseData.message) {
+          errorMessage = responseData.message;
+        } else if (typeof responseData === 'string') {
+          errorMessage = responseData;
+        } else {
+          errorMessage = `服务器错误 (${error.response.status})`;
+        }
+      } else {
+        errorMessage = `服务器错误 (${error.response.status})`;
+      }
+      
     } else if (error.request) {
       // 请求已发送但没有响应
       errorMessage = "服务器无响应，请检查网络连接";
