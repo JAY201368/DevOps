@@ -29,37 +29,37 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     private static final Pattern PHONE_PATTERN = Pattern
-            .compile("^1[3-9]\\d{9}$");
+            .compile("^1(3[0-9]|4[579]|5[0-35-9]|6[2567]|7[0-8]|8[0-9]|9[189])\\d{8}$");
 
     @Override
     public String login(String username, String password) {
         try {
             logger.debug("开始验证用户: {}", username);
-
+            
             if (username == null || username.trim().isEmpty()) {
                 logger.error("登录失败: 用户名为空");
                 throw TomatoMallException.userNotExists();
             }
-
+            
             if (password == null || password.trim().isEmpty()) {
                 logger.error("登录失败: 密码为空");
                 throw TomatoMallException.passwordError();
             }
-
+            
             Optional<UserPO> userOpt = userRepository.findByUsername(username);
             if (!userOpt.isPresent()) {
                 logger.error("登录失败: 用户不存在, 用户名: {}", username);
                 throw TomatoMallException.userNotExists();
             }
-
+            
             UserPO userPO = userOpt.get();
             logger.debug("获取到用户信息: {}", userPO.getUsername());
-
+            
             if (!passwordEncoder.matches(password, userPO.getPassword())) {
                 logger.error("登录失败: 密码不匹配, 用户名: {}", username);
                 throw TomatoMallException.nameOrPasswordError();
             }
-
+            
             logger.debug("密码验证成功, 开始生成token");
             String token = jwtUtil.generateToken(username);
             logger.debug("token生成成功");

@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @Service
 public class AdvertisementServiceImpl implements AdvertisementService {
 
-    private static final Logger logger = LoggerFactory.getLogger(AdvertisementServiceImpl.class);
+    
     
     private final AdvertisementRepository advertisementRepository;
     private final ProductRepository productRepository;
@@ -44,7 +44,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             Long productId = Long.valueOf(advertisementVO.getProductId());
             Optional<ProductPO> productOpt = productRepository.findById(productId);
             if (!productOpt.isPresent()) {
-                logger.warn("创建广告失败: 商品不存在, productId: {}", productId);
+                System.out.printf("创建广告失败: 商品不存在, productId: {}", productId);
                 return null; // 商品不存在，返回null
             }
 
@@ -56,13 +56,13 @@ public class AdvertisementServiceImpl implements AdvertisementService {
                     .build();
 
             AdvertisementPO savedPO = advertisementRepository.save(advertisementPO);
-            logger.info("创建广告成功: {}", savedPO);
+            System.out.printf("创建广告成功: {}", savedPO);
             return convertToVO(savedPO);
         } catch (NumberFormatException e) {
-            logger.error("创建广告失败: 商品ID格式错误: {}", advertisementVO.getProductId(), e);
+            System.out.printf("创建广告失败: 商品ID格式错误: {}", advertisementVO.getProductId(), e);
             return null;
         } catch (Exception e) {
-            logger.error("创建广告时发生未知错误", e);
+            e.printStackTrace();
             return null;
         }
     }
@@ -74,7 +74,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             Integer adId = Integer.valueOf(advertisementVO.getId());
             Optional<AdvertisementPO> advertisementOpt = advertisementRepository.findById(adId);
             if (!advertisementOpt.isPresent()) {
-                logger.warn("更新广告失败: 广告不存在, adId: {}", adId);
+                System.out.printf("更新广告失败: 广告不存在, adId: {}", adId);
                 return null;
             }
 
@@ -82,7 +82,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             Long productId = Long.valueOf(advertisementVO.getProductId());
             Optional<ProductPO> productOpt = productRepository.findById(productId);
             if (!productOpt.isPresent()) {
-                logger.warn("更新广告失败: 商品不存在, productId: {}", productId);
+                System.out.printf("更新广告失败: 商品不存在, productId: {}", productId);
                 return null; // 商品不存在，返回null
             }
 
@@ -99,14 +99,14 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             advertisementPO.setProductId(productId.intValue());
 
             advertisementRepository.save(advertisementPO);
-            logger.info("更新广告成功: {}", advertisementPO);
+            System.out.printf("更新广告成功: {}", advertisementPO);
             return "更新成功";
         } catch (NumberFormatException e) {
-            logger.error("更新广告失败: ID格式错误: adId: {}, productId: {}", 
+            System.out.printf("更新广告失败: ID格式错误: adId: {}, productId: {}", 
                     advertisementVO.getId(), advertisementVO.getProductId(), e);
             return null;
         } catch (Exception e) {
-            logger.error("更新广告时发生未知错误", e);
+            e.printStackTrace();
             return null;
         }
     }
@@ -116,13 +116,13 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         try {
             if (advertisementRepository.existsById(id)) {
                 advertisementRepository.deleteById(id);
-                logger.info("删除广告成功: id={}", id);
+                System.out.printf("删除广告成功: id={}", id);
                 return "删除成功";
             }
-            logger.warn("删除广告失败: 广告不存在, id={}", id);
+            System.out.printf("删除广告失败: 广告不存在, id={}", id);
             return null;
         } catch (Exception e) {
-            logger.error("删除广告时发生未知错误: id={}", id, e);
+            System.out.printf("删除广告时发生未知错误: id={}", id, e);
             return null;
         }
     }

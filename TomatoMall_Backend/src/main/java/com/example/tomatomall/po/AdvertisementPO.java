@@ -35,4 +35,4 @@ public class AdvertisementPO {
     @NotNull(message = "所属商品ID不能为空")
     @Column(name = "product_id", nullable = false)
     private Integer productId;
-} 
+}
