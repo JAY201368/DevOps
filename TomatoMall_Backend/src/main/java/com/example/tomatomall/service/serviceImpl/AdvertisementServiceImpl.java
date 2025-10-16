@@ -39,7 +39,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             Long productId = Long.valueOf(advertisementVO.getProductId());
             Optional<ProductPO> productOpt = productRepository.findById(productId);
             if (!productOpt.isPresent()) {
-                System.out.printf("创建广告失败: 商品不存在, productId: {}", productId);
+                System.out.printf("创建广告失败: 商品不存在, productId: %d\n", productId);
                 return null; // 商品不存在，返回null
             }
 
@@ -51,13 +51,14 @@ public class AdvertisementServiceImpl implements AdvertisementService {
                     .build();
 
             AdvertisementPO savedPO = advertisementRepository.save(advertisementPO);
-            System.out.printf("创建广告成功: {}", savedPO);
+            System.out.printf("创建广告成功: %s\n", savedPO);
             return convertToVO(savedPO);
         } catch (NumberFormatException e) {
-            System.out.printf("创建广告失败: 商品ID格式错误: {}", advertisementVO.getProductId(), e);
+            System.out.printf("创建广告失败: 商品ID格式错误: %s\n", advertisementVO.getProductId());
             return null;
         } catch (Exception e) {
-            System.out.printf("创建广告时发生未知错误", e);
+            System.out.printf("创建广告时发生未知错误\n");
+            e.printStackTrace();
             return null;
         }
     }
@@ -69,7 +70,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             Integer adId = Integer.valueOf(advertisementVO.getId());
             Optional<AdvertisementPO> advertisementOpt = advertisementRepository.findById(adId);
             if (!advertisementOpt.isPresent()) {
-                System.out.printf("更新广告失败: 广告不存在, adId: {}", adId);
+                System.out.printf("更新广告失败: 广告不存在, adId: %d\n", adId);
                 return null;
             }
 
@@ -77,7 +78,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             Long productId = Long.valueOf(advertisementVO.getProductId());
             Optional<ProductPO> productOpt = productRepository.findById(productId);
             if (!productOpt.isPresent()) {
-                System.out.printf("更新广告失败: 商品不存在, productId: {}", productId);
+                System.out.printf("更新广告失败: 商品不存在, productId: %d\n", productId);
                 return null; // 商品不存在，返回null
             }
 
@@ -94,13 +95,14 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             advertisementPO.setProductId(productId.intValue());
 
             advertisementRepository.save(advertisementPO);
-            System.out.printf("更新广告成功: {}", advertisementPO);
+            System.out.printf("更新广告成功: %s\n", advertisementPO);
             return "更新成功";
         } catch (NumberFormatException e) {
-            System.out.printf("更新广告失败: ID格式错误: adId: {}, productId: {}", 
-                    advertisementVO.getId(), advertisementVO.getProductId(), e);
+            System.out.printf("更新广告失败: ID格式错误: adId: %s, productId: %s\n", 
+                    advertisementVO.getId(), advertisementVO.getProductId());
             return null;
         } catch (Exception e) {
+            System.out.printf("更新广告时发生未知错误\n");
             e.printStackTrace();
             return null;
         }
@@ -111,13 +113,14 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         try {
             if (advertisementRepository.existsById(id)) {
                 advertisementRepository.deleteById(id);
-                System.out.printf("删除广告成功: id={}", id);
+                System.out.printf("删除广告成功: id=%d\n", id);
                 return "删除成功";
             }
-            System.out.printf("删除广告失败: 广告不存在, id={}", id);
+            System.out.printf("删除广告失败: 广告不存在, id=%d\n", id);
             return null;
         } catch (Exception e) {
-            System.out.printf("删除广告时发生未知错误: id={}", id, e);
+            System.out.printf("删除广告时发生未知错误: id=%d\n", id);
+            e.printStackTrace();
             return null;
         }
     }
@@ -131,4 +134,4 @@ public class AdvertisementServiceImpl implements AdvertisementService {
                 .productId(String.valueOf(advertisementPO.getProductId()))
                 .build();
     }
-} 
+}
