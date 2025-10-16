@@ -6,8 +6,6 @@ import com.example.tomatomall.repository.AdvertisementRepository;
 import com.example.tomatomall.repository.ProductRepository;
 import com.example.tomatomall.service.AdvertisementService;
 import com.example.tomatomall.vo.AdvertisementVO;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,9 +15,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class AdvertisementServiceImpl implements AdvertisementService {
-
-    
-    
     private final AdvertisementRepository advertisementRepository;
     private final ProductRepository productRepository;
 
@@ -62,7 +57,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             System.out.printf("创建广告失败: 商品ID格式错误: {}", advertisementVO.getProductId(), e);
             return null;
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.printf("创建广告时发生未知错误", e);
             return null;
         }
     }
