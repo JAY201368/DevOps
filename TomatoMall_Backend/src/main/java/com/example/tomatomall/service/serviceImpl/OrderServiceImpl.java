@@ -102,15 +102,15 @@ public class OrderServiceImpl implements OrderService {
             }
         }
     }
-
-    @Override
-    @Transactional
-    public void handlePaymentCallback(String orderId, String alipayTradeNo, String amount, String tradeStatus) {
-        if ("TRADE_SUCCESS".equals(tradeStatus)) {
-            updateOrderStatus(orderId, alipayTradeNo, amount);
-            reduceStock(Long.parseLong(orderId));
-        }
-    }
+    //无用的回调函数，因为库存已经在下单时扣减了
+    // @Override
+    // @Transactional
+    // public void handlePaymentCallback(String orderId, String alipayTradeNo, String amount, String tradeStatus) {
+    //     if ("TRADE_SUCCESS".equals(tradeStatus)) {
+    //         updateOrderStatus(orderId, alipayTradeNo, amount);
+    //         reduceStock(Long.parseLong(orderId));
+    //     }
+    // }
 
     @Override
     @Transactional

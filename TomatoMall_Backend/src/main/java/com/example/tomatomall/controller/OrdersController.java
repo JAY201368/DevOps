@@ -60,8 +60,6 @@ public class OrdersController {
             // 更新订单状态（注意幂等性，防止重复处理）
             orderService.updateOrderStatus(orderId, alipayTradeNo, amount);
 
-            // 扣减库存（建议加锁或乐观锁）
-            
         }
 
         // 4. 必须返回纯文本的 "success"（支付宝要求）
