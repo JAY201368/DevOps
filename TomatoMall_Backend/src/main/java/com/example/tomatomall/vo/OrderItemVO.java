@@ -6,10 +6,11 @@ import java.math.BigDecimal;
 @Data
 public class OrderItemVO {
     private Long id;
+    private Integer orderId;
     private Long productId;
-    private String productTitle;
-    private String productCover;
     private Integer quantity;
     private BigDecimal price;
-    private BigDecimal subtotal;
+    private String productTitle;
+    private String productCover;
+    private BigDecimal subtotal;  // 小计金额（价格 * 数量）
 }

@@ -4,12 +4,18 @@ import com.alipay.api.internal.util.AlipaySignature;
 import com.example.tomatomall.service.OrderService;
 import com.example.tomatomall.vo.PaymentVO;
 import com.example.tomatomall.vo.ResultVO;
+import com.example.tomatomall.vo.OrderVO;
+import com.example.tomatomall.exception.TomatoMallException;
+import com.example.tomatomall.repository.UserRepository;
+import com.example.tomatomall.util.JwtUtil;
+import com.example.tomatomall.po.UserPO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -20,14 +26,54 @@ public class OrdersController {
 
     @Autowired
     private OrderService orderService;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private JwtUtil jwtUtil;
 
-    @PostMapping("/{orderId}/pay")
-    public ResultVO<PaymentVO> pay(@PathVariable Long orderId) {
+    @GetMapping
+    public ResultVO<List<OrderVO>> getOrders(HttpServletRequest request) {
         try {
-            PaymentVO paymentVO = orderService.pay(orderId);
-            return ResultVO.buildSuccess(paymentVO);
+            // 获取当前用户
+            String token = request.getHeader("token");
+            if (token == null || !jwtUtil.validateToken(token)) {
+                return ResultVO.buildFailure("未授权", "401");
+            }
+            
+            String username = jwtUtil.getUsernameFromToken(token);
+            UserPO user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new TomatoMallException(404, "用户不存在"));
+            
+            List<OrderVO> orders = orderService.getOrdersByUserId(user.getId());
+            return ResultVO.buildSuccess(orders);
         } catch (Exception e) {
             return ResultVO.buildFailure(e.getMessage(), "500");
+        }
+    }
+
+    @PostMapping("/{orderId}/pay")
+    public ResultVO<PaymentVO> pay(@PathVariable Long orderId, HttpServletRequest request) {
+        try {
+            // 获取当前用户
+            String token = request.getHeader("token");
+            if (token == null || !jwtUtil.validateToken(token)) {
+                return ResultVO.buildFailure("未授权", "401");
+            }
+            
+            String username = jwtUtil.getUsernameFromToken(token);
+            UserPO user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new TomatoMallException(404, "用户不存在"));
+
+            // 验证订单所属
+            PaymentVO paymentVO = orderService.pay(orderId);
+            return ResultVO.buildSuccess(paymentVO);
+        } catch (TomatoMallException e) {
+            return ResultVO.buildFailure(e.getMessage(), String.valueOf(e.getCode()));
+        } catch (Exception e) {
+            e.printStackTrace(); // 打印详细错误日志
+            return ResultVO.buildFailure("支付失败：" + e.getMessage(), "500");
         }
     }
 
@@ -60,9 +106,35 @@ public class OrdersController {
             // 更新订单状态（注意幂等性，防止重复处理）
             orderService.updateOrderStatus(orderId, alipayTradeNo, amount);
 
+            // 扣减库存（建议加锁或乐观锁）
+            
         }
 
         // 4. 必须返回纯文本的 "success"（支付宝要求）
         response.getWriter().print("success");
+    }
+    
+    @PostMapping("/{orderId}/cancel")
+    public ResultVO<Void> cancelOrder(@PathVariable Long orderId, HttpServletRequest request) {
+        try {
+            // 获取当前用户
+            String token = request.getHeader("token");
+            if (token == null || !jwtUtil.validateToken(token)) {
+                return ResultVO.buildFailure("未授权", "401");
+            }
+            
+            String username = jwtUtil.getUsernameFromToken(token);
+            UserPO user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new TomatoMallException(404, "用户不存在"));
+            
+            // 取消订单
+            orderService.cancelOrder(orderId, user.getId());
+            return ResultVO.buildSuccess(null);
+        } catch (TomatoMallException e) {
+            return ResultVO.buildFailure(e.getMessage(), String.valueOf(e.getCode()));
+        } catch (Exception e) {
+            e.printStackTrace(); // 打印详细错误日志
+            return ResultVO.buildFailure("取消订单失败：" + e.getMessage(), "500");
+        }
     }
 }

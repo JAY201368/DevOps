@@ -7,6 +7,7 @@ import ProductDetail from '../views/ProductDetail.vue'
 import Cart from '../views/Cart.vue'
 import DbTest from '../views/DbTest.vue'
 import Advertisement from '../views/Advertisement.vue'
+import OrderList from '../views/OrderList.vue'
 
 const routes = [
   {
@@ -78,7 +79,13 @@ const routes = [
   {
     path: '/payment/status',
     name: 'PaymentStatus',
-    component: () => import('../views/PaymentStatus.vue')
+    component: () => import('../views/PaymentStatus.vue') q
+  },
+  {
+    path: '/orders',
+    name: 'OrderList',
+    component: OrderList,
+    meta: { requiresAuth: true }
   }
 ]
 

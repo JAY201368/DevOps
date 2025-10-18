@@ -192,7 +192,12 @@ public class CartServiceImpl implements CartService {
         OrderPO order = new OrderPO();
         order.setUserId(userId);
         order.setTotalAmount(totalAmount);
-        order.setPaymentMethod(paymentMethod);
+        // 支付方式统一转换为后端识别的格式
+        if ("Alipay".equalsIgnoreCase(paymentMethod)) {
+            order.setPaymentMethod("支付宝");
+        } else {
+            order.setPaymentMethod(paymentMethod);
+        }
         order.setStatus("PENDING");
         order.setCreateTime(new Timestamp(System.currentTimeMillis()));
         // 设置订单15分钟后超时

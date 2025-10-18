@@ -10,6 +10,7 @@
         <el-icon class="cart-icon"><ShoppingCart /></el-icon> 购物车
         <el-badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" />
       </el-button>
+      <el-button type="text" @click="goToOrders">我的订单</el-button>
       <el-button type="text" @click="goToProfile">个人信息</el-button>
       
       <!-- 根据用户角色显示不同的广告相关菜单 -->
@@ -66,6 +67,10 @@ const fetchCartCount = async () => {
   } catch (error) {
     console.error('获取购物车数量失败:', error);
   }
+}
+
+const goToOrders = () => {
+  router.push('/orders')
 }
 
 const goToProducts = () => {
@@ -172,4 +177,4 @@ defineExpose({
 .user-actions .el-button {
   font-size: 16px;
 }
-</style> 
+</style>

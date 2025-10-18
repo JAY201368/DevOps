@@ -496,56 +496,36 @@ export default {
 
     const handleCheckoutSubmit = async () => {
       // 校验收货人信息
-      shippingFormRef.value.validate(async (valid) => {
-        if (!valid) return;
-        checkoutLoading.value = true;
-        try {
-          const cartItemIds = cartItems.value.map((item) =>
-            item.cartItemId.toString()
-          );
-          const payment_method = "支付宝";
-          const shipping_address = { ...shippingForm.value };
-          const response = await checkoutCart({
-            cartItemIds,
-            shipping_address,
-            payment_method,
-          });
+      try {
+        await shippingFormRef.value.validate();
+      } catch (error) {
+        return;
+      }
 
-          if (response.code === "200") {
-            ElMessage.success("订单提交成功");
-            checkoutDialogVisible.value = false;
+      checkoutLoading.value = true;
+      try {
+        const payload = {
+          cartItemIds: cartItems.value.map(item => item.cartItemId.toString()),
+          shipping_address: shippingForm.value,
+          payment_method: "Alipay"  // 修改为与后端匹配的值
+        };
 
-            // 发起支付
-            const paymentResponse = await pay(response.data.orderId);
-            if (paymentResponse.code === "200") {
-              // 创建一个临时div来放置支付表单
-              const div = document.createElement("div");
-              div.innerHTML = paymentResponse.data.paymentForm;
-              document.body.appendChild(div);
+        console.log('Checkout payload:', payload);
 
-              // 提交支付表单
-              const form = div.getElementsByTagName("form")[0];
-              if (form) {
-                form.submit();
-              } else {
-                ElMessage.error("支付表单生成失败");
-              }
-
-              // 清空购物车
-              cartItems.value = [];
-            } else {
-              ElMessage.error(paymentResponse.msg || "发起支付失败");
-            }
-          } else {
-            ElMessage.error(response.msg || "订单提交失败");
-          }
-        } catch (e) {
-          console.error("提交订单或发起支付时出错:", e);
-          ElMessage.error("操作失败，请稍后重试");
-        } finally {
-          checkoutLoading.value = false;
+        const response = await checkoutCart(payload);
+        console.log('Checkout response:', response.code);
+        if (response.code === "200") {
+          ElMessage.success("订单提交成功");
+          checkoutDialogVisible.value = false;
+        } else {
+          throw new Error(response.msg || "订单提交失败");
         }
-      });
+      } catch (e) {
+        console.error("提交订单或发起支付时出错:", e);
+        ElMessage.error(e.message || "操作失败，请稍后重试");
+      } finally {
+        checkoutLoading.value = false;
+      }
     };
 
     onMounted(() => {
