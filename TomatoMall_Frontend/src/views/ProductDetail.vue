@@ -179,6 +179,111 @@
           <div v-else class="no-specs">
             <el-empty description="暂无规格信息" :image-size="80" />
           </div>
+
+          <el-divider content-position="left">
+            <el-icon class="divider-icon"><ChatDotRound /></el-icon> 商品评价
+          </el-divider>
+
+          <div class="product-comments">
+            <div class="comments-header">
+              <div class="comments-summary">
+                <div class="average-rating">
+                  <span class="rating-label">商品评分：</span>
+                  <el-rate
+                    :model-value="averageRating"
+                    disabled
+                    text-color="#ff9900"
+                    :allow-half="true"
+                  />
+                  <span class="rating-value">{{ averageRating.toFixed(1) }}分</span>
+                  <span class="comment-count">({{ comments.length }}条评价)</span>
+                </div>
+              </div>
+              <el-button 
+                type="primary" 
+                @click="showCommentDialog = true"
+                :disabled="!canComment"
+              >
+                <el-icon><Edit /></el-icon> 写评价
+              </el-button>
+            </div>
+
+            <div class="comments-list" v-if="comments.length > 0">
+              <el-card v-for="comment in comments" :key="comment.id" class="comment-card">
+                <div class="comment-header">
+                  <div class="comment-user">
+                    <el-avatar :size="32">{{ comment.username?.charAt(0) }}</el-avatar>
+                    <span class="username">{{ comment.username }}</span>
+                  </div>
+                  <div class="comment-rating">
+                    <el-rate
+                      :model-value="comment.rating"
+                      disabled
+                      text-color="#ff9900"
+                      :allow-half="true"
+                    />
+                    <span class="rating-value">{{ comment.rating.toFixed(1) }}分</span>
+                  </div>
+                </div>
+                <div class="comment-content">{{ comment.content }}</div>
+                <div class="comment-footer">
+                  <span class="comment-time">{{ formatDate(comment.createdAt) }}</span>
+                  <el-button 
+                    v-if="comment.userId === currentUserId"
+                    type="danger" 
+                    size="small" 
+                    @click="handleDeleteComment(comment.id)"
+                  >
+                    删除
+                  </el-button>
+                </div>
+              </el-card>
+            </div>
+            <el-empty v-else description="暂无评价" />
+          </div>
+
+          <!-- 评论对话框 -->
+          <el-dialog
+            v-model="showCommentDialog"
+            title="写评价"
+            width="500px"
+            class="comment-dialog"
+          >
+            <el-form
+              ref="commentFormRef"
+              :model="commentForm"
+              :rules="commentRules"
+              label-width="80px"
+            >
+              <el-form-item label="评分" prop="rating">
+                <el-rate
+                  v-model="commentForm.rating"
+                  :max="5"
+                  :allow-half="true"
+                  :colors="['#ffd21e', '#ffd21e', '#ffd21e']"
+                />
+                <div class="rate-hint">（每半颗星代表1分，满分5分）</div>
+              </el-form-item>
+              <el-form-item label="评价内容" prop="content">
+                <el-input
+                  v-model="commentForm.content"
+                  type="textarea"
+                  :rows="4"
+                  placeholder="请输入您的评价内容（最多500字）"
+                  maxlength="500"
+                  show-word-limit
+                />
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <span class="dialog-footer">
+                <el-button @click="showCommentDialog = false">取消</el-button>
+                <el-button type="primary" @click="handleSubmitComment" :loading="submittingComment">
+                  提交评价
+                </el-button>
+              </span>
+            </template>
+          </el-dialog>
         </div>
       </div>
 
@@ -348,9 +453,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
   getProductById,
   updateProduct,
@@ -372,8 +477,10 @@ import {
   PriceTag,
   Picture,
   ShoppingCart,
+  ChatDotRound,
 } from "@element-plus/icons-vue";
 import ImageUploader from "../components/ImageUploader.vue";
+import { getComments, addComment, deleteComment, checkPurchaseStatus } from "../api/comment";
 
 const route = useRoute();
 const router = useRouter();
@@ -440,6 +547,49 @@ const isAdmin = ref(false);
 
 const submitting = ref(false);
 const stockSubmitting = ref(false);
+
+// 评论相关
+const comments = ref([]);
+const showCommentDialog = ref(false);
+const commentFormRef = ref(null);
+const submittingComment = ref(false);
+const canComment = ref(false);
+const currentUserId = ref(null);
+
+const commentForm = ref({
+  rating: 0,
+  content: ''
+});
+
+const commentRules = {
+  rating: [
+    { required: true, message: '请选择评分', trigger: 'change' },
+    { type: 'number', min: 0.5, max: 5, message: '评分必须在0.5-5分之间', trigger: 'change' }
+  ],
+  content: [
+    { required: true, message: '请输入评价内容', trigger: 'blur' },
+    { min: 1, max: 500, message: '评价内容长度必须在1-500字之间', trigger: 'blur' }
+  ]
+};
+
+// 计算平均评分
+const averageRating = computed(() => {
+  if (comments.value.length === 0) return 0;
+  const sum = comments.value.reduce((acc, comment) => acc + comment.rating, 0);
+  return sum / comments.value.length;
+});
+
+// 格式化日期
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
 
 // 获取用户信息并设置管理员状态
 const fetchUserInfo = async () => {
@@ -723,9 +873,106 @@ const goToCart = () => {
   router.push("/cart");
 };
 
+// 获取评论列表
+const fetchComments = async () => {
+  try {
+    const res = await getComments(route.params.id);
+    if (res.code === 200 || res.code === "200") {
+      comments.value = res.data;
+    }
+  } catch (error) {
+    console.error('获取评论列表失败:', error);
+    ElMessage.error('获取评论列表失败');
+  }
+};
+
+// 检查用户是否可以评论
+const checkCanComment = async () => {
+  try {
+    const username = localStorage.getItem('username');
+    if (!username) {
+      canComment.value = false;
+      return;
+    }
+
+    // 获取用户ID
+    const userRes = await getUserInfo(username);
+    if (userRes.code === 200 || userRes.code === "200") {
+      currentUserId.value = userRes.data.id;
+      // 检查购买状态
+      const purchaseRes = await checkPurchaseStatus(userRes.data.id, route.params.id);
+      if (purchaseRes.code === 200 || purchaseRes.code === "200") {
+        canComment.value = purchaseRes.data;
+      }
+    }
+  } catch (error) {
+    console.error('检查评论权限失败:', error);
+    canComment.value = false;
+  }
+};
+
+// 提交评论
+const handleSubmitComment = async () => {
+  if (!commentFormRef.value) return;
+
+  await commentFormRef.value.validate(async (valid) => {
+    if (valid) {
+      submittingComment.value = true;
+      try {
+        const res = await addComment(
+          currentUserId.value,
+          route.params.id,
+          commentForm.value.content,
+          commentForm.value.rating
+        );
+
+        if (res.code === 200 || res.code === "200") {
+          ElMessage.success('评价成功');
+          showCommentDialog.value = false;
+          commentForm.value = { rating: 0, content: '' };
+          await fetchComments();
+        } else {
+          throw new Error(res.msg || '评价失败');
+        }
+      } catch (error) {
+        console.error('提交评价失败:', error);
+        ElMessage.error(error.message || '提交评价失败');
+      } finally {
+        submittingComment.value = false;
+      }
+    }
+  });
+};
+
+// 删除评论
+const handleDeleteComment = async (commentId) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这条评价吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+
+    const res = await deleteComment(commentId, currentUserId.value);
+    if (res.code === 200 || res.code === "200") {
+      ElMessage.success('删除成功');
+      await fetchComments();
+    } else {
+      throw new Error(res.msg || '删除失败');
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除评价失败:', error);
+      ElMessage.error(error.message || '删除评价失败');
+    }
+  }
+};
+
 onMounted(() => {
   fetchProduct();
   fetchUserInfo();
+  fetchComments();
+  checkCanComment();
 });
 </script>
 
@@ -1257,5 +1504,123 @@ onMounted(() => {
   .action-buttons {
     flex-direction: column;
   }
+}
+
+.product-comments {
+  margin-top: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+}
+
+.comments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.comments-summary {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.average-rating {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rating-label {
+  font-size: 16px;
+  color: #606266;
+  font-weight: bold;
+}
+
+.rating-value {
+  color: #ff9900;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.comment-count {
+  color: #909399;
+  font-size: 14px;
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.comment-card {
+  transition: all 0.3s ease;
+}
+
+.comment-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.comment-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.username {
+  font-weight: bold;
+  color: #303133;
+}
+
+.comment-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comment-content {
+  color: #606266;
+  line-height: 1.6;
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #f9fafc;
+  border-radius: 4px;
+}
+
+.comment-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #ebeef5;
+}
+
+.comment-time {
+  color: #909399;
+  font-size: 13px;
+}
+
+.comment-dialog {
+  border-radius: 8px;
+}
+
+.rate-hint {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 5px;
 }
 </style>

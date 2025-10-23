@@ -79,7 +79,7 @@ const routes = [
   {
     path: '/payment/status',
     name: 'PaymentStatus',
-    component: () => import('../views/PaymentStatus.vue') q
+    component: () => import('../views/PaymentStatus.vue')
   },
   {
     path: '/orders',
