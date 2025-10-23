@@ -9,6 +9,9 @@
       <el-button type="text" @click="goToCart">
         <el-icon class="cart-icon"><ShoppingCart /></el-icon> 购物车
         <el-badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" />
+      </el-button>      <el-button v-if="!isAdmin" type="text" @click="goToWishList">
+        <el-icon class="wishlist-icon"><Star /></el-icon> 我的愿望单
+        <el-badge v-if="wishlistStore.wishlistCount > 0" :value="wishlistStore.wishlistCount" class="wishlist-badge" />
       </el-button>
       <el-button type="text" @click="goToOrders">我的订单</el-button>
       <el-button type="text" @click="goToProfile">个人信息</el-button>
@@ -27,12 +30,15 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getCartItems } from '../api/cart'
-import { ShoppingCart } from '@element-plus/icons-vue'
+import { ShoppingCart, Star } from '@element-plus/icons-vue'
+import { useWishListStore } from '../store/wishlist'
 
 const router = useRouter()
 const route = useRoute()
 const logined = ref(false)
 const cartCount = ref(0)
+
+const wishlistStore = useWishListStore()
 
 // 从localStorage获取用户角色
 const userRole = ref('')
@@ -45,15 +51,17 @@ onMounted(() => {
   
   if (logined.value) {
     fetchCartCount();
+    wishlistStore.fetchWishListCount();
     // 获取用户角色
     userRole.value = localStorage.getItem('userRole') || '';
   }
 })
 
-// 监听路由变化，在每次路由变化时更新购物车数量
+// 监听路由变化，在每次路由变化时更新购物车和愿望清单数量
 watch(() => route.path, () => {
   if (logined.value) {
     fetchCartCount();
+    wishlistStore.fetchWishListCount();
   }
 })
 
@@ -69,29 +77,14 @@ const fetchCartCount = async () => {
   }
 }
 
-const goToOrders = () => {
-  router.push('/orders')
-}
-
-const goToProducts = () => {
-  router.push('/products')
-}
-
-const goToCart = () => {
-  router.push('/cart')
-}
-
-const goToProfile = () => {
-  router.push('/profile')
-}
-
-const goToAdvertisements = () => {
-  router.push('/advertisements')
-}
-
-const goToAdsRecommend = () => {
-  router.push('/ads-recommend')
-}
+// 导航函数
+const goToProducts = () => router.push('/products')
+const goToCart = () => router.push('/cart')
+const goToOrders = () => router.push('/orders')
+const goToProfile = () => router.push('/profile')
+const goToWishList = () => router.push('/wishlist')
+const goToAdvertisements = () => router.push('/advertisements')
+const goToAdsRecommend = () => router.push('/ads-recommend')
 
 const logout = () => {
   logined.value = false
@@ -109,11 +102,11 @@ defineExpose({
   setLogined: (value) => {
     logined.value = value
     sessionStorage.setItem('logined', value.toString())
-    
-    if (value) {
-      // 登录时获取用户角色
+      if (value) {
+      // 登录时获取用户角色和更新数据
       userRole.value = localStorage.getItem('userRole') || '';
       fetchCartCount();
+      wishlistStore.fetchWishListCount();
     }
   }
 })
@@ -166,6 +159,15 @@ defineExpose({
 }
 
 .cart-badge {
+  margin-left: 5px;
+}
+
+.wishlist-icon {
+  margin-right: 4px;
+  font-size: 16px;
+}
+
+.wishlist-badge {
   margin-left: 5px;
 }
 

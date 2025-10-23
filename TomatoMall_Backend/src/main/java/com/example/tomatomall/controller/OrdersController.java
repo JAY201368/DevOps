@@ -82,7 +82,7 @@ public class OrdersController {
         // 1. 解析支付宝回调参数（通常是 application/x-www-form-urlencoded）
         Map<String, String> params = request.getParameterMap().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue()[0]));
-        System.out.println("params: " + params);
+
         // 2. 验证支付宝签名（防止伪造请求）
         boolean signVerified;
         try {
@@ -98,21 +98,16 @@ public class OrdersController {
 
         // 3. 处理业务逻辑（更新订单、减库存等）
         String tradeStatus = params.get("trade_status");
-        System.out.println("tradeStatus: " + tradeStatus);
         if ("TRADE_SUCCESS".equals(tradeStatus)) {
             String orderId = params.get("out_trade_no"); // 您的订单号
             String alipayTradeNo = params.get("trade_no"); // 支付宝交易号
             String amount = params.get("total_amount"); // 支付金额
 
-            try {
-                // 使用事务处理订单状态更新和库存扣减
-                orderService.handlePaymentCallback(orderId, alipayTradeNo, amount, tradeStatus);
-            } catch (Exception e) {
-                // 记录错误日志
-                e.printStackTrace();
-                response.getWriter().print("fail");
-                return;
-            }
+            // 更新订单状态（注意幂等性，防止重复处理）
+            orderService.updateOrderStatus(orderId, alipayTradeNo, amount);
+
+            // 扣减库存（建议加锁或乐观锁）
+            
         }
 
         // 4. 必须返回纯文本的 "success"（支付宝要求）
