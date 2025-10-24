@@ -5,7 +5,6 @@ import UserProfile from '../views/UserProfile.vue'
 import ProductList from '../views/ProductList.vue'
 import ProductDetail from '../views/ProductDetail.vue'
 import Cart from '../views/Cart.vue'
-import WishList from '../views/WishList.vue'
 import DbTest from '../views/DbTest.vue'
 import Advertisement from '../views/Advertisement.vue'
 import OrderList from '../views/OrderList.vue'
@@ -47,19 +46,12 @@ const routes = [
     name: 'ProductDetail',
     component: ProductDetail,
     meta: { requiresAuth: true }
-  },  {
+  },
+  {
     path: '/cart',
     name: 'Cart',
     component: Cart,
     meta: { requiresAuth: true }
-  },  {
-    path: '/wishlist',
-    name: 'WishList',
-    component: WishList,
-    meta: { 
-      requiresAuth: true,
-      requiresUser: true // 只允许普通用户访问
-    }
   },
   {
     path: '/advertisements',

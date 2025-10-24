@@ -44,4 +44,4 @@ alipay:
   charset: utf-8
   sign-type: RSA2
   notify-url:  http://localhost:8080/api/orders/notify
-  return-url:  http://localhost:5173/products
+  return-url:  http://localhost:5173/orders
