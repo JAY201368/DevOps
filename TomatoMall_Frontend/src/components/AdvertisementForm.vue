@@ -430,6 +430,7 @@ input, textarea {
   transition: all 0.3s;
   outline: none;
   background-color: #ffffff;
+  color: #333333;
 }
 
 input:focus, textarea:focus {

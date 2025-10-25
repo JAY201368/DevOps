@@ -107,15 +107,22 @@
                 :max="product.stockpile?.amount || 1"
                 size="large"
               />
-            </div>
-            <div class="action-buttons">
-              <el-button
+            </div>            <div class="action-buttons">              <el-button
                 type="primary"
                 size="large"
                 :disabled="product.stockpile?.amount <= 0"
                 @click="addToCart"
               >
                 <el-icon><ShoppingCart /></el-icon> 加入购物车
+              </el-button>              <el-button 
+                v-if="!isAdmin"
+                :type="isInWishList ? 'danger' : 'default'"
+                size="large"
+                @click="handleWishList"
+                :loading="wishlistLoading"
+              >
+                <el-icon><Star /></el-icon>
+                {{ isInWishList ? '已加入愿望单' : '加入愿望单' }}
               </el-button>
               <el-button size="large" @click="goToCart"> 查看购物车 </el-button>
             </div>
@@ -453,9 +460,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage } from "element-plus";
 import {
   getProductById,
   updateProduct,
@@ -466,8 +473,9 @@ import {
   createProduct,
   deleteProduct,
 } from "../api/product";
-import { addToCart as addProductToCart, getCartItems } from "../api/cart";
+import { addToCart as addProductToCart } from "../api/cart";
 import { getUserInfo } from "../api/user";
+import { addToWishList, removeFromWishList, checkInWishList } from "../api/wishlist";
 import {
   Edit,
   Goods,
@@ -477,7 +485,6 @@ import {
   PriceTag,
   Picture,
   ShoppingCart,
-  ChatDotRound,
 } from "@element-plus/icons-vue";
 import ImageUploader from "../components/ImageUploader.vue";
 import { getComments, addComment, deleteComment, checkPurchaseStatus } from "../api/comment";
@@ -491,6 +498,9 @@ const stockDialogVisible = ref(false);
 const productFormRef = ref(null);
 const stockFormRef = ref(null);
 const purchaseQuantity = ref(1);
+const isInWishList = ref(false);
+const wishlistLoading = ref(false);
+const wishlistStore = useWishListStore();
 
 const productForm = ref({
   id: "",
@@ -634,6 +644,9 @@ const fetchProduct = async () => {
   loading.value = true;
   try {
     console.log("开始获取商品详情，ID:", route.params.id);
+    
+    // 确保不重复检查愿望单状态
+    const isFirstLoad = !product.value;
 
     // 清除可能存在的缓存
     const cacheKey = `product_${route.params.id}`;
@@ -689,9 +702,13 @@ const fetchProduct = async () => {
         } catch (stockError) {
           console.error("获取库存信息失败", stockError);
         }
-      }
-    } else {
+      }    } else {
       ElMessage.error(res.msg || "获取商品详情失败");
+    }
+
+    // 在商品加载完成后检查愿望单状态
+    if (isFirstLoad) {
+      await checkWishListStatus();
     }
   } catch (error) {
     console.error("获取商品详情失败:", error);
@@ -844,7 +861,7 @@ const handleImageUploadError = (error) => {
   ElMessage.error("图片上传失败：" + (error.message || "未知错误"));
 };
 
-// 添加购物车
+// 加入购物车方法
 const addToCart = async () => {
   if (!product.value) return;
 
@@ -859,19 +876,6 @@ const addToCart = async () => {
         message: "成功加入购物车",
         duration: 300
       });
-      
-      // 更新购物车数量
-      try {
-        const cartResponse = await getCartItems();
-        if (cartResponse.code === '200' && cartResponse.data && cartResponse.data.items) {
-          // 触发全局事件，通知 AppHeader 更新购物车数量
-          window.dispatchEvent(new CustomEvent('cart-updated', {
-            detail: { count: cartResponse.data.items.length }
-          }));
-        }
-      } catch (error) {
-        console.error('更新购物车数量失败:', error);
-      }
     } else {
       ElMessage.error(response.msg || "加入购物车失败");
     }
@@ -984,8 +988,6 @@ const handleDeleteComment = async (commentId) => {
 onMounted(() => {
   fetchProduct();
   fetchUserInfo();
-  fetchComments();
-  checkCanComment();
 });
 </script>
 

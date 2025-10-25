@@ -29,13 +29,6 @@ request.interceptors.request.use(
       config.headers.token = token
     }
     
-    // 为购物车相关的请求禁用缓存
-    if (config.url.includes('/cart')) {
-      config.headers['Cache-Control'] = 'no-cache'
-      config.headers['Pragma'] = 'no-cache'
-      return config
-    }
-    
     // 只对GET请求使用缓存
     if (config.method.toLowerCase() === 'get') {
       const cacheKey = `${config.url}${JSON.stringify(config.params || {})}`;
@@ -70,8 +63,8 @@ request.interceptors.response.use(
     const res = response.data;
     console.log("API响应:", response.config.url, res);
     
-    // 缓存GET请求的成功响应，但排除购物车相关的请求
-    if (response.config.method.toLowerCase() === 'get' && !response.config.url.includes('/cart')) {
+    // 缓存GET请求的成功响应
+    if (response.config.method.toLowerCase() === 'get') {
       const cacheKey = `${response.config.url}${JSON.stringify(response.config.params || {})}`;
       cache.set(cacheKey, {
         data: res,
