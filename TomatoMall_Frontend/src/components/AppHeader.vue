@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getCartItems } from '../api/cart'
 import { ShoppingCart, Star } from '@element-plus/icons-vue'
@@ -54,6 +54,8 @@ onMounted(() => {
     wishlistStore.fetchWishListCount();
     // 获取用户角色
     userRole.value = localStorage.getItem('userRole') || '';
+    // 添加购物车更新事件监听
+    window.addEventListener('cart-updated', handleCartUpdate);
   }
 })
 
@@ -76,6 +78,26 @@ const fetchCartCount = async () => {
     console.error('获取购物车数量失败:', error);
   }
 }
+
+// 监听购物车更新事件
+const handleCartUpdate = (event) => {
+  cartCount.value = event.detail.count;
+}
+
+// 组件卸载时移除事件监听
+onUnmounted(() => {
+  window.removeEventListener('cart-updated', handleCartUpdate);
+})
+
+// 监听购物车更新事件
+const handleCartUpdate = (event) => {
+  cartCount.value = event.detail.count;
+}
+
+// 组件卸载时移除事件监听
+onUnmounted(() => {
+  window.removeEventListener('cart-updated', handleCartUpdate);
+})
 
 // 导航函数
 const goToProducts = () => router.push('/products')

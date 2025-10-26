@@ -473,7 +473,7 @@ import {
   createProduct,
   deleteProduct,
 } from "../api/product";
-import { addToCart as addProductToCart } from "../api/cart";
+import { addToCart as addProductToCart, getCartItems } from "../api/cart";
 import { getUserInfo } from "../api/user";
 import { addToWishList, removeFromWishList, checkInWishList } from "../api/wishlist";
 import {
@@ -861,7 +861,7 @@ const handleImageUploadError = (error) => {
   ElMessage.error("图片上传失败：" + (error.message || "未知错误"));
 };
 
-// 加入购物车方法
+// 添加购物车
 const addToCart = async () => {
   if (!product.value) return;
 
@@ -876,6 +876,19 @@ const addToCart = async () => {
         message: "成功加入购物车",
         duration: 300
       });
+      
+      // 更新购物车数量
+      try {
+        const cartResponse = await getCartItems();
+        if (cartResponse.code === '200' && cartResponse.data && cartResponse.data.items) {
+          // 触发全局事件，通知 AppHeader 更新购物车数量
+          window.dispatchEvent(new CustomEvent('cart-updated', {
+            detail: { count: cartResponse.data.items.length }
+          }));
+        }
+      } catch (error) {
+        console.error('更新购物车数量失败:', error);
+      }
     } else {
       ElMessage.error(response.msg || "加入购物车失败");
     }
