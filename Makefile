@@ -13,7 +13,10 @@ frontend:
 # Start the backend Spring Boot application
 backend:
 	@echo "Starting Backend..."
-	cd TomatoMall_Backend && exec mvn -B -q spring-boot:run
+	nohup ngrok http --url=stinkbug-perfect-lynx.ngrok-free.app 8080 > /dev/null 2>&1 &
+	@echo "Waiting for ngrok to start..."
+	sleep 2
+	cd TomatoMall_Backend && exec mvn -B -qspring-boot:run
 
 # Stop both services (using process name matching)
 stop:

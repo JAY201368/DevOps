@@ -9,7 +9,8 @@ import java.sql.Timestamp;
 import java.util.List;
 
 public interface OrderRepository extends JpaRepository<OrderPO, Long> {
-    List<OrderPO> findByUserId(Long userId);
+    @Query("SELECT o FROM OrderPO o WHERE o.userId = :userId ORDER BY o.createTime DESC")
+    List<OrderPO> findByUserId(@Param("userId") Long userId);
 
     @Query("SELECT o FROM OrderPO o WHERE o.status = 'PENDING' AND o.expireTime < :currentTime")
     List<OrderPO> findExpiredOrders(@Param("currentTime") Timestamp currentTime);

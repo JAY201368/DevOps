@@ -460,9 +460,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
+import { useWishListStore } from '../store/wishlist';
 import {
   getProductById,
   updateProduct,
@@ -995,6 +996,68 @@ const handleDeleteComment = async (commentId) => {
       console.error('删除评价失败:', error);
       ElMessage.error(error.message || '删除评价失败');
     }
+  }
+};
+
+// 检查商品是否在愿望单中
+const checkWishListStatus = async () => {
+  if (!product.value || !product.value.id) return;
+  
+  wishlistLoading.value = true;
+  try {
+    const username = localStorage.getItem('username');
+    if (!username) {
+      isInWishList.value = false;
+      return;
+    }
+
+    const res = await checkInWishList(username, product.value.id);
+    isInWishList.value = res.code === 200 || res.code === "200";
+  } catch (error) {
+    console.error('检查愿望单状态失败:', error);
+    isInWishList.value = false;
+  } finally {
+    wishlistLoading.value = false;
+  }
+};
+
+// 处理愿望单操作
+const handleWishList = async () => {
+  if (!product.value || !product.value.id) return;
+  
+  wishlistLoading.value = true;
+  try {
+    const username = localStorage.getItem('username');
+    if (!username) {
+      ElMessage.warning('请先登录');
+      router.push('/login');
+      return;
+    }
+
+    if (isInWishList.value) {
+      // 从愿望单中移除
+      const res = await removeFromWishList(username, product.value.id);
+      if (res.code === 200 || res.code === "200") {
+        isInWishList.value = false;
+        ElMessage.success('已从愿望单中移除');
+        // 更新愿望单状态
+        wishlistStore.removeFromWishList(product.value.id);
+      }
+    } else {
+      // 添加到愿望单
+      const res = await addToWishList(username, product.value.id);
+      if (res.code === 200 || res.code === "200") {
+        isInWishList.value = true;
+        ElMessage.success('已添加到愿望单');
+        // 更新愿望单状态
+        wishlistStore.addToWishList(product.value.id);
+      }
+    }
+  } catch (error) {
+    console.error('操作愿望单失败:', error);
+    ElMessage.error('操作失败，请稍后重试');
+  } finally {
+    wishlistLoading.value = false;
   }
 };
 

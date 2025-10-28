@@ -8,9 +8,9 @@ import com.alipay.api.request.AlipayTradePagePayRequest;
 import com.example.tomatomall.util.AliPay;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+@Service
 public class AliPayController {
     @Value("${alipay.app-id}")
     private String appId;

@@ -30,7 +30,7 @@ public class OrderPO {
     @Column(name = "status", nullable = false, length = 20)
     private String status = "PENDING";
 
-    @Column(name = "create_time", insertable = false, updatable = false)
+    @Column(name = "create_time", nullable = false)
     private Timestamp createTime;
 
     @Column(name = "receiver_name", length = 50)

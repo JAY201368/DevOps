@@ -183,63 +183,110 @@
       </div>
     </div>
 
-    <!-- 结算弹窗（简化版） -->
+    <!-- 结算弹窗 -->
     <el-dialog
       v-model="checkoutDialogVisible"
       title="确认订单"
-      width="400px"
+      width="600px"
       :close-on-click-modal="false"
+      class="checkout-dialog"
+      destroy-on-close
     >
-      <el-form
-        :model="shippingForm"
-        ref="shippingFormRef"
-        :rules="shippingRules"
-        label-width="80px"
-        style="margin-bottom: 10px"
-      >
-        <el-form-item label="收货人" prop="name">
-          <el-input v-model="shippingForm.name" autocomplete="off" />
-        </el-form-item>
-        <el-form-item label="手机号" prop="phone">
-          <el-input v-model="shippingForm.phone" autocomplete="off" />
-        </el-form-item>
-        <el-form-item label="邮编" prop="zipcode">
-          <el-input v-model="shippingForm.zipcode" autocomplete="off" />
-        </el-form-item>
-        <el-form-item label="地址" prop="address">
-          <el-input v-model="shippingForm.address" autocomplete="off" />
-        </el-form-item>
-      </el-form>
-      <div class="order-summary">
-        <div class="order-row">
-          <span class="label">用户名：</span>
-          <span class="value">{{ username }}</span>
+      <div class="checkout-container">
+        <!-- 收货信息表单 -->
+        <div class="checkout-section">
+          <div class="section-header">
+            <el-icon><Location /></el-icon>
+            <span>收货信息</span>
+          </div>
+          <el-form
+            :model="shippingForm"
+            ref="shippingFormRef"
+            :rules="shippingRules"
+            label-width="80px"
+            class="shipping-form"
+          >
+            <el-form-item label="收货人" prop="name">
+              <el-input v-model="shippingForm.name" placeholder="请输入收货人姓名" />
+            </el-form-item>
+            <el-form-item label="手机号" prop="phone">
+              <el-input v-model="shippingForm.phone" placeholder="请输入手机号码" />
+            </el-form-item>
+            <el-form-item label="邮编" prop="zipcode">
+              <el-input v-model="shippingForm.zipcode" placeholder="请输入邮政编码" />
+            </el-form-item>
+            <el-form-item label="地址" prop="address">
+              <el-input
+                v-model="shippingForm.address"
+                type="textarea"
+                :rows="2"
+                placeholder="请输入详细收货地址"
+              />
+            </el-form-item>
+          </el-form>
         </div>
-        <div class="order-row">
-          <span class="label">订单内容：</span>
-          <ul class="order-items">
-            <li v-for="item in cartItems" :key="item.cartItemId">
-              {{ item.title }} × {{ item.quantity }}
-            </li>
-          </ul>
-        </div>
-        <div class="order-row">
-          <span class="label">支付总金额：</span>
-          <span class="value price">¥{{ formatPrice(totalAmount) }}</span>
-        </div>
-        <div class="order-row">
-          <span class="label">支付方式：</span>
-          <span class="value">支付宝</span>
+
+        <!-- 订单信息 -->
+        <div class="checkout-section">
+          <div class="section-header">
+            <el-icon><Document /></el-icon>
+            <span>订单信息</span>
+          </div>
+          <div class="order-summary">
+            <div class="order-row">
+              <span class="label">用户名：</span>
+              <span class="value">{{ username }}</span>
+            </div>
+            <div class="order-row">
+              <span class="label">订单内容：</span>
+              <div class="order-items">
+                <div v-for="item in cartItems" :key="item.cartItemId" class="order-item">
+                  <el-image :src="item.cover" class="item-image" fit="cover">
+                    <template #error>
+                      <div class="image-error">
+                        <el-icon><Picture /></el-icon>
+                      </div>
+                    </template>
+                  </el-image>
+                  <div class="item-info">
+                    <div class="item-title">{{ item.title }}</div>
+                    <div class="item-meta">
+                      <span class="item-price">¥{{ formatPrice(item.price) }}</span>
+                      <span class="item-quantity">× {{ item.quantity }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="order-row total">
+              <span class="label">支付总金额：</span>
+              <span class="value price">¥{{ formatPrice(totalAmount) }}</span>
+            </div>
+            <div class="order-row">
+              <span class="label">支付方式：</span>
+              <span class="value payment-method">
+                <el-icon><Money /></el-icon>
+                支付宝
+              </span>
+            </div>
+          </div>
         </div>
       </div>
+
       <template #footer>
-        <el-button @click="checkoutDialogVisible = false">取消</el-button>
-        <el-button
-          type="primary"
-          :loading="checkoutLoading"
-          @click="handleCheckoutSubmit"
-          >提交订单</el-button
-        >
+        <div class="dialog-footer">
+          <el-button @click="checkoutDialogVisible = false" size="large">取消</el-button>
+          <el-button
+            type="primary"
+            size="large"
+            :loading="checkoutLoading"
+            @click="handleCheckoutSubmit"
+            class="submit-button"
+          >
+            <el-icon><Check /></el-icon>
+            提交订单
+          </el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -262,6 +309,11 @@ import {
   ArrowLeft,
   ShoppingCart,
   Delete,
+  Location,
+  Document,
+  Check,
+  Money,
+  Picture
 } from "@element-plus/icons-vue";
 import { pay } from "../api/order";
 
@@ -273,6 +325,11 @@ export default {
     ArrowLeft,
     ShoppingCart,
     Delete,
+    Location,
+    Document,
+    Check,
+    Money,
+    Picture
   },
   setup() {
     const router = useRouter();
@@ -1025,5 +1082,188 @@ export default {
   margin: 0;
   padding-left: 18px;
   list-style: disc;
+}
+
+/* 结算弹窗样式 */
+.checkout-dialog :deep(.el-dialog__header) {
+  background: linear-gradient(to right, #409EFF, #67C23A);
+  margin: 0;
+  padding: 20px;
+  border-radius: 8px 8px 0 0;
+}
+
+.checkout-dialog :deep(.el-dialog__title) {
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.checkout-dialog :deep(.el-dialog__headerbtn .el-dialog__close) {
+  color: white;
+}
+
+.checkout-dialog :deep(.el-dialog__body) {
+  padding: 0;
+}
+
+.checkout-container {
+  padding: 20px;
+}
+
+.checkout-section {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f0f2f5;
+  color: #303133;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.section-header .el-icon {
+  margin-right: 8px;
+  font-size: 20px;
+  color: #409EFF;
+}
+
+.shipping-form {
+  max-width: 100%;
+}
+
+.order-summary {
+  padding: 10px 0;
+}
+
+.order-row {
+  display: flex;
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.order-row .label {
+  color: #606266;
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.order-row .value {
+  color: #303133;
+  flex: 1;
+}
+
+.order-items {
+  flex: 1;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.order-item:last-child {
+  border-bottom: none;
+}
+
+.item-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  margin-right: 12px;
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-title {
+  font-size: 14px;
+  color: #303133;
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #909399;
+  font-size: 13px;
+}
+
+.item-price {
+  color: #f56c6c;
+  font-weight: bold;
+}
+
+.total {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 2px dashed #f0f2f5;
+}
+
+.total .price {
+  color: #f56c6c;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.payment-method {
+  display: flex;
+  align-items: center;
+  color: #409EFF;
+  font-weight: bold;
+}
+
+.payment-method .el-icon {
+  margin-right: 5px;
+  font-size: 18px;
+}
+
+.dialog-footer {
+  padding: 20px;
+  text-align: right;
+  background: #f8f9fa;
+  border-radius: 0 0 8px 8px;
+}
+
+.submit-button {
+  padding: 12px 30px;
+  font-size: 16px;
+}
+
+.submit-button .el-icon {
+  margin-right: 5px;
+}
+
+/* 自定义滚动条样式 */
+.order-items::-webkit-scrollbar {
+  width: 6px;
+}
+
+.order-items::-webkit-scrollbar-thumb {
+  background: #dcdfe6;
+  border-radius: 3px;
+}
+
+.order-items::-webkit-scrollbar-track {
+  background: #f5f7fa;
+  border-radius: 3px;
 }
 </style>

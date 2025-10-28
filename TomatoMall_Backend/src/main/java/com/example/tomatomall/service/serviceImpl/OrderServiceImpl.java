@@ -107,15 +107,14 @@ public class OrderServiceImpl implements OrderService {
             }
         }
     }
-    //无用的回调函数，因为库存已经在下单时扣减了
-    // @Override
-    // @Transactional
-    // public void handlePaymentCallback(String orderId, String alipayTradeNo, String amount, String tradeStatus) {
-    //     if ("TRADE_SUCCESS".equals(tradeStatus)) {
-    //         updateOrderStatus(orderId, alipayTradeNo, amount);
-    //         reduceStock(Long.parseLong(orderId));
-    //     }
-    // }
+    @Override
+    @Transactional
+    public void handlePaymentCallback(String orderId, String alipayTradeNo, String amount, String tradeStatus) {
+        if ("TRADE_SUCCESS".equals(tradeStatus)) {
+            updateOrderStatus(orderId, alipayTradeNo, amount);
+            reduceStock(Long.parseLong(orderId));
+        }
+    }
 
     @Override
     @Transactional
@@ -141,12 +140,40 @@ public class OrderServiceImpl implements OrderService {
         // 转换订单列表为VO
         return orders.stream().map(order -> {
             OrderVO orderVO = new OrderVO();
-            BeanUtils.copyProperties(order, orderVO);
+            // 先复制基本属性
+            orderVO.setOrderId(order.getOrderId());
+            orderVO.setUserId(order.getUserId());
+            orderVO.setTotalAmount(order.getTotalAmount());
+            orderVO.setPaymentMethod(order.getPaymentMethod());
+            orderVO.setStatus(order.getStatus());
+            orderVO.setReceiverName(order.getReceiverName());
+            orderVO.setReceiverPhone(order.getReceiverPhone());
+            orderVO.setReceiverZipcode(order.getReceiverZipcode());
+            orderVO.setReceiverAddress(order.getReceiverAddress());
+            orderVO.setShippingAddress(order.getShippingAddress());
+            orderVO.setAlipayTradeNo(order.getAlipayTradeNo());
+            
+            // 手动转换日期字段
+            if (order.getCreateTime() != null) {
+                orderVO.setCreateTime(order.getCreateTime().toLocalDateTime());
+            }
+            if (order.getUpdateTime() != null) {
+                orderVO.setUpdateTime(order.getUpdateTime().toLocalDateTime());
+            }
+            if (order.getExpireTime() != null) {
+                orderVO.setExpireTime(order.getExpireTime().toLocalDateTime());
+            }
             
             // 转换订单项
             List<OrderItemVO> orderItemVOs = order.getOrderItems().stream().map(item -> {
                 OrderItemVO itemVO = new OrderItemVO();
-                BeanUtils.copyProperties(item, itemVO);
+                itemVO.setId(item.getId());
+                itemVO.setOrderId(order.getOrderId().intValue());
+                itemVO.setProductId(item.getProductId());
+                itemVO.setQuantity(item.getQuantity());
+                itemVO.setPrice(item.getPrice());
+                itemVO.setProductTitle(item.getProductTitle());
+                itemVO.setProductCover(item.getProductCover());
                 // 计算小计金额
                 itemVO.setSubtotal(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
                 return itemVO;

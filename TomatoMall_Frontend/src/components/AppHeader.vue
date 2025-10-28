@@ -89,16 +89,6 @@ onUnmounted(() => {
   window.removeEventListener('cart-updated', handleCartUpdate);
 })
 
-// 监听购物车更新事件
-const handleCartUpdate = (event) => {
-  cartCount.value = event.detail.count;
-}
-
-// 组件卸载时移除事件监听
-onUnmounted(() => {
-  window.removeEventListener('cart-updated', handleCartUpdate);
-})
-
 // 导航函数
 const goToProducts = () => router.push('/products')
 const goToCart = () => router.push('/cart')

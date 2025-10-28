@@ -79,10 +79,10 @@ public class OrdersController {
 
     @PostMapping("/notify")
     public void handleAlipayNotify(HttpServletRequest request, HttpServletResponse response) throws IOException{
+        System.out.println("handleAlipayNotify");
         // 1. 解析支付宝回调参数（通常是 application/x-www-form-urlencoded）
         Map<String, String> params = request.getParameterMap().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue()[0]));
-        System.out.println("params: " + params);
         // 2. 验证支付宝签名（防止伪造请求）
         boolean signVerified;
         try {
@@ -98,7 +98,6 @@ public class OrdersController {
 
         // 3. 处理业务逻辑（更新订单、减库存等）
         String tradeStatus = params.get("trade_status");
-        System.out.println("tradeStatus: " + tradeStatus);
         if ("TRADE_SUCCESS".equals(tradeStatus)) {
             String orderId = params.get("out_trade_no"); // 您的订单号
             String alipayTradeNo = params.get("trade_no"); // 支付宝交易号

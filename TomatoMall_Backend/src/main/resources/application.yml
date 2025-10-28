@@ -43,5 +43,5 @@ alipay:
   server-url: https://openapi-sandbox.dl.alipaydev.com/gateway.do
   charset: utf-8
   sign-type: RSA2
-  notify-url:  http://localhost:8080/api/orders/notify
-  return-url:  http://localhost:5173/orders
+  notify-url: https://stinkbug-perfect-lynx.ngrok-free.app/api/orders/notify
+  return-url: http://localhost:5173/orders

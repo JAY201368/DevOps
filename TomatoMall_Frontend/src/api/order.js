@@ -3,7 +3,11 @@ import request from '../utils/request';
 export function getOrders() {
   return request({
     url: '/api/orders',
-    method: 'get'
+    method: 'get',
+    headers: {
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
+    }
   })
 }
 
