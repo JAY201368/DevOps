@@ -67,16 +67,6 @@ public class CommentServiceImpl implements CommentService {
             throw new TomatoMallException(400, "评分必须在0-5分之间");
         }
 
-        // 检查用户是否已购买商品
-        if (!checkUserPurchaseStatus(userId, productId)) {
-            throw new TomatoMallException(403, "您需要购买该商品后才能评论");
-        }
-
-        // 检查用户是否已评论过
-        if (commentRepository.existsByUserIdAndProductIdAndStatus(userId, productId, 1)) {
-            throw new TomatoMallException(409, "您已经评论过该商品");
-        }
-
         // 创建评论
         CommentPO comment = new CommentPO();
         comment.setUserId(userId);
@@ -115,6 +105,11 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public boolean checkUserPurchaseStatus(Long userId, Long productId) {
-        return commentRepository.hasUserPurchasedProduct(userId, productId);
+        try {
+            return commentRepository.hasUserPurchasedProduct(userId, productId);
+        } catch (Exception e) {
+            e.printStackTrace(); // 打印详细错误信息
+            throw new TomatoMallException(500, "检查购买状态失败：" + e.getMessage());
+        }
     }
 } 

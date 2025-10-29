@@ -85,15 +85,15 @@ body {
 /* 全局Live2D定位样式 */
 .global-live2d {
   position: fixed;
-  bottom: 0;
-  right: 30px;
-  z-index: 1000;
+  bottom: 20px; /* 增加底部距离 */
+  right: 20px; /* 增加右侧距离 */
+  z-index: 999; /* 降低层级，确保不会遮挡重要按钮 */
   pointer-events: none; /* 防止Live2D阻挡下方内容的点击 */
-  width: 280px;
-  height: 350px;
-  transform: scale(0.95); /* 额外微调整体大小 */
+  width: 200px; /* 减小宽度 */
+  height: 250px; /* 减小高度 */
+  transform: scale(0.8); /* 进一步缩小整体大小 */
   transform-origin: bottom right;
-  opacity: 0.95; /* 略微透明以减少视觉干扰 */
+  opacity: 0.9; /* 略微增加透明度 */
 }
 
 .global-live2d > * {

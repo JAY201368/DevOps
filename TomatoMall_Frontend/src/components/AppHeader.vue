@@ -5,23 +5,36 @@
       <h1 class="site-title">番茄线上书城</h1>
     </div>
     <div class="nav-buttons" v-if="logined">
-      <el-button type="text" @click="goToProducts">商品列表</el-button>
+      <el-button type="text" @click="goToProducts">
+        <el-icon><Goods /></el-icon> 商品列表
+      </el-button>
       <el-button type="text" @click="goToCart">
         <el-icon class="cart-icon"><ShoppingCart /></el-icon> 购物车
         <el-badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" />
-      </el-button>      <el-button v-if="!isAdmin" type="text" @click="goToWishList">
+      </el-button>
+      <el-button v-if="!isAdmin" type="text" @click="goToWishList">
         <el-icon class="wishlist-icon"><Star /></el-icon> 我的愿望单
         <el-badge v-if="wishlistStore.wishlistCount > 0" :value="wishlistStore.wishlistCount" class="wishlist-badge" />
       </el-button>
-      <el-button type="text" @click="goToOrders">我的订单</el-button>
-      <el-button type="text" @click="goToProfile">个人信息</el-button>
+      <el-button type="text" @click="goToOrders">
+        <el-icon><Document /></el-icon> 我的订单
+      </el-button>
+      <el-button type="text" @click="goToProfile">
+        <el-icon><User /></el-icon> 个人信息
+      </el-button>
       
       <!-- 根据用户角色显示不同的广告相关菜单 -->
-      <el-button v-if="isAdmin" type="text" @click="goToAdvertisements">广告管理</el-button>
-      <el-button v-else type="text" @click="goToAdsRecommend">广告推荐</el-button>
+      <el-button v-if="isAdmin" type="text" @click="goToAdvertisements">
+        <el-icon><Setting /></el-icon> 广告管理
+      </el-button>
+      <el-button v-else type="text" @click="goToAdsRecommend">
+        <el-icon><Bell /></el-icon> 广告推荐
+      </el-button>
     </div>
     <div class="user-actions" v-if="logined">
-      <el-button type="text" @click="logout">退出登录</el-button>
+      <el-button type="text" @click="logout">
+        <el-icon><SwitchButton /></el-icon> 退出登录
+      </el-button>
     </div>
   </div>
 </template>
@@ -30,7 +43,7 @@
 import { ref, onMounted, watch, computed, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getCartItems } from '../api/cart'
-import { ShoppingCart, Star } from '@element-plus/icons-vue'
+import { ShoppingCart, Star, Goods, Document, User, Setting, Bell, SwitchButton } from '@element-plus/icons-vue'
 import { useWishListStore } from '../store/wishlist'
 
 const router = useRouter()
@@ -114,7 +127,7 @@ defineExpose({
   setLogined: (value) => {
     logined.value = value
     sessionStorage.setItem('logined', value.toString())
-      if (value) {
+    if (value) {
       // 登录时获取用户角色和更新数据
       userRole.value = localStorage.getItem('userRole') || '';
       fetchCartCount();
@@ -164,6 +177,11 @@ defineExpose({
   padding: 0 10px;
   display: flex;
   align-items: center;
+  gap: 5px;
+}
+
+.nav-buttons .el-icon {
+  font-size: 18px;
 }
 
 .cart-icon {

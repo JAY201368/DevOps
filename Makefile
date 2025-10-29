@@ -15,7 +15,6 @@ backend:
 	@echo "Starting Backend..."
 	nohup ngrok http --url=stinkbug-perfect-lynx.ngrok-free.app 8080 > /dev/null 2>&1 &
 	@echo "Waiting for ngrok to start..."
-	sleep 2
 	cd TomatoMall_Backend && exec mvn -B -qspring-boot:run
 
 # Stop both services (using process name matching)

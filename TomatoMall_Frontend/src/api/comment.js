@@ -18,7 +18,7 @@ export function addComment(userId, productId, content, rating) {
   return request({
     url: '/api/comments/add',
     method: 'post',
-    params: {
+    data: {
       userId,
       productId,
       content,

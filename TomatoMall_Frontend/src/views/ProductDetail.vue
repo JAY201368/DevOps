@@ -38,15 +38,19 @@
           <div class="product-title">
             <h2>{{ product.title }}</h2>
             <div class="product-rating">
-              <el-rate
-                :model-value="Number(product.rate) / 2"
-                disabled
-                text-color="#ff9900"
-                :allow-half="true"
-              />
-              <span class="product-score"
-                >{{ Number(product.rate).toFixed(1) }}分</span
-              >
+              <template v-if="comments.length > 0">
+                <el-rate
+                  :model-value="averageRating"
+                  disabled
+                  text-color="#ff9900"
+                  :allow-half="true"
+                />
+                <span class="product-score">{{ averageRating.toFixed(1) }}分</span>
+                <span class="comment-count">({{ comments.length }}条评价)</span>
+              </template>
+              <template v-else>
+                <span class="no-rating">暂无评分</span>
+              </template>
             </div>
           </div>
 
@@ -208,8 +212,7 @@
               </div>
               <el-button 
                 type="primary" 
-                @click="showCommentDialog = true"
-                :disabled="!canComment"
+                @click="handleCommentClick"
               >
                 <el-icon><Edit /></el-icon> 写评价
               </el-button>
@@ -460,7 +463,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useWishListStore } from '../store/wishlist';
@@ -907,13 +910,20 @@ const goToCart = () => {
 // 获取评论列表
 const fetchComments = async () => {
   try {
+    console.log('开始获取评论列表，商品ID:', route.params.id);
     const res = await getComments(route.params.id);
+    console.log('获取评论列表响应:', res);
+    
     if (res.code === 200 || res.code === "200") {
       comments.value = res.data;
+      console.log('更新评论列表成功，评论数量:', comments.value.length);
+    } else {
+      console.error('获取评论列表失败:', res.msg);
+      ElMessage.error(res.msg || '获取评论列表失败');
     }
   } catch (error) {
-    console.error('获取评论列表失败:', error);
-    ElMessage.error('获取评论列表失败');
+    console.error('获取评论列表出错:', error);
+    ElMessage.error('获取评论列表失败，请刷新页面重试');
   }
 };
 
@@ -961,6 +971,7 @@ const handleSubmitComment = async () => {
           ElMessage.success('评价成功');
           showCommentDialog.value = false;
           commentForm.value = { rating: 0, content: '' };
+          // 重新获取评论列表
           await fetchComments();
         } else {
           throw new Error(res.msg || '评价失败');
@@ -987,6 +998,7 @@ const handleDeleteComment = async (commentId) => {
     const res = await deleteComment(commentId, currentUserId.value);
     if (res.code === 200 || res.code === "200") {
       ElMessage.success('删除成功');
+      // 重新获取评论列表
       await fetchComments();
     } else {
       throw new Error(res.msg || '删除失败');
@@ -1061,9 +1073,50 @@ const handleWishList = async () => {
   }
 };
 
-onMounted(() => {
-  fetchProduct();
-  fetchUserInfo();
+// 在 script setup 部分添加处理函数
+const handleCommentClick = async () => {
+  const username = localStorage.getItem('username');
+  if (!username) {
+    ElMessage.warning('请先登录后再评价');
+    router.push('/login');
+    return;
+  }
+
+  try {
+    const userRes = await getUserInfo(username);
+    if (userRes.code === 200 || userRes.code === "200") {
+      currentUserId.value = userRes.data.id;
+      // 检查购买状态
+      const purchaseRes = await checkPurchaseStatus(userRes.data.id, route.params.id);
+      if (purchaseRes.code === 200 || purchaseRes.code === "200") {
+        if (purchaseRes.data) {
+          showCommentDialog.value = true;
+        } else {
+          ElMessage.warning('购买后才能评价哦');
+        }
+      }
+    }
+  } catch (error) {
+    console.error('检查评论权限失败:', error);
+    ElMessage.error('检查评论权限失败');
+  }
+};
+
+// 添加路由监听，确保每次进入页面都刷新评论
+watch(
+  () => route.params.id,
+  async (newId) => {
+    if (newId) {
+      console.log('商品ID变化，重新获取评论列表');
+      await fetchComments();
+    }
+  }
+);
+
+onMounted(async () => {
+  await fetchProduct();
+  await fetchUserInfo();
+  await fetchComments(); // 确保在组件挂载时获取评论
 });
 </script>
 
@@ -1200,6 +1253,18 @@ onMounted(() => {
   margin-left: 10px;
   color: #ff9900;
   font-weight: bold;
+}
+
+.comment-count {
+  margin-left: 10px;
+  color: #909399;
+  font-size: 14px;
+}
+
+.no-rating {
+  color: #909399;
+  font-size: 14px;
+  font-style: italic;
 }
 
 .divider-icon {

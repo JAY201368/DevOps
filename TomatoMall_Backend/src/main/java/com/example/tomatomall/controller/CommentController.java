@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/comments")
@@ -41,18 +42,20 @@ public class CommentController {
      * POST /api/comments/add
      */
     @PostMapping("/add")
-    public ResultVO<CommentVO> addComment(
-            @RequestParam Long userId,
-            @RequestParam Long productId,
-            @RequestParam String content,
-            @RequestParam Double rating) {
+    public ResultVO<CommentVO> addComment(@RequestBody Map<String, Object> requestBody) {
         try {
+            Long userId = Long.parseLong(requestBody.get("userId").toString());
+            Long productId = Long.parseLong(requestBody.get("productId").toString());
+            String content = requestBody.get("content").toString();
+            Double rating = Double.parseDouble(requestBody.get("rating").toString());
+
             CommentVO comment = commentService.addComment(userId, productId, content, rating);
             return ResultVO.buildSuccess(comment);
         } catch (TomatoMallException e) {
             return ResultVO.buildFailure(e.getMessage(), e.getCode().toString());
         } catch (Exception e) {
-            return ResultVO.buildFailure("服务器内部错误", "500");
+            e.printStackTrace(); // 打印详细错误信息
+            return ResultVO.buildFailure("服务器内部错误: " + e.getMessage(), "500");
         }
     }
 
