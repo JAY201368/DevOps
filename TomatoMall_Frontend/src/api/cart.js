@@ -7,7 +7,7 @@ import request from './request';
  */
 export function addToCart(data) {
   return request({
-    url: '/cart',
+    url: '/api/cart',
     method: 'post',
     data
   });
@@ -20,7 +20,7 @@ export function addToCart(data) {
  */
 export function removeFromCart(cartItemId) {
   return request({
-    url: `/cart/${cartItemId}`,
+    url: `/api/cart/${cartItemId}`,
     method: 'delete'
   });
 }
@@ -33,7 +33,7 @@ export function removeFromCart(cartItemId) {
  */
 export function updateCartItemQuantity(cartItemId, quantity) {
   return request({
-    url: `/cart/${cartItemId}`,
+    url: `/api/cart/${cartItemId}`,
     method: 'patch',
     data: { quantity }
   });
@@ -45,7 +45,7 @@ export function updateCartItemQuantity(cartItemId, quantity) {
  */
 export function getCartItems() {
   return request({
-    url: '/cart',
+    url: '/api/cart',
     method: 'get',
     headers: {
       'Cache-Control': 'no-cache' // 禁用缓存，确保获取最新数据
@@ -55,7 +55,7 @@ export function getCartItems() {
 
 export function checkoutCart(data) {
   return request({
-    url: '/cart/checkout',
+    url: '/api/cart/checkout',
     method: 'post',
     data
   });

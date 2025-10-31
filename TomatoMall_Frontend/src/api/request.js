@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 
 // 创建请求实例
 const request = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: 'http://localhost:8080',
   timeout: 10000,
   // 启用HTTP持久连接
   keepAlive: true,
@@ -11,7 +11,8 @@ const request = axios.create({
   withCredentials: false,
   // 添加HTTP请求头以优化性能
   headers: {
-    'Cache-Control': 'max-age=60', // 启用缓存
+    'Cache-Control': 'no-cache', // 禁用缓存
+    'Pragma': 'no-cache',
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   }
@@ -21,6 +22,12 @@ const request = axios.create({
 const cache = new Map();
 const CACHE_DURATION = 30 * 1000; // 30秒缓存
 
+// 清除所有缓存
+export const clearCache = () => {
+  cache.clear();
+  console.log('已清除所有API请求缓存');
+};
+
 // 请求拦截器
 request.interceptors.request.use(
   config => {
@@ -29,15 +36,15 @@ request.interceptors.request.use(
       config.headers.token = token
     }
     
-    // 为购物车相关的请求禁用缓存
-    if (config.url.includes('/cart')) {
-      config.headers['Cache-Control'] = 'no-cache'
-      config.headers['Pragma'] = 'no-cache'
-      return config
-    }
+    // 为所有请求禁用缓存
+    config.headers['Cache-Control'] = 'no-cache';
+    config.headers['Pragma'] = 'no-cache';
     
-    // 只对GET请求使用缓存
-    if (config.method.toLowerCase() === 'get') {
+    // 检查是否是推荐相关的URL
+    const isRecommendationUrl = config.url.includes('/recommendations');
+    
+    // 只对GET请求使用缓存，且排除推荐相关的请求
+    if (config.method.toLowerCase() === 'get' && !isRecommendationUrl) {
       const cacheKey = `${config.url}${JSON.stringify(config.params || {})}`;
       const cachedData = cache.get(cacheKey);
       
@@ -70,8 +77,14 @@ request.interceptors.response.use(
     const res = response.data;
     console.log("API响应:", response.config.url, res);
     
-    // 缓存GET请求的成功响应，但排除购物车相关的请求
-    if (response.config.method.toLowerCase() === 'get' && !response.config.url.includes('/cart')) {
+    // 检查是否是推荐相关的URL
+    const isRecommendationUrl = response.config.url.includes('/recommendations');
+    
+    // 缓存GET请求的成功响应，但排除推荐、购物车和愿望单相关的请求
+    if (response.config.method.toLowerCase() === 'get' && 
+        !isRecommendationUrl &&
+        !response.config.url.includes('/cart') && 
+        !response.config.url.includes('/wishlist')) {
       const cacheKey = `${response.config.url}${JSON.stringify(response.config.params || {})}`;
       cache.set(cacheKey, {
         data: res,

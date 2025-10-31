@@ -15,14 +15,14 @@ export const getAllProducts = async () => {
 
 export function getProductById(id) {
   return request({
-    url: `/products/${id}`,
+    url: `/api/products/${id}`,
     method: 'get'
   });
 }
 
 export function createProduct(data) {
   return request({
-    url: '/products',
+    url: '/api/products',
     method: 'post',
     data
   });
@@ -30,7 +30,7 @@ export function createProduct(data) {
 
 export function updateProduct(data) {
   return request({
-    url: '/products',
+    url: '/api/products',
     method: 'put',
     data
   });
@@ -38,7 +38,7 @@ export function updateProduct(data) {
 
 export function updateProductBasicInfo(data) {
   return request({
-    url: '/products/basic',
+    url: '/api/products/basic',
     method: 'post',
     data
   });
@@ -46,7 +46,7 @@ export function updateProductBasicInfo(data) {
 
 export function updateProductBasicOnly(data) {
   return request({
-    url: '/products/basic-only',
+    url: '/api/products/basic-only',
     method: 'post',
     data
   });
@@ -54,14 +54,14 @@ export function updateProductBasicOnly(data) {
 
 export function deleteProduct(id) {
   return request({
-    url: `/products/${id}`,
+    url: `/api/products/${id}`,
     method: 'delete'
   });
 }
 
 export function updateStockpile(productId, amount) {
   return request({
-    url: `/products/stockpile/${productId}`,
+    url: `/api/products/stockpile/${productId}`,
     method: 'patch',
     data: { amount }
   });
@@ -69,14 +69,14 @@ export function updateStockpile(productId, amount) {
 
 export function getStockpile(productId) {
   return request({
-    url: `/products/stockpile/${productId}`,
+    url: `/api/products/stockpile/${productId}`,
     method: 'get'
   });
 }
 
 export function getProductDetails(id) {
   return request({
-    url: `/products/${id}`,
+    url: `/api/products/${id}`,
     method: 'get',
     headers: {
       'Cache-Control': 'no-cache',

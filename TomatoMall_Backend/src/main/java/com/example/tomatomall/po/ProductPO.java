@@ -49,7 +49,19 @@ public class ProductPO {
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private SpecificationPO specification;
 
+    // 添加tags字段，用于存储书籍标签
+    private String tags;
+
     public SpecificationPO getSpecification() {
         return specification;
+    }
+
+    // 添加tags的getter和setter方法
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
     }
 }

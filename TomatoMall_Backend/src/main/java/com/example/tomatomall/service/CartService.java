@@ -10,5 +10,5 @@ public interface CartService {
     String removeFromCart(Long userId, Long cartItemId);
     String updateCartItemQuantity(Long userId, Long cartItemId, Integer quantity);
     CartVO getCartItems(Long userId);
-    OrderVO checkout(Long userId, List<String> cartItemIds, String receiverName, String receiverPhone, String receiverZipcode, String receiverAddress, String paymentMethod);
+    OrderVO checkout(Long userId, List<String> cartItemIds, String receiverName, String receiverPhone, String receiverZipcode, String receiverAddress, String paymentMethod, Long couponId);
 }

@@ -130,6 +130,12 @@ public class CartController {
             List<String> cartItemIds = (List<String>) requestBody.get("cartItemIds");
             Map<String, Object> shippingAddressObj = (Map<String, Object>) requestBody.get("shipping_address");
             String paymentMethod = requestBody.get("payment_method").toString();
+            
+            // 获取促销券ID（如果有）
+            Long couponId = null;
+            if (requestBody.containsKey("couponId") && requestBody.get("couponId") != null) {
+                couponId = Long.parseLong(requestBody.get("couponId").toString());
+            }
 
             String receiverName = shippingAddressObj.getOrDefault("name", "").toString();
             String receiverPhone = shippingAddressObj.getOrDefault("phone", "").toString();
@@ -143,7 +149,8 @@ public class CartController {
                 receiverPhone,
                 receiverZipcode,
                 receiverAddress,
-                paymentMethod
+                paymentMethod,
+                couponId
             );
             return ResultVO.buildSuccess(orderVO);
         } catch (TomatoMallException e) {

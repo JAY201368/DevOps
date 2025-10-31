@@ -8,12 +8,14 @@ import com.example.tomatomall.po.StockpilePO;
 import com.example.tomatomall.repository.CartItemRepository;
 import com.example.tomatomall.repository.ProductRepository;
 import com.example.tomatomall.service.CartService;
+import com.example.tomatomall.service.CouponService;
 import com.example.tomatomall.vo.CartItemVO;
 import com.example.tomatomall.vo.CartVO;
 import com.example.tomatomall.vo.OrderItemVO;
 import com.example.tomatomall.po.OrderPO;
 import com.example.tomatomall.repository.OrderRepository;
 import com.example.tomatomall.vo.OrderVO;
+import com.example.tomatomall.vo.UserCouponVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,9 @@ public class CartServiceImpl implements CartService {
 
     @Autowired
     private OrderRepository orderRepository;
+    
+    @Autowired
+    private CouponService couponService;
 
     @Override
     @Transactional
@@ -161,7 +166,7 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public OrderVO checkout(Long userId, List<String> cartItemIds, String receiverName,
-            String receiverPhone, String receiverZipcode, String receiverAddress, String paymentMethod) {
+            String receiverPhone, String receiverZipcode, String receiverAddress, String paymentMethod, Long couponId) {
         // 1. 查询购物车商品
         List<Long> cartItemIdList = cartItemIds.stream().map(Long::parseLong).collect(Collectors.toList());
         List<CartItemPO> cartItems = cartItemRepository.findAllById(cartItemIdList);
@@ -180,7 +185,38 @@ public class CartServiceImpl implements CartService {
             totalAmount = totalAmount.add(product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         }
 
-        // 3. 扣减库存
+        // 3. 处理促销券
+        UserCouponVO usedCoupon = null;
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        if (couponId != null) {
+            try {
+                // 检查促销券是否可用
+                UserCouponVO userCoupon = couponService.getUserCouponById(couponId);
+                if (userCoupon == null) {
+                    throw new TomatoMallException(400, "促销券不存在");
+                }
+                
+                // 验证促销券最低订单金额
+                BigDecimal minOrderAmount = userCoupon.getCoupon().getMinOrderAmount();
+                if (totalAmount.compareTo(minOrderAmount) < 0) {
+                    throw new TomatoMallException(400, "订单金额未达到促销券使用门槛");
+                }
+                
+                // 使用促销券
+                discountAmount = userCoupon.getCoupon().getDiscountAmount();
+                usedCoupon = userCoupon;
+            } catch (Exception e) {
+                throw new TomatoMallException(400, "使用促销券失败: " + e.getMessage());
+            }
+        }
+        
+        // 计算优惠后的实际支付金额
+        BigDecimal finalAmount = totalAmount.subtract(discountAmount);
+        if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
+            finalAmount = BigDecimal.ZERO;
+        }
+
+        // 4. 扣减库存
         for (CartItemPO item : cartItems) {
             ProductPO product = productRepository.findById(item.getProductId()).get();
             StockpilePO stockpile = product.getStockpile();
@@ -188,10 +224,14 @@ public class CartServiceImpl implements CartService {
             // 保存库存
             productRepository.save(product);
         }
-        // 4. 创建订单
+        
+        // 5. 创建订单
         OrderPO order = new OrderPO();
         order.setUserId(userId);
-        order.setTotalAmount(totalAmount);
+        order.setOriginalAmount(totalAmount);  // 原始金额
+        order.setDiscountAmount(discountAmount);  // 优惠金额
+        order.setTotalAmount(finalAmount);  // 实际支付金额
+        
         // 支付方式统一转换为后端识别的格式
         if ("Alipay".equalsIgnoreCase(paymentMethod)) {
             order.setPaymentMethod("支付宝");
@@ -206,6 +246,7 @@ public class CartServiceImpl implements CartService {
         order.setReceiverPhone(receiverPhone);
         order.setReceiverZipcode(receiverZipcode);
         order.setReceiverAddress(receiverAddress);
+        
         // 添加订单项
         List<OrderItemVO> orderItemVOs = new ArrayList<>();
         for (CartItemPO cartItem : cartItems) {
@@ -230,13 +271,20 @@ public class CartServiceImpl implements CartService {
 
         try {
             order = orderRepository.save(order);
+            
+            // 6. 标记促销券为已使用
+            if (usedCoupon != null) {
+                couponService.useCoupon(usedCoupon.getId(), userId, order.getOrderId(), totalAmount);
+            }
         } catch (Exception e) {
             e.printStackTrace(); // 打印详细异常
             throw new RuntimeException("保存订单失败: " + e.getMessage(), e);
         }
-        // 5. 删除已结算购物车项
+        
+        // 7. 删除已结算购物车项
         cartItemRepository.deleteAll(cartItems);
-        // 6. 返回OrderVO
+        
+        // 8. 返回OrderVO
         OrderVO orderVO = new OrderVO();
         BeanUtils.copyProperties(order, orderVO);
         orderVO.setOrderItems(orderItemVOs);

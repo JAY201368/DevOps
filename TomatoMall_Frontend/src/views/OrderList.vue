@@ -32,38 +32,38 @@
                 class="error-alert"
             />
 
-        <!-- 订单状态筛选 -->
+            <!-- 订单状态筛选 -->
             <div v-if="!loading && !error" class="status-filter">
                 <el-radio-group v-model="currentStatus" @change="handleStatusChange" size="large">
-                <el-radio-button label="all">全部订单</el-radio-button>
-                <el-radio-button label="PENDING">待支付</el-radio-button>
-                <el-radio-button label="SUCCESS">已支付</el-radio-button>
-                <el-radio-button label="CANCELLED">已取消</el-radio-button>
-            </el-radio-group>
-        </div>
+                    <el-radio-button label="all">全部订单</el-radio-button>
+                    <el-radio-button label="PENDING">待支付</el-radio-button>
+                    <el-radio-button label="SUCCESS">已支付</el-radio-button>
+                    <el-radio-button label="CANCELLED">已取消</el-radio-button>
+                </el-radio-group>
+            </div>
 
-        <!-- 订单列表 -->
+            <!-- 订单列表 -->
             <div v-if="!loading && !error" class="order-items">
                 <el-card v-for="order in filteredOrders" 
                         :key="order.orderId" 
                         class="order-item"
                         shadow="hover"
                         @click="handleViewDetails(order)">
-                <div class="order-header">
+                    <div class="order-header">
                         <div class="order-info">
                             <span class="order-time">
                                 <el-icon><Clock /></el-icon>
                                 下单时间：{{ formatDate(order.createTime) }}
-                    </span>
+                            </span>
                         </div>
                         <el-tag :type="getStatusType(order.status)" 
                                effect="dark" 
                                class="order-status">
                             {{ getStatusText(order.status) }}
                         </el-tag>
-                </div>
+                    </div>
 
-                <div class="order-products">
+                    <div class="order-products">
                         <div v-for="item in order.orderItems" 
                              :key="item.id" 
                              class="product-item">
@@ -76,40 +76,40 @@
                                     </div>
                                 </template>
                             </el-image>
-                        <div class="product-info">
-                            <div class="product-title">{{ item.productTitle }}</div>
+                            <div class="product-info">
+                                <div class="product-title">{{ item.productTitle }}</div>
                                 <div class="product-meta">
                                     <span class="product-price">
                                         <span class="currency">¥</span>{{ item.price }}
                                     </span>
                                     <span class="product-quantity">× {{ item.quantity }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="order-footer">
-                    <div class="order-total">
+                    <div class="order-footer">
+                        <div class="order-total">
                             <span class="total-label">订单总额：</span>
                             <span class="total-price">
                                 <span class="currency">¥</span>{{ order.totalAmount }}
                             </span>
-                    </div>
-                    <div class="order-actions">
+                        </div>
+                        <div class="order-actions">
                             <el-button v-if="order.status === 'PENDING'" 
                                      type="primary" 
                                      size="large"
                                      @click.stop="handlePay(order)">
                                 <el-icon><Wallet /></el-icon>
-                            立即支付
-                        </el-button>
+                                立即支付
+                            </el-button>
                             <el-button v-if="order.status === 'PENDING'" 
                                      type="danger" 
                                      size="large"
                                      @click.stop="handleCancel(order)">
                                 <el-icon><Close /></el-icon>
-                            取消订单
-                        </el-button>
+                                取消订单
+                            </el-button>
                             <el-button v-if="order.status === 'SUCCESS'" 
                                      type="success" 
                                      size="large"
@@ -117,12 +117,12 @@
                                 <el-icon><View /></el-icon>
                                 查看详情
                             </el-button>
+                        </div>
                     </div>
-                </div>
-            </el-card>
-        </div>
+                </el-card>
+            </div>
 
-        <!-- 没有订单时显示 -->
+            <!-- 没有订单时显示 -->
             <el-empty v-if="!loading && !error && filteredOrders.length === 0" 
                      description="暂无订单"
                      :image-size="200">
@@ -251,34 +251,34 @@ import {
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
-        const orders = ref([])
-        const loading = ref(false)
+const orders = ref([])
+const loading = ref(false)
 const error = ref('')
-        const currentStatus = ref('all')
-        let loadingInstance = null
+const currentStatus = ref('all')
+let loadingInstance = null
 const detailsDialogVisible = ref(false)
 const currentOrder = ref(null)
 
-        // 获取订单列表
-        const fetchOrders = async () => {
+// 获取订单列表
+const fetchOrders = async () => {
     loading.value = true
     error.value = ''
-            loadingInstance = ElLoading.service({
-                target: '.order-list',
+    loadingInstance = ElLoading.service({
+        target: '.order-list',
         fullscreen: false,
         text: '加载订单中...'
-            })
+    })
     
-            try {
-                const response = await getOrders()
-                if (response.code === '200') {
+    try {
+        const response = await getOrders()
+        if (response.code === '200') {
             console.log('订单数据:', response.data); // 添加日志
-                    orders.value = response.data
+            orders.value = response.data
         } else if (response.code === '401') {
             error.value = '请先登录'
             ElMessage.warning('请先登录后再查看订单')
             router.push('/login')
-                } else {
+        } else {
             error.value = response.msg || '获取订单列表失败'
             ElMessage.error(error.value)
         }
@@ -286,16 +286,16 @@ const currentOrder = ref(null)
         console.error('获取订单列表失败:', err)
         error.value = '获取订单列表失败，请稍后重试'
         ElMessage.error(error.value)
-            } finally {
-                loading.value = false
+    } finally {
+        loading.value = false
         if (loadingInstance) {
-                loadingInstance.close()
+            loadingInstance.close()
         }
-            }
-        }
+    }
+}
 
 // 根据状态筛选订单并按时间排序
-        const filteredOrders = computed(() => {
+const filteredOrders = computed(() => {
     let filtered = currentStatus.value === 'all' 
         ? orders.value 
         : orders.value.filter(order => order.status === currentStatus.value);
@@ -306,22 +306,22 @@ const currentOrder = ref(null)
         const dateB = new Date(b.createTime).getTime();
         return dateB - dateA;
     });
-        })
+})
 
-        // 处理状态改变
-        const handleStatusChange = (status) => {
-            currentStatus.value = status
-        }
+// 处理状态改变
+const handleStatusChange = (status) => {
+    currentStatus.value = status
+}
 
-        // 获取状态文本
-        const getStatusText = (status) => {
-            const statusMap = {
-                'PENDING': '待支付',
-                'SUCCESS': '已支付',
-                'CANCELLED': '已取消'
-            }
-            return statusMap[status] || status
-        }
+// 获取状态文本
+const getStatusText = (status) => {
+    const statusMap = {
+        'PENDING': '待支付',
+        'SUCCESS': '已支付',
+        'CANCELLED': '已取消'
+    }
+    return statusMap[status] || status
+}
 
 // 获取状态类型
 const getStatusType = (status) => {
@@ -333,48 +333,48 @@ const getStatusType = (status) => {
     return typeMap[status] || 'info'
 }
 
-        // 处理支付
-        const handlePay = async (order) => {
-            try {
-                console.log("订单数据:", order); // 调试: 先打印整个订单对象
+// 处理支付
+const handlePay = async (order) => {
+    try {
+        console.log("订单数据:", order); // 调试: 先打印整个订单对象
 
-                // 直接使用订单ID，不进行额外转换
-                const response = await pay(order.orderId);
+        // 直接使用订单ID，不进行额外转换
+        const response = await pay(order.orderId);
 
-                if (response.code === '200' && response.data) {
-                    const div = document.createElement('div');
-                    div.innerHTML = response.data.paymentForm;
-                    document.body.appendChild(div);
-                    const form = div.getElementsByTagName('form')[0];
-                    if (form) {
-                        form.submit();
-                    } else {
-                        throw new Error('支付表单生成失败');
-                    }
-                } else {
-                    throw new Error(response.msg || '发起支付失败');
-                }
-            } catch (error) {
-                ElMessage.error(error.message || '发起支付失败');
-                console.error('发起支付失败:', error);
+        if (response.code === '200' && response.data) {
+            const div = document.createElement('div');
+            div.innerHTML = response.data.paymentForm;
+            document.body.appendChild(div);
+            const form = div.getElementsByTagName('form')[0];
+            if (form) {
+                form.submit();
+            } else {
+                throw new Error('支付表单生成失败');
             }
+        } else {
+            throw new Error(response.msg || '发起支付失败');
         }
+    } catch (error) {
+        ElMessage.error(error.message || '发起支付失败');
+        console.error('发起支付失败:', error);
+    }
+}
 
-        // 处理取消订单
-        const handleCancel = async (order) => {
-            try {
-                const response = await cancelOrder(order.orderId)
-                if (response.code === '200') {
-                    ElMessage.success('订单已取消')
-                    fetchOrders() // 刷新订单列表
-                } else {
-                    ElMessage.error(response.msg || '取消订单失败')
-                }
-            } catch (error) {
-                ElMessage.error('取消订单失败')
-                console.error('取消订单失败:', error)
-            }
+// 处理取消订单
+const handleCancel = async (order) => {
+    try {
+        const response = await cancelOrder(order.orderId)
+        if (response.code === '200') {
+            ElMessage.success('订单已取消')
+            fetchOrders() // 刷新订单列表
+        } else {
+            ElMessage.error(response.msg || '取消订单失败')
         }
+    } catch (error) {
+        ElMessage.error('取消订单失败')
+        console.error('取消订单失败:', error)
+    }
+}
 
 // 跳转到商品详情
 const goToProductDetail = (productId) => {
@@ -435,7 +435,7 @@ const formatDate = (dateString) => {
     } catch (error) {
         console.error('Date formatting error:', error, 'Input:', dateString);
         return '日期格式错误';
-        }
+    }
 };
 
 onMounted(() => {
@@ -659,8 +659,8 @@ onMounted(() => {
 
     .order-info {
         flex-direction: column;
-    gap: 10px;
-}
+        gap: 10px;
+    }
 
     .product-item {
         flex-direction: column;

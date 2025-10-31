@@ -126,7 +126,7 @@ const handleLogin = async () => {
         window.dispatchEvent(new CustomEvent("user-logged-in"));
 
         // 确保在设置登录状态后再跳转
-        await router.push("/products");
+        await router.push("/home");
       } catch (error) {
         // 显示详细的错误信息
         console.error("登录失败:", error);

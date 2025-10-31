@@ -9,11 +9,20 @@ import WishList from '../views/WishList.vue'
 import DbTest from '../views/DbTest.vue'
 import Advertisement from '../views/Advertisement.vue'
 import OrderList from '../views/OrderList.vue'
+import CouponManagement from '../views/CouponManagement.vue'
+import Home from '../views/Home.vue'
+import BannerManagement from '../views/BannerManagement.vue'
 
 const routes = [
   {
     path: '/',
-    redirect: '/login'
+    redirect: to => {
+      const token = localStorage.getItem('token')
+      if (token) {
+        return '/home'
+      }
+      return '/login'
+    }
   },
   {
     path: '/login',
@@ -24,6 +33,12 @@ const routes = [
     path: '/register',
     name: 'Register',
     component: Register
+  },
+  {
+    path: '/home',
+    name: 'Home',
+    component: Home,
+    meta: { requiresAuth: true }
   },
   {
     path: '/profile',
@@ -94,6 +109,33 @@ const routes = [
     name: 'OrderList',
     component: OrderList,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/coupons',
+    name: 'CouponManagement',
+    component: CouponManagement,
+    meta: { 
+      requiresAuth: true,
+      requiresAdmin: true
+    }
+  },
+  {
+    path: '/user-coupons',
+    name: 'UserCoupons',
+    component: () => import('../views/UserCoupons.vue'),
+    meta: { 
+      requiresAuth: true,
+      requiresUser: true
+    }
+  },
+  {
+    path: '/banners',
+    name: 'BannerManagement',
+    component: BannerManagement,
+    meta: { 
+      requiresAuth: true,
+      requiresAdmin: true // 只允许管理员访问
+    }
   }
 ]
 

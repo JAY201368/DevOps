@@ -7,6 +7,9 @@
             <el-icon><Star /></el-icon> 我的愿望单
           </span>
           <span class="book-count">共 {{ wishList.length }} 本图书</span>
+          <el-button type="primary" size="small" @click="refreshWishList">
+            <el-icon><Refresh /></el-icon> 刷新
+          </el-button>
         </div>
       </template>
 
@@ -21,15 +24,16 @@
       </div>
       
       <div v-else class="wishlist-grid">
-        <el-card v-for="item in wishList" :key="item.id" class="book-card">
+        <el-card v-for="item in wishList" :key="item.bookId" class="book-card">
           <template #header>
             <div class="book-header">
-              <h3 class="book-title">{{ item.book?.title || '未知书名' }}</h3>              <el-button
+              <h3 class="book-title">{{ item.book?.title || '未知书名' }}</h3>
+              <el-button
                 type="danger"
                 circle
                 size="small"
-                :loading="removingIds.has(item.bookId)"
-                @click="removeFromWishList(item.bookId)"
+                :loading="isRemoving(item.bookId)"
+                @click="handleRemoveFromWishList(item.bookId)"
               >
                 <el-icon><Delete /></el-icon>
               </el-button>
@@ -67,65 +71,155 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Star, Delete, ShoppingCart } from '@element-plus/icons-vue'
+import { Star, Delete, ShoppingCart, Refresh } from '@element-plus/icons-vue'
 import { getWishList, removeFromWishList as removeBook } from '../api/wishlist'
 import { addToCart as addToCartApi } from '../api/cart'
 import { getProductById } from '../api/product'
+import { useWishListStore } from '../store/wishlist'
 
 const router = useRouter()
+const route = useRoute()
 const loading = ref(true)
 const wishList = ref([])
-const removingIds = ref(new Set()) // 正在删除的商品ID集合
-const addingToCartIds = ref(new Set()) // 正在加入购物车的商品ID集合
+const removingIds = ref(new Set())
+const isRemoving = (bookId) => {
+  if (!(removingIds.value instanceof Set)) {
+    console.warn('removingIds不是Set对象，重新初始化');
+    removingIds.value = new Set();
+    return false;
+  }
+  return removingIds.value.has(bookId);
+}
+const addToRemoving = (bookId) => {
+  if (!(removingIds.value instanceof Set)) {
+    console.warn('removingIds不是Set对象，重新初始化');
+    removingIds.value = new Set();
+  }
+  removingIds.value.add(bookId);
+}
+const removeFromRemoving = (bookId) => {
+  if (!(removingIds.value instanceof Set)) {
+    console.warn('removingIds不是Set对象，重新初始化');
+    removingIds.value = new Set();
+    return;
+  }
+  removingIds.value.delete(bookId);
+}
+const addingToCartIds = ref(new Set())
+const wishlistStore = useWishListStore()
+const fetchingData = ref(false)
 
 // 获取愿望单列表
 const fetchWishList = async () => {
-  loading.value = true
+  if (fetchingData.value) {
+    console.log('已有请求在进行中，跳过此次刷新')
+    return
+  }
+  
+  fetchingData.value = true
+  loading.value = true;
   try {
-    const response = await getWishList()
-    if (response.code === '200') {
+    console.log('开始获取愿望单数据...');
+    await wishlistStore.fetchWishListCount(true);
+    
+    if (wishlistStore.wishlistItems.length > 0) {
+      console.log('使用store中的愿望单数据:', wishlistStore.wishlistItems);
       wishList.value = await Promise.all(
-        response.data.map(async (item) => {
-          // 获取每本书的详细信息
+        wishlistStore.wishlistItems.map(async (bookId) => {
           try {
-            const bookResponse = await getProductById(item.bookId)
+            const bookResponse = await getProductById(bookId);
             return {
-              ...item,
+              bookId,
               book: bookResponse.code === '200' ? bookResponse.data : null
-            }
+            };
           } catch (error) {
-            console.error('获取图书信息失败:', error)
-            return item
+            console.error('获取图书信息失败:', error);
+            return { bookId };
           }
         })
-      )
+      );
+      console.log('愿望单数据处理完成，共', wishList.value.length, '项');
     } else {
-      ElMessage.error(response.msg || '获取愿望单失败')
+      const response = await getWishList();
+      if (response.code === '200') {
+        console.log('获取愿望单数据成功:', response.data);
+        wishList.value = await Promise.all(
+          response.data.map(async (item) => {
+            try {
+              const bookResponse = await getProductById(item.bookId);
+              return {
+                ...item,
+                book: bookResponse.code === '200' ? bookResponse.data : null
+              };
+            } catch (error) {
+              console.error('获取图书信息失败:', error);
+              return item;
+            }
+          })
+        );
+        console.log('愿望单数据处理完成，共', wishList.value.length, '项');
+      } else {
+        ElMessage.error(response.msg || '获取愿望单失败');
+      }
     }
   } catch (error) {
-    console.error('获取愿望单失败:', error)
-    ElMessage.error('获取愿望单失败，请稍后重试')
+    console.error('获取愿望单失败:', error);
+    ElMessage.error('获取愿望单失败，请稍后重试');
   } finally {
-    loading.value = false
+    loading.value = false;
+    setTimeout(() => {
+      fetchingData.value = false
+    }, 1000)
   }
+};
+
+// 刷新愿望单
+const refreshWishList = () => {
+  fetchWishList()
 }
 
 // 从愿望单中移除
-const removeFromWishList = async (bookId) => {
+const handleRemoveFromWishList = async (bookId) => {
+  if (isRemoving(bookId)) {
+    console.log('该商品正在删除中，跳过操作:', bookId);
+    return;
+  }
+  
+  console.log('尝试从愿望单移除商品:', bookId);
+  addToRemoving(bookId);
+  
   try {
-    const response = await removeBook(bookId)
-    if (response.code === '200') {
-      ElMessage.success('已从愿望单移除')
-      wishList.value = wishList.value.filter(item => item.bookId !== bookId)
+    if (!bookId) {
+      console.error('无效的商品ID');
+      ElMessage.error('移除失败：无效的商品ID');
+      return;
+    }
+    
+    console.log('发送移除愿望单请求:', bookId);
+    const response = await removeBook(bookId);
+    console.log('移除愿望单响应:', response);
+    
+    if (response && response.code === '200') {
+      ElMessage.success('已从愿望单移除');
+      wishList.value = wishList.value.filter(item => item.bookId !== bookId);
+      
+      wishlistStore.removeFromWishList(bookId);
+      
+      setTimeout(() => {
+        wishlistStore.fetchWishListCount(true);
+      }, 300);
     } else {
-      ElMessage.error(response.msg || '移除失败')
+      console.error('移除失败，响应:', response);
+      ElMessage.error(response?.msg || '移除失败');
     }
   } catch (error) {
-    console.error('移除失败:', error)
-    ElMessage.error('移除失败，请稍后重试')
+    console.error('移除失败:', error);
+    ElMessage.error('移除失败，请稍后重试');
+  } finally {
+    removeFromRemoving(bookId);
   }
 }
 
@@ -149,8 +243,41 @@ const viewBookDetail = (bookId) => {
   router.push(`/products/${bookId}`)
 }
 
+// 监听路由变化
+watch(
+  () => route.fullPath,
+  () => {
+    console.log('路由变化，刷新愿望单数据')
+    if (route.query && Object.keys(route.query).length > 0) {
+    fetchWishList()
+  }
+  }
+)
+
+// 监听愿望单状态变化 - 优化刷新逻辑
+watch(() => wishlistStore.lastUpdated, (newTimestamp, oldTimestamp) => {
+  console.log('wishlistStore时间戳变化:', newTimestamp)
+  if (newTimestamp && oldTimestamp && newTimestamp - oldTimestamp > 1000) {
+    console.log('愿望单状态变化，刷新列表')
+    fetchWishList()
+  }
+})
+
 onMounted(() => {
+  console.log('WishList组件挂载')
+  
+  // 确保removingIds是Set对象
+  if (!(removingIds.value instanceof Set)) {
+    console.log('重新初始化removingIds为Set对象');
+    removingIds.value = new Set();
+  }
+  
   fetchWishList()
+})
+
+onUnmounted(() => {
+  // 清理工作
+  removingIds.value = new Set();
 })
 </script>
 
@@ -187,6 +314,8 @@ onMounted(() => {
 .book-count {
   font-size: 14px;
   color: #909399;
+  margin-right: auto;
+  margin-left: 20px;
 }
 
 .loading-container {

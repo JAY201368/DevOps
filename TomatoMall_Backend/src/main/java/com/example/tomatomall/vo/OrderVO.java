@@ -9,6 +9,8 @@ import java.util.List;
 public class OrderVO {
     private Long orderId;
     private Long userId;
+    private BigDecimal originalAmount;
+    private BigDecimal discountAmount;
     private BigDecimal totalAmount;
     private String paymentMethod;
     private String status;
@@ -18,6 +20,7 @@ public class OrderVO {
     private String receiverZipcode;
     private String receiverAddress;
     private String shippingAddress;
+    private Long couponId;
     private String alipayTradeNo;
     private LocalDateTime updateTime;
     private LocalDateTime expireTime;

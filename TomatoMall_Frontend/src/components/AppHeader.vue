@@ -5,23 +5,41 @@
       <h1 class="site-title">番茄线上书城</h1>
     </div>
     <div class="nav-buttons" v-if="logined">
+      <el-button type="text" @click="goToHome">
+        <el-icon><HomeFilled /></el-icon> 首页
+      </el-button>
       <el-button type="text" @click="goToProducts">
         <el-icon><Goods /></el-icon> 商品列表
       </el-button>
-      <el-button type="text" @click="goToCart">
-        <el-icon class="cart-icon"><ShoppingCart /></el-icon> 购物车
-        <el-badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" />
-      </el-button>
-      <el-button v-if="!isAdmin" type="text" @click="goToWishList">
-        <el-icon class="wishlist-icon"><Star /></el-icon> 我的愿望单
-        <el-badge v-if="wishlistStore.wishlistCount > 0" :value="wishlistStore.wishlistCount" class="wishlist-badge" />
-      </el-button>
-      <el-button type="text" @click="goToOrders">
-        <el-icon><Document /></el-icon> 我的订单
-      </el-button>
-      <el-button type="text" @click="goToProfile">
-        <el-icon><User /></el-icon> 个人信息
-      </el-button>
+      
+      <!-- 个人中心下拉菜单 -->
+      <el-dropdown trigger="click" class="user-center-dropdown">
+        <el-button type="text" class="user-center-button">
+          <el-icon><UserFilled /></el-icon> 个人中心
+          <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item @click="goToCart">
+              <el-icon class="cart-icon"><ShoppingCart /></el-icon> 购物车
+              <el-badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" />
+            </el-dropdown-item>
+            <el-dropdown-item v-if="!isAdmin" @click="goToWishList">
+              <el-icon class="wishlist-icon"><Star /></el-icon> 我的愿望单
+              <el-badge v-if="wishlistStore.wishlistCount > 0" :value="wishlistStore.wishlistCount" class="wishlist-badge" />
+            </el-dropdown-item>
+            <el-dropdown-item @click="goToOrders">
+              <el-icon><Document /></el-icon> 我的订单
+            </el-dropdown-item>
+            <el-dropdown-item v-if="!isAdmin" @click="goToUserCoupons">
+              <el-icon><Ticket /></el-icon> 我的促销券
+            </el-dropdown-item>
+            <el-dropdown-item @click="goToProfile">
+              <el-icon><User /></el-icon> 个人信息
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
       
       <!-- 根据用户角色显示不同的广告相关菜单 -->
       <el-button v-if="isAdmin" type="text" @click="goToAdvertisements">
@@ -29,6 +47,16 @@
       </el-button>
       <el-button v-else type="text" @click="goToAdsRecommend">
         <el-icon><Bell /></el-icon> 广告推荐
+      </el-button>
+      
+      <!-- 促销券管理入口 -->
+      <el-button v-if="isAdmin" type="text" @click="goToCouponManagement">
+        <el-icon><Discount /></el-icon> 促销券管理
+      </el-button>
+
+      <!-- 轮播图管理入口 -->
+      <el-button v-if="isAdmin" type="text" @click="goToBannerManagement">
+        <el-icon><Picture /></el-icon> 轮播图管理
       </el-button>
     </div>
     <div class="user-actions" v-if="logined">
@@ -43,8 +71,9 @@
 import { ref, onMounted, watch, computed, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getCartItems } from '../api/cart'
-import { ShoppingCart, Star, Goods, Document, User, Setting, Bell, SwitchButton } from '@element-plus/icons-vue'
+import { ShoppingCart, Star, Goods, Document, User, UserFilled, Setting, Bell, SwitchButton, Discount, Ticket, Picture, HomeFilled, ArrowDown } from '@element-plus/icons-vue'
 import { useWishListStore } from '../store/wishlist'
+import { clearCache } from '../api/request'
 
 const router = useRouter()
 const route = useRoute()
@@ -59,6 +88,9 @@ const isAdmin = computed(() => userRole.value === 'admin')
 
 // 组件挂载时检查sessionStorage中的登录状态
 onMounted(() => {
+  // 清除API缓存
+  clearCache();
+  
   const loginStatus = sessionStorage.getItem('logined')
   logined.value = loginStatus === 'true'
   
@@ -110,6 +142,10 @@ const goToProfile = () => router.push('/profile')
 const goToWishList = () => router.push('/wishlist')
 const goToAdvertisements = () => router.push('/advertisements')
 const goToAdsRecommend = () => router.push('/ads-recommend')
+const goToCouponManagement = () => router.push('/coupons')
+const goToUserCoupons = () => router.push('/user-coupons')
+const goToHome = () => router.push('/')
+const goToBannerManagement = () => router.push('/banners')
 
 const logout = () => {
   logined.value = false
@@ -208,5 +244,101 @@ defineExpose({
 
 .user-actions .el-button {
   font-size: 16px;
+}
+
+.user-center-dropdown {
+  margin: 0;
+}
+
+.user-center-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: color 0.3s;
+}
+
+.user-center-button:hover {
+  color: #409eff;
+}
+
+.user-center-dropdown :deep(.el-dropdown-menu__item) {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  line-height: 1.5;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.user-center-dropdown :deep(.el-dropdown-menu__item:hover) {
+  background-color: #ecf5ff;
+  color: #409eff;
+}
+
+.user-center-dropdown :deep(.el-dropdown-menu) {
+  min-width: 180px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 5px 0;
+}
+
+.el-dropdown-menu__item .el-icon {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.el-dropdown-menu__item .cart-badge,
+.el-dropdown-menu__item .wishlist-badge {
+  margin-left: 8px;
+}
+
+.el-dropdown-menu__item .el-badge :deep(.el-badge__content) {
+  transform: scale(0.8);
+  height: 16px;
+  line-height: 16px;
+  padding: 0 4px;
+}
+
+@media (max-width: 768px) {
+  .nav-buttons {
+    margin-left: 0;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .app-header {
+    flex-direction: column;
+    height: auto;
+    padding: 15px;
+  }
+  
+  .logo-container {
+    margin-bottom: 15px;
+  }
+  
+  .user-actions {
+    margin-top: 15px;
+  }
+  
+  .nav-buttons .el-button {
+    font-size: 14px;
+    padding: 0 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-buttons {
+    gap: 5px;
+  }
+  
+  .site-title {
+    font-size: 20px;
+  }
+  
+  .logo {
+    width: 40px;
+    height: 40px;
+  }
 }
 </style>

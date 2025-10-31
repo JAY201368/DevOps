@@ -199,31 +199,31 @@
             <el-icon><Location /></el-icon>
             <span>收货信息</span>
           </div>
-      <el-form
-        :model="shippingForm"
-        ref="shippingFormRef"
-        :rules="shippingRules"
-        label-width="80px"
+          <el-form
+            :model="shippingForm"
+            ref="shippingFormRef"
+            :rules="shippingRules"
+            label-width="80px"
             class="shipping-form"
-      >
-        <el-form-item label="收货人" prop="name">
+          >
+            <el-form-item label="收货人" prop="name">
               <el-input v-model="shippingForm.name" placeholder="请输入收货人姓名" />
-        </el-form-item>
-        <el-form-item label="手机号" prop="phone">
+            </el-form-item>
+            <el-form-item label="手机号" prop="phone">
               <el-input v-model="shippingForm.phone" placeholder="请输入手机号码" />
-        </el-form-item>
-        <el-form-item label="邮编" prop="zipcode">
+            </el-form-item>
+            <el-form-item label="邮编" prop="zipcode">
               <el-input v-model="shippingForm.zipcode" placeholder="请输入邮政编码" />
-        </el-form-item>
-        <el-form-item label="地址" prop="address">
+            </el-form-item>
+            <el-form-item label="地址" prop="address">
               <el-input
                 v-model="shippingForm.address"
                 type="textarea"
                 :rows="2"
                 placeholder="请输入详细收货地址"
               />
-        </el-form-item>
-      </el-form>
+            </el-form-item>
+          </el-form>
         </div>
 
         <!-- 订单信息 -->
@@ -232,20 +232,20 @@
             <el-icon><Document /></el-icon>
             <span>订单信息</span>
           </div>
-      <div class="order-summary">
-        <div class="order-row">
-          <span class="label">用户名：</span>
-          <span class="value">{{ username }}</span>
-        </div>
-        <div class="order-row">
-          <span class="label">订单内容：</span>
+          <div class="order-summary">
+            <div class="order-row">
+              <span class="label">用户名：</span>
+              <span class="value">{{ username }}</span>
+            </div>
+            <div class="order-row">
+              <span class="label">订单内容：</span>
               <div class="order-items">
                 <div v-for="item in cartItems" :key="item.cartItemId" class="order-item">
                   <el-image :src="item.cover" class="item-image" fit="cover">
                     <template #error>
                       <div class="image-error">
                         <el-icon><Picture /></el-icon>
-        </div>
+                      </div>
                     </template>
                   </el-image>
                   <div class="item-info">
@@ -258,31 +258,77 @@
                 </div>
               </div>
             </div>
+            
+            <!-- 促销券选择 -->
+            <div class="order-row">
+              <span class="label">促销券：</span>
+              <div class="coupon-selection">
+                <el-select 
+                  v-model="selectedCouponId" 
+                  clearable 
+                  placeholder="请选择促销券" 
+                  style="width: 100%"
+                  @change="handleCouponChange"
+                >
+                  <el-option
+                    v-for="coupon in availableCoupons"
+                    :key="coupon.id"
+                    :label="`${coupon.name} (¥${coupon.discountAmount})`"
+                    :value="coupon.id"
+                  >
+                    <div class="coupon-option">
+                      <div class="coupon-name">{{ coupon.name }}</div>
+                      <div class="coupon-desc">
+                        <span class="discount-amount">¥{{ coupon.discountAmount }}</span>
+                        <span v-if="coupon.minOrderAmount > 0" class="min-order">
+                          满{{ coupon.minOrderAmount }}元可用
+                        </span>
+                      </div>
+                    </div>
+                  </el-option>
+                </el-select>
+                <div class="no-coupon" v-if="availableCoupons.length === 0">
+                  <el-link type="primary" @click="$router.push('/user-coupons')">您暂无可用促销券，点击查看</el-link>
+                </div>
+              </div>
+            </div>
+            
+            <div class="order-row subtotal">
+              <span class="label">商品金额：</span>
+              <span class="value price">¥{{ formatPrice(totalAmount) }}</span>
+            </div>
+            
+            <!-- 优惠金额 -->
+            <div class="order-row discount" v-if="discountAmount > 0">
+              <span class="label">优惠金额：</span>
+              <span class="value discount-price">-¥{{ formatPrice(discountAmount) }}</span>
+            </div>
+            
             <div class="order-row total">
-          <span class="label">支付总金额：</span>
-          <span class="value price">¥{{ formatPrice(totalAmount) }}</span>
-        </div>
-        <div class="order-row">
-          <span class="label">支付方式：</span>
+              <span class="label">支付总金额：</span>
+              <span class="value price">¥{{ formatPrice(finalAmount) }}</span>
+            </div>
+            <div class="order-row">
+              <span class="label">支付方式：</span>
               <span class="value payment-method">
                 <el-icon><Money /></el-icon>
                 支付宝
               </span>
-        </div>
-      </div>
+            </div>
+          </div>
         </div>
       </div>
 
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="checkoutDialogVisible = false" size="large">取消</el-button>
-        <el-button
-          type="primary"
+          <el-button
+            type="primary"
             size="large"
-          :loading="checkoutLoading"
-          @click="handleCheckoutSubmit"
+            :loading="checkoutLoading"
+            @click="handleCheckoutSubmit"
             class="submit-button"
-        >
+          >
             <el-icon><Check /></el-icon>
             提交订单
           </el-button>
@@ -303,6 +349,7 @@ import {
   checkoutCart,
 } from "../api/cart";
 import { getProductById, getStockpile } from "../api/product";
+import { getUserUnusedCoupons } from "../api/coupon";
 import {
   PictureFilled,
   ArrowRight,
@@ -346,6 +393,70 @@ export default {
         return total + item.price * item.quantity;
       }, 0);
     });
+
+    // 新增：促销券相关状态
+    const availableCoupons = ref([]);
+    const selectedCouponId = ref(null);
+    const discountAmount = ref(0);
+    const selectedCoupon = ref(null);
+    
+    // 计算最终支付金额
+    const finalAmount = computed(() => {
+      return Math.max(totalAmount.value - discountAmount.value, 0).toFixed(2);
+    });
+    
+    // 处理促销券选择变更
+    const handleCouponChange = (couponId) => {
+      if (!couponId) {
+        // 清除选择
+        selectedCoupon.value = null;
+        discountAmount.value = 0;
+        return;
+      }
+      
+      // 找到选中的促销券
+      const coupon = availableCoupons.value.find(c => c.id === couponId);
+      if (coupon) {
+        selectedCoupon.value = coupon;
+        discountAmount.value = parseFloat(coupon.discountAmount);
+      }
+    };
+    
+    // 获取当前用户可用的促销券
+    const fetchAvailableCoupons = async () => {
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) return;
+        
+        const response = await getUserUnusedCoupons(userId);
+        if (response.code === '200') {
+          // 筛选出满足订单金额条件的促销券
+          availableCoupons.value = response.data
+            .filter(coupon => {
+              // 验证促销券是否有效
+              const isValid = 
+                !coupon.isUsed && 
+                new Date(coupon.coupon.endDate) > new Date() &&
+                new Date(coupon.coupon.startDate) <= new Date();
+              
+              // 验证最低订单金额条件
+              const meetMinOrderAmount = 
+                totalAmount.value >= coupon.coupon.minOrderAmount;
+                
+              return isValid && meetMinOrderAmount;
+            })
+            .map(coupon => ({
+              id: coupon.id,
+              name: coupon.coupon.name,
+              discountAmount: coupon.coupon.discountAmount,
+              minOrderAmount: coupon.coupon.minOrderAmount,
+              description: coupon.coupon.description
+            }));
+        }
+      } catch (error) {
+        console.error('获取促销券出错:', error);
+      }
+    };
 
     // 加载商品库存信息
     const loadProductStock = async (item) => {
@@ -548,6 +659,15 @@ export default {
         ElMessage.warning("购物车为空");
         return;
       }
+      
+      // 重置促销券选择
+      selectedCouponId.value = null;
+      discountAmount.value = 0;
+      selectedCoupon.value = null;
+      
+      // 获取可用促销券
+      fetchAvailableCoupons();
+      
       checkoutDialogVisible.value = true;
     };
 
@@ -564,7 +684,8 @@ export default {
         const payload = {
           cartItemIds: cartItems.value.map(item => item.cartItemId.toString()),
           shipping_address: shippingForm.value,
-          payment_method: "Alipay"
+          payment_method: "Alipay",  // 修改为与后端匹配的值
+          couponId: selectedCoupon.value ? selectedCoupon.value.id : null
         };
 
         console.log('Checkout payload:', payload);
@@ -574,14 +695,6 @@ export default {
         if (response.code === "200") {
           ElMessage.success("订单提交成功");
           checkoutDialogVisible.value = false;
-          // 清空购物车
-          cartItems.value = [];
-          // 触发购物车更新事件
-          window.dispatchEvent(new CustomEvent('cart-updated', { 
-            detail: { count: 0 } 
-          }));
-          // 跳转到订单页面
-          router.push('/orders');
         } else {
           throw new Error(response.msg || "订单提交失败");
         }
@@ -597,6 +710,8 @@ export default {
       // 你可以根据实际项目获取用户名
       username.value = localStorage.getItem("username") || "未登录用户";
       fetchCartItems();
+      // 添加：初始化时获取可用促销券
+      fetchAvailableCoupons();
     });
 
     return {
@@ -618,6 +733,12 @@ export default {
       shippingForm,
       shippingFormRef,
       shippingRules,
+      // 新增：促销券相关
+      availableCoupons,
+      selectedCouponId,
+      discountAmount,
+      finalAmount,
+      handleCouponChange
     };
   },
 };
@@ -1273,5 +1394,60 @@ export default {
 .order-items::-webkit-scrollbar-track {
   background: #f5f7fa;
   border-radius: 3px;
+}
+
+/* 促销券相关样式 */
+.coupon-selection {
+  flex: 1;
+}
+
+.coupon-option {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 0;
+}
+
+.coupon-name {
+  font-weight: bold;
+  color: #303133;
+}
+
+.coupon-desc {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.discount-amount {
+  color: #f56c6c;
+  font-weight: bold;
+}
+
+.min-order {
+  color: #909399;
+  font-size: 12px;
+}
+
+.no-coupon {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.order-row.discount .value.discount-price {
+  color: #f56c6c;
+  font-weight: bold;
+}
+
+.order-row.subtotal {
+  border-top: 1px dashed #EBEEF5;
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.order-row.total {
+  border-top: 1px solid #EBEEF5;
+  padding-top: 16px;
+  margin-top: 12px;
+  font-weight: bold;
 }
 </style>

@@ -1,4 +1,4 @@
-import request from '../utils/request';
+import request from './request';
 
 // 获取商品评论列表
 export function getComments(productId, page = 1, size = 10) {

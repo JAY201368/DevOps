@@ -15,12 +15,14 @@ import { ref, provide, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from './components/AppHeader.vue'
 import Live2D from './components/Live2D.vue'
+import { useWishListStore } from './store/wishlist'
 
 const appHeaderRef = ref(null)
 provide('appHeaderRef', appHeaderRef)
 
 const route = useRoute()
 const router = useRouter()
+const wishlistStore = useWishListStore()
 
 // 判断当前是否是登录页面，登录页面已经包含了Live2D组件，所以不需要在全局再添加
 const isLoginPage = computed(() => {
@@ -42,6 +44,21 @@ watch(() => route.path, (newPath, oldPath) => {
       }, 100)
     }
   }
+  
+  // 处理愿望单同步
+  if (newPath === '/wishlist') {
+    console.log('进入愿望单页面，检查是否需要刷新数据')
+    const wishlistUpdated = localStorage.getItem('wishlist_updated') === 'true'
+    if (wishlistUpdated) {
+      console.log('检测到愿望单有更新，强制刷新数据')
+      // 强制刷新愿望单数据
+      setTimeout(() => {
+        wishlistStore.fetchWishListCount(true)
+        // 触发自定义事件
+        window.dispatchEvent(new CustomEvent('wishlist-updated'))
+      }, 100)
+    }
+  }
 })
 
 // 组件挂载时也进行一次检查
@@ -49,10 +66,21 @@ onMounted(() => {
   const token = localStorage.getItem('token')
   const username = localStorage.getItem('username')
   if (token && username && route.path !== '/login') {
+    // 加载用户愿望单数据
+    wishlistStore.fetchWishListCount()
+    
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('user-logged-in'))
     }, 100)
   }
+  
+  // 全局监听愿望单更新事件
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'wishlist_updated' && event.newValue === 'true') {
+      console.log('检测到localStorage中愿望单状态更新')
+      wishlistStore.fetchWishListCount(true)
+    }
+  })
 })
 </script>
 

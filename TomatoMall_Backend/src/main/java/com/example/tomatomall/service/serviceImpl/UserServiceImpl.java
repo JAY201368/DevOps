@@ -13,8 +13,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -129,5 +131,22 @@ public class UserServiceImpl implements UserService {
 
         UserPO updatedUser = userRepository.save(existingUser);
         return UserVO.fromPO(updatedUser);
+    }
+
+    @Override
+    public Long getUserIdByUsername(String username) {
+        Optional<UserPO> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isPresent()) {
+            return userOpt.get().getId();
+        }
+        return null;
+    }
+
+    @Override
+    public List<UserVO> getAllUsers() {
+        List<UserPO> users = userRepository.findAll();
+        return users.stream()
+                .map(UserVO::fromPO)
+                .collect(Collectors.toList());
     }
 }

@@ -20,6 +20,7 @@ public class ProductVO {
     private String cover;
     private String detail;
     private Set<SpecificationVO> specifications;
+    private String tags;
 
     public static ProductVO fromPO(ProductPO productPO) {
         ProductVO productVO = new ProductVO();
@@ -30,6 +31,7 @@ public class ProductVO {
         productVO.setDescription(productPO.getDescription());
         productVO.setCover(productPO.getCover());
         productVO.setDetail(productPO.getDetail());
+        productVO.setTags(productPO.getTags());
         if (productPO.getSpecifications() != null) {
             productVO.setSpecifications(productPO.getSpecifications().stream()
                     .map(SpecificationVO::fromPO)

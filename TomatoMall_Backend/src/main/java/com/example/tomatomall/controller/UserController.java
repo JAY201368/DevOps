@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -71,6 +72,31 @@ public class UserController {
             }
             userService.updateUser(userVO);
             return ResultVO.buildSuccess("更新成功");
+        } catch (TomatoMallException e) {
+            return ResultVO.buildFailure(e.getMessage(), e.getCode().toString());
+        } catch (Exception e) {
+            return ResultVO.buildFailure("服务器内部错误", "500");
+        }
+    }
+
+    @GetMapping("/all")
+    public ResultVO<List<UserVO>> getAllUsers(HttpServletRequest request) {
+        try {
+            // 验证管理员权限
+            String token = request.getHeader("token");
+            if (token == null || !jwtUtil.validateToken(token)) {
+                return ResultVO.buildFailure("未授权", "401");
+            }
+            
+            // 获取当前用户角色
+            String username = jwtUtil.getUsernameFromToken(token);
+            UserVO currentUser = userService.getUserByUsername(username);
+            if (!"admin".equals(currentUser.getRole())) {
+                return ResultVO.buildFailure("无权限访问", "403");
+            }
+            
+            List<UserVO> users = userService.getAllUsers();
+            return ResultVO.buildSuccess(users);
         } catch (TomatoMallException e) {
             return ResultVO.buildFailure(e.getMessage(), e.getCode().toString());
         } catch (Exception e) {

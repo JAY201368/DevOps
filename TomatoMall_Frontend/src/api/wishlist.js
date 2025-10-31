@@ -1,4 +1,4 @@
-import request from '../utils/request'
+import request from './request'
 
 // 添加图书到愿望单
 export const addToWishList = (bookId) => {
@@ -19,9 +19,20 @@ export const getWishList = () => {
 
 // 从愿望单中删除图书
 export const removeFromWishList = (bookId) => {
+  console.log('API: 从愿望单删除商品:', bookId);
+  if (!bookId) {
+    console.error('API: 无效的bookId');
+    return Promise.reject(new Error('无效的商品ID'));
+  }
+  
   return request({
     url: `/api/wishlist/${bookId}`,
-    method: 'delete'
+    method: 'delete',
+    // 确保不使用缓存
+    headers: {
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
+    }
   })
 }
 
@@ -31,4 +42,4 @@ export const checkInWishList = (bookId) => {
     url: `/api/wishlist/check/${bookId}`,
     method: 'get'
   })
-}
+} 

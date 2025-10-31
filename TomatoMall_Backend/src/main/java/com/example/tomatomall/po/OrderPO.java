@@ -21,6 +21,12 @@ public class OrderPO {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "original_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal originalAmount;
+
+    @Column(name = "discount_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
@@ -47,6 +53,9 @@ public class OrderPO {
 
     @Column(name = "shipping_address", columnDefinition = "TEXT")
     private String shippingAddress;
+
+    @Column(name = "coupon_id")
+    private Long couponId;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<OrderItemPO> orderItems = new ArrayList<>();
