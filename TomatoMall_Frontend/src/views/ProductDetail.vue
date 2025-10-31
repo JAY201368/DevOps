@@ -39,12 +39,12 @@
             <h2>{{ product.title }}</h2>
             <div class="product-rating">
               <template v-if="comments.length > 0">
-                <el-rate
+              <el-rate
                   :model-value="averageRating"
-                  disabled
-                  text-color="#ff9900"
-                  :allow-half="true"
-                />
+                disabled
+                text-color="#ff9900"
+                :allow-half="true"
+              />
                 <span class="product-score">{{ averageRating.toFixed(1) }}分</span>
                 <span class="comment-count">({{ comments.length }}条评价)</span>
               </template>
@@ -192,6 +192,22 @@
           </div>
 
           <el-divider content-position="left">
+            <el-icon class="divider-icon"><Reading /></el-icon> 外部书评
+          </el-divider>
+
+          <div class="external-reviews">
+            <el-button 
+              type="success" 
+              plain
+              @click="openExternalReview"
+              class="review-button"
+            >
+              <el-icon><Link /></el-icon>
+              查看豆瓣书评
+            </el-button>
+          </div>
+
+          <el-divider content-position="left">
             <el-icon class="divider-icon"><ChatDotRound /></el-icon> 商品评价
           </el-divider>
 
@@ -222,8 +238,8 @@
               <el-card v-for="comment in comments" :key="comment.id" class="comment-card">
                 <div class="comment-header">
                   <div class="comment-user">
-                    <el-avatar :size="32">{{ comment.username?.charAt(0) }}</el-avatar>
-                    <span class="username">{{ comment.username }}</span>
+                    <el-avatar :size="32">{{ (comment.nickname || comment.username || '?').charAt(0) }}</el-avatar>
+                    <span class="username">{{ comment.nickname || comment.username || '未知用户' }}</span>
                   </div>
                   <div class="comment-rating">
                     <el-rate
@@ -239,7 +255,7 @@
                 <div class="comment-footer">
                   <span class="comment-time">{{ formatDate(comment.createdAt) }}</span>
                   <el-button 
-                    v-if="comment.userId === currentUserId"
+                    v-if="comment.userId && currentUserId && comment.userId === currentUserId"
                     type="danger" 
                     size="small" 
                     @click="handleDeleteComment(comment.id)"
@@ -465,7 +481,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { useWishListStore } from '../store/wishlist';
 import {
   getProductById,
@@ -489,6 +505,10 @@ import {
   PriceTag,
   Picture,
   ShoppingCart,
+  Star,
+  Link,
+  Reading,
+  ChatDotRound,
 } from "@element-plus/icons-vue";
 import ImageUploader from "../components/ImageUploader.vue";
 import { getComments, addComment, deleteComment, checkPurchaseStatus } from "../api/comment";
@@ -569,6 +589,7 @@ const commentFormRef = ref(null);
 const submittingComment = ref(false);
 const canComment = ref(false);
 const currentUserId = ref(null);
+const currentUsername = ref(null);
 
 const commentForm = ref({
   rating: 0,
@@ -915,8 +936,29 @@ const fetchComments = async () => {
     console.log('获取评论列表响应:', res);
     
     if (res.code === 200 || res.code === "200") {
-      comments.value = res.data;
-      console.log('更新评论列表成功，评论数量:', comments.value.length);
+      // 确保评论数据包含用户名
+      comments.value = await Promise.all(res.data.map(async (comment) => {
+        try {
+          // 获取评论者的用户信息
+          const userRes = await getUserInfo(comment.userId); // 使用 userId 而不是 username
+          console.log('获取用户信息响应:', userRes);
+          if (userRes.code === 200 || userRes.code === "200") {
+            return {
+              ...comment,
+              username: userRes.data.username, // 确保设置用户名
+              nickname: userRes.data.nickname || userRes.data.username // 使用昵称，如果没有则使用用户名
+            };
+          }
+          return comment;
+        } catch (error) {
+          console.error('获取用户信息失败:', error);
+          return {
+            ...comment,
+            username: comment.username || '未知用户' // 确保至少有一个用户名显示
+          };
+        }
+      }));
+      console.log('处理后的评论列表:', comments.value);
     } else {
       console.error('获取评论列表失败:', res.msg);
       ElMessage.error(res.msg || '获取评论列表失败');
@@ -933,13 +975,17 @@ const checkCanComment = async () => {
     const username = localStorage.getItem('username');
     if (!username) {
       canComment.value = false;
+      currentUserId.value = null;
       return;
     }
 
-    // 获取用户ID
+    // 获取用户信息
     const userRes = await getUserInfo(username);
+    console.log('获取当前用户信息:', userRes);
     if (userRes.code === 200 || userRes.code === "200") {
       currentUserId.value = userRes.data.id;
+      currentUsername.value = userRes.data.username;
+      console.log('设置当前用户ID:', currentUserId.value);
       // 检查购买状态
       const purchaseRes = await checkPurchaseStatus(userRes.data.id, route.params.id);
       if (purchaseRes.code === 200 || purchaseRes.code === "200") {
@@ -949,6 +995,7 @@ const checkCanComment = async () => {
   } catch (error) {
     console.error('检查评论权限失败:', error);
     canComment.value = false;
+    currentUserId.value = null;
   }
 };
 
@@ -998,8 +1045,11 @@ const handleDeleteComment = async (commentId) => {
     const res = await deleteComment(commentId, currentUserId.value);
     if (res.code === 200 || res.code === "200") {
       ElMessage.success('删除成功');
-      // 重新获取评论列表
-      await fetchComments();
+      // 重新获取评论列表和商品信息以更新评分
+      await Promise.all([
+        fetchComments(),
+        fetchProduct()
+      ]);
     } else {
       throw new Error(res.msg || '删除失败');
     }
@@ -1134,10 +1184,28 @@ watch(
   }
 );
 
+// 打开外部书评链接
+const openExternalReview = () => {
+  if (!product.value) return;
+  
+  try {
+    // 构建豆瓣搜索链接
+    const searchQuery = encodeURIComponent(product.value.title);
+    const doubanUrl = `https://search.douban.com/book/subject_search?search_text=${searchQuery}`;
+    
+    // 在新窗口打开链接
+    window.open(doubanUrl, '_blank');
+  } catch (error) {
+    console.error('打开外部书评链接失败:', error);
+    ElMessage.error('打开外部书评链接失败，请稍后重试');
+  }
+};
+
 onMounted(async () => {
+  await fetchUserInfo(); // 获取用户角色信息
+  await checkCanComment(); // 获取当前用户ID和评论权限
   await fetchProduct();
-  await fetchUserInfo();
-  await fetchComments(); // 确保在组件挂载时获取评论
+  await fetchComments();
 });
 </script>
 
@@ -1799,5 +1867,32 @@ onMounted(async () => {
   font-size: 12px;
   color: #909399;
   margin-top: 5px;
+}
+
+.external-reviews {
+  margin: 15px 0;
+  padding: 10px 0 10px 20px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.review-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 16px;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  opacity: 0.9;
+}
+
+.review-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  opacity: 1;
+}
+
+.review-button .el-icon {
+  font-size: 18px;
 }
 </style>

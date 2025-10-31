@@ -199,31 +199,31 @@
             <el-icon><Location /></el-icon>
             <span>收货信息</span>
           </div>
-          <el-form
-            :model="shippingForm"
-            ref="shippingFormRef"
-            :rules="shippingRules"
-            label-width="80px"
+      <el-form
+        :model="shippingForm"
+        ref="shippingFormRef"
+        :rules="shippingRules"
+        label-width="80px"
             class="shipping-form"
-          >
-            <el-form-item label="收货人" prop="name">
+      >
+        <el-form-item label="收货人" prop="name">
               <el-input v-model="shippingForm.name" placeholder="请输入收货人姓名" />
-            </el-form-item>
-            <el-form-item label="手机号" prop="phone">
+        </el-form-item>
+        <el-form-item label="手机号" prop="phone">
               <el-input v-model="shippingForm.phone" placeholder="请输入手机号码" />
-            </el-form-item>
-            <el-form-item label="邮编" prop="zipcode">
+        </el-form-item>
+        <el-form-item label="邮编" prop="zipcode">
               <el-input v-model="shippingForm.zipcode" placeholder="请输入邮政编码" />
-            </el-form-item>
-            <el-form-item label="地址" prop="address">
+        </el-form-item>
+        <el-form-item label="地址" prop="address">
               <el-input
                 v-model="shippingForm.address"
                 type="textarea"
                 :rows="2"
                 placeholder="请输入详细收货地址"
               />
-            </el-form-item>
-          </el-form>
+        </el-form-item>
+      </el-form>
         </div>
 
         <!-- 订单信息 -->
@@ -232,20 +232,20 @@
             <el-icon><Document /></el-icon>
             <span>订单信息</span>
           </div>
-          <div class="order-summary">
-            <div class="order-row">
-              <span class="label">用户名：</span>
-              <span class="value">{{ username }}</span>
-            </div>
-            <div class="order-row">
-              <span class="label">订单内容：</span>
+      <div class="order-summary">
+        <div class="order-row">
+          <span class="label">用户名：</span>
+          <span class="value">{{ username }}</span>
+        </div>
+        <div class="order-row">
+          <span class="label">订单内容：</span>
               <div class="order-items">
                 <div v-for="item in cartItems" :key="item.cartItemId" class="order-item">
                   <el-image :src="item.cover" class="item-image" fit="cover">
                     <template #error>
                       <div class="image-error">
                         <el-icon><Picture /></el-icon>
-                      </div>
+        </div>
                     </template>
                   </el-image>
                   <div class="item-info">
@@ -306,7 +306,7 @@
             
             <div class="order-row total">
               <span class="label">支付总金额：</span>
-              <span class="value price">¥{{ formatPrice(finalAmount) }}</span>
+              <span class="value price">¥{{ formatPrice(totalAmount) }}</span>
             </div>
             <div class="order-row">
               <span class="label">支付方式：</span>
@@ -314,21 +314,21 @@
                 <el-icon><Money /></el-icon>
                 支付宝
               </span>
-            </div>
-          </div>
+        </div>
+      </div>
         </div>
       </div>
 
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="checkoutDialogVisible = false" size="large">取消</el-button>
-          <el-button
-            type="primary"
+        <el-button
+          type="primary"
             size="large"
-            :loading="checkoutLoading"
-            @click="handleCheckoutSubmit"
+          :loading="checkoutLoading"
+          @click="handleCheckoutSubmit"
             class="submit-button"
-          >
+        >
             <el-icon><Check /></el-icon>
             提交订单
           </el-button>
@@ -684,8 +684,7 @@ export default {
         const payload = {
           cartItemIds: cartItems.value.map(item => item.cartItemId.toString()),
           shipping_address: shippingForm.value,
-          payment_method: "Alipay",  // 修改为与后端匹配的值
-          couponId: selectedCoupon.value ? selectedCoupon.value.id : null
+          payment_method: "Alipay"  // 修改为与后端匹配的值
         };
 
         console.log('Checkout payload:', payload);
@@ -695,6 +694,14 @@ export default {
         if (response.code === "200") {
           ElMessage.success("订单提交成功");
           checkoutDialogVisible.value = false;
+          // 清空购物车
+          cartItems.value = [];
+          // 触发购物车更新事件
+          window.dispatchEvent(new CustomEvent('cart-updated', { 
+            detail: { count: 0 } 
+          }));
+          // 跳转到订单页面
+          router.push('/orders');
         } else {
           throw new Error(response.msg || "订单提交失败");
         }
