@@ -30,15 +30,6 @@
       <el-button v-else type="text" @click="goToAdsRecommend">
         <el-icon><Bell /></el-icon> 广告推荐
       </el-button>
-      <el-button
-        class="nav-button"
-        @click="goToAiQuery"
-        type="primary"
-        plain
-      >
-        <el-icon><ChatDotRound /></el-icon>
-        AI 智能查询
-      </el-button>
     </div>
     <div class="user-actions" v-if="logined">
       <el-button type="text" @click="logout">
@@ -52,7 +43,7 @@
 import { ref, onMounted, watch, computed, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getCartItems } from '../api/cart'
-import { ShoppingCart, Star, Goods, Document, User, Setting, Bell, SwitchButton, ChatDotRound } from '@element-plus/icons-vue'
+import { ShoppingCart, Star, Goods, Document, User, Setting, Bell, SwitchButton } from '@element-plus/icons-vue'
 import { useWishListStore } from '../store/wishlist'
 
 const router = useRouter()
@@ -119,7 +110,6 @@ const goToProfile = () => router.push('/profile')
 const goToWishList = () => router.push('/wishlist')
 const goToAdvertisements = () => router.push('/advertisements')
 const goToAdsRecommend = () => router.push('/ads-recommend')
-const goToAiQuery = () => router.push('/ai-query')
 
 const logout = () => {
   logined.value = false
@@ -217,17 +207,6 @@ defineExpose({
 }
 
 .user-actions .el-button {
-  font-size: 16px;
-}
-
-.nav-button {
-  margin-right: 10px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.nav-button .el-icon {
   font-size: 16px;
 }
 </style>
