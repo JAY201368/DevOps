@@ -79,12 +79,61 @@ const rules = {
   password: [{ required: true, message: "请输入密码", trigger: "blur" }],
 };
 
-// 组件挂载时将logined设置为false
+// 组件挂载时检查登录状态
 onMounted(() => {
+  // 将logined设置为false
   if (appHeaderRef && appHeaderRef.value) {
     appHeaderRef.value.setLogined(false);
   }
+  
+  // 检查是否已登录
+  const token = localStorage.getItem('token');
+  const username = localStorage.getItem('username');
+  
+  if (token && username) {
+    // 验证token有效性
+    checkLoginStatus(username);
+  }
 });
+
+// 验证登录状态
+const checkLoginStatus = async (username) => {
+  try {
+    // 尝试获取用户信息，验证token是否有效
+    const userInfo = await getUserInfo(username);
+    
+    if (userInfo && userInfo.data) {
+      // token有效，设置登录状态
+      localStorage.setItem("userRole", userInfo.data.role);
+      
+      if (appHeaderRef && appHeaderRef.value) {
+        appHeaderRef.value.setLogined(true);
+      }
+      
+      // 触发自定义登录事件
+      window.dispatchEvent(new CustomEvent("user-logged-in"));
+      
+      // 跳转到首页
+      router.push("/home");
+    } else {
+      // token无效，清除本地存储
+      clearLoginInfo();
+    }
+  } catch (error) {
+    console.error("验证登录状态失败:", error);
+    // token无效或过期，清除本地存储
+    clearLoginInfo();
+  }
+};
+
+// 清除登录信息
+const clearLoginInfo = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  localStorage.removeItem("userId");
+  localStorage.removeItem("userRole");
+  sessionStorage.removeItem("logined");
+};
 
 const handleLogin = async () => {
   if (!loginFormRef.value) return;

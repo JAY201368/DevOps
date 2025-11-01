@@ -16,13 +16,7 @@ import BannerManagement from '../views/BannerManagement.vue'
 const routes = [
   {
     path: '/',
-    redirect: to => {
-      const token = localStorage.getItem('token')
-      if (token) {
-        return '/home'
-      }
-      return '/login'
-    }
+    redirect: '/login'  // 直接重定向到登录页，让登录页面去判断是否已登录
   },
   {
     path: '/login',
