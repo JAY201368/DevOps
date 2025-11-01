@@ -79,61 +79,12 @@ const rules = {
   password: [{ required: true, message: "请输入密码", trigger: "blur" }],
 };
 
-// 组件挂载时检查登录状态
+// 组件挂载时将logined设置为false
 onMounted(() => {
-  // 将logined设置为false
   if (appHeaderRef && appHeaderRef.value) {
     appHeaderRef.value.setLogined(false);
   }
-  
-  // 检查是否已登录
-  const token = localStorage.getItem('token');
-  const username = localStorage.getItem('username');
-  
-  if (token && username) {
-    // 验证token有效性
-    checkLoginStatus(username);
-  }
 });
-
-// 验证登录状态
-const checkLoginStatus = async (username) => {
-  try {
-    // 尝试获取用户信息，验证token是否有效
-    const userInfo = await getUserInfo(username);
-    
-    if (userInfo && userInfo.data) {
-      // token有效，设置登录状态
-      localStorage.setItem("userRole", userInfo.data.role);
-      
-      if (appHeaderRef && appHeaderRef.value) {
-        appHeaderRef.value.setLogined(true);
-      }
-      
-      // 触发自定义登录事件
-      window.dispatchEvent(new CustomEvent("user-logged-in"));
-      
-      // 跳转到首页
-      router.push("/home");
-    } else {
-      // token无效，清除本地存储
-      clearLoginInfo();
-    }
-  } catch (error) {
-    console.error("验证登录状态失败:", error);
-    // token无效或过期，清除本地存储
-    clearLoginInfo();
-  }
-};
-
-// 清除登录信息
-const clearLoginInfo = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("username");
-  localStorage.removeItem("userId");
-  localStorage.removeItem("userRole");
-  sessionStorage.removeItem("logined");
-};
 
 const handleLogin = async () => {
   if (!loginFormRef.value) return;
@@ -147,18 +98,23 @@ const handleLogin = async () => {
         // 检查响应中是否有错误信息
         if (res.code !== "200" && res.code !== 200) {
           ElMessage.error("账号或密码错误");
+          loading.value = false;
           return;
         }
 
         // 保存token和用户名
         localStorage.setItem("token", res.data.token || res.data);
         localStorage.setItem("username", loginForm.username);
+        
+        // 设置登录状态
+        sessionStorage.setItem("logined", "true");
 
         // 获取用户信息，保存角色
         try {
           const userInfo = await getUserInfo(loginForm.username);
           if (userInfo && userInfo.data) {
             localStorage.setItem("userRole", userInfo.data.role);
+            localStorage.setItem("userId", userInfo.data.id);
           }
         } catch (error) {
           console.error("获取用户信息失败", error);
@@ -174,13 +130,17 @@ const handleLogin = async () => {
         // 触发自定义登录事件，通知Live2D组件用户已登录
         window.dispatchEvent(new CustomEvent("user-logged-in"));
 
+        // 清除API缓存，确保获取最新数据
+        import('../api/request').then(module => {
+          module.clearCache();
+        });
+
         // 确保在设置登录状态后再跳转
         await router.push("/home");
       } catch (error) {
         // 显示详细的错误信息
         console.error("登录失败:", error);
         ElMessage.error("账号或密码错误");
-      } finally {
         loading.value = false;
       }
     }

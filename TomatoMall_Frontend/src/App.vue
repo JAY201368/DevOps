@@ -65,7 +65,20 @@ watch(() => route.path, (newPath, oldPath) => {
 onMounted(() => {
   const token = localStorage.getItem('token')
   const username = localStorage.getItem('username')
+  const logined = sessionStorage.getItem('logined') === 'true'
+  
+  // 如果有token但没有设置登录状态，设置登录状态
+  if (token && username && !logined) {
+    sessionStorage.setItem('logined', 'true')
+  }
+  
+  // 如果已登录且不在登录页面
   if (token && username && route.path !== '/login') {
+    // 设置Header组件的登录状态
+    if (appHeaderRef.value) {
+      appHeaderRef.value.setLogined(true)
+    }
+    
     // 加载用户愿望单数据
     wishlistStore.fetchWishListCount()
     

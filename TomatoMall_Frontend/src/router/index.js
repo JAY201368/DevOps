@@ -16,7 +16,7 @@ import BannerManagement from '../views/BannerManagement.vue'
 const routes = [
   {
     path: '/',
-    redirect: '/login'  // 直接重定向到登录页，让登录页面去判断是否已登录
+    redirect: '/login'  // 直接重定向到登录页面
   },
   {
     path: '/login',
@@ -145,6 +145,12 @@ router.beforeEach((to, from, next) => {
   // 检查是否需要登录
   if (to.meta.requiresAuth && !token) {
     next('/login')
+    return
+  }
+  
+  // 如果已登录且尝试访问登录页，重定向到首页
+  if (to.path === '/login' && token) {
+    next('/home')
     return
   }
   
