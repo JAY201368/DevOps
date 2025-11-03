@@ -43,14 +43,19 @@
           <h3 class="book-title" :title="book.title">{{ book.title }}</h3>
           
           <div class="book-rating">
-            <el-rate 
-              v-model="book.rate" 
-              disabled 
-              :max="5"
-              :allow-half="true"
-              :colors="['#FF9900', '#FF9900', '#FF9900']"
-            />
-            <span class="rating-value">{{ (book.rate || 0).toFixed(1) }}</span>
+            <template v-if="book.rate !== null && book.rate !== undefined">
+              <el-rate 
+                v-model="book.rate" 
+                disabled 
+                :max="5"
+                :allow-half="true"
+                :colors="['#FF9900', '#FF9900', '#FF9900']"
+              />
+              <span class="rating-value">{{ Number(book.rate).toFixed(1) }}分</span>
+            </template>
+            <template v-else>
+              <span class="no-rating">暂无评分</span>
+            </template>
           </div>
           
           <div class="book-price">¥{{ book.price }}</div>
@@ -111,7 +116,7 @@ const fetchRecommendations = async () => {
     if (response.code === '200' && response.data) {
       books.value = response.data.map(book => ({
         ...book,
-        rate: book.rate ? book.rate / 2 : 0 // 假设后端评分是10分制，转换为5分制
+        rate: book.rate !== null && book.rate !== undefined ? Number(book.rate) : null // 数据库已经是5分制，直接使用
       }));
       console.log(`成功获取${books.value.length}本推荐书籍`);
       // 发射加载成功事件
@@ -238,9 +243,16 @@ onMounted(() => {
 }
 
 .rating-value {
-  margin-left: 5px;
-  color: #ff9900;
-  font-weight: bold;
+  margin-left: 8px;
+  color: #FF9900;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.no-rating {
+  color: #909399;
+  font-size: 14px;
+  font-style: italic;
 }
 
 .book-price {
