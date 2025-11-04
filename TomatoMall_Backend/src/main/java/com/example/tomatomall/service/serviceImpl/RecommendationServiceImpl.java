@@ -126,9 +126,9 @@ public class RecommendationServiceImpl implements RecommendationService {
                 }
             }
             
-            // 考虑评分因素（现在产品的rate字段是5分制）
+            // 考虑评分因素（假设产品有rate字段表示评分，满分10分）
             if (product.getRate() != null) {
-                score *= (0.5 + product.getRate() / 10.0); // 评分影响因子，5分制
+                score *= (0.5 + product.getRate() / 20.0); // 评分影响因子
             }
             
             productScores.put(product.getId(), score);

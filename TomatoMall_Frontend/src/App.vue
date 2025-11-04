@@ -1,7 +1,9 @@
 <template>
   <div class="app">
     <AppHeader ref="appHeaderRef" />
-    <router-view />
+    <div class="main-content">
+      <router-view />
+    </div>
     
     <!-- 在全局添加Live2D组件，确保在所有页面都可见 -->
     <div class="global-live2d" v-if="!isLoginPage">
@@ -108,7 +110,6 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f7fa;
 }
 
 .app {
@@ -116,11 +117,15 @@ body {
   display: flex;
   flex-direction: column;
   position: relative; /* 添加相对定位，为Live2D提供定位上下文 */
+  background: linear-gradient(135deg, #f6f9fc, #e9f1f9, #dce9f5);
 }
 
 .main-content {
   flex: 1;
   padding: 20px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 /* 全局Live2D定位样式 */

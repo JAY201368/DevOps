@@ -8,14 +8,14 @@
             <div class="banner-info">
               <h2 class="banner-title">{{ banner.title }}</h2>
               <p class="banner-description">{{ banner.description }}</p>
-              <el-button type="primary" @click="navigateTo(banner.link)">查看详情</el-button>
+              <el-button type="primary" @click="navigateTo(banner)">查看详情</el-button>
             </div>
             <div class="banner-books">
               <div v-if="banner.books.length === 0" class="no-books-message">
                 <el-empty description="加载中..." :image-size="100"></el-empty>
               </div>
               <div v-else class="book-carousel" :class="{ 'few-books': banner.books.length < 4 }">
-                <div v-for="(book, bookIndex) in banner.books" :key="bookIndex" class="book-item">
+                <div v-for="(book, bookIndex) in banner.books" :key="bookIndex" class="book-item" @click="navigateToBook(book)">
                   <div class="book-cover">
                     <img :src="book.cover" :alt="book.title" class="book-image" />
                   </div>
@@ -32,15 +32,7 @@
     </div>
     
     <!-- 个性化推荐组件 -->
-    <div class="recommendation-section container">
-      <BookRecommendation 
-        title="为您推荐"
-        description="根据您的阅读偏好，为您精选图书"
-        type="personalized"
-        :limit="9"
-        @loaded="recommendationLoaded('personalized', $event)"
-      />
-    </div>
+    <!-- 移除个性化推荐组件 -->
     
     <!-- 热门推荐组件 -->
     <div class="recommendation-section container">
@@ -48,7 +40,7 @@
         title="热门图书"
         description="当前最受欢迎的图书"
         type="popular"
-        :limit="6"
+        :limit="12"
         @loaded="recommendationLoaded('popular', $event)"
       />
     </div>
@@ -69,8 +61,25 @@ const router = useRouter();
 const banners = ref([]);
 
 // 导航到指定链接
-const navigateTo = (link) => {
-  router.push(link);
+const navigateTo = (banner) => {
+  console.log('点击了轮播图:', banner);
+  
+  // 如果banner有ID，则导航到该轮播图的商品列表页
+  if (banner.id) {
+    console.log(`跳转到轮播图商品列表页: /banner-products/${banner.id}`);
+    router.push(`/banner-products/${banner.id}`);
+  } else {
+    // 如果没有ID（比如使用默认数据时），则使用原来的链接
+    console.log(`跳转到默认链接: ${banner.link || '/products'}`);
+    router.push(banner.link || '/products');
+  }
+};
+
+// 导航到指定书籍详情页
+const navigateToBook = (book) => {
+  console.log('点击了书籍:', book);
+  console.log(`跳转到书籍详情页: /products/${book.id}`);
+  router.push(`/products/${book.id}`);
 };
 
 // 监听推荐组件加载状态
@@ -211,14 +220,16 @@ onMounted(() => {
   display: flex;
   align-items: center;
   padding: 0 40px;
-  background: linear-gradient(to right, #f5f7fa, #ffffff);
+  background: linear-gradient(to right, #ffeef2, #fff5f7);
   position: relative;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 .banner-info {
   flex: 0 0 25%;
   padding: 25px;
-  border-radius: 10px;
+  border-radius: 20px;
   background-color: rgba(255, 255, 255, 0.9);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   z-index: 2;
@@ -241,14 +252,17 @@ onMounted(() => {
   flex: 0 0 calc(25% - 15px);
   max-width: calc(25% - 15px);
   background: white;
-  border-radius: 8px;
+  border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s;
+  transition: transform 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+  border: 1px solid #ffebee;
 }
 
 .book-item:hover {
   transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(255, 182, 193, 0.3);
 }
 
 .book-cover {
@@ -256,8 +270,9 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f5f7fa;
+  background-color: #fff9fa;
   overflow: hidden;
+  border-bottom-left-radius: 30px;
 }
 
 .book-image {
@@ -372,5 +387,43 @@ onMounted(() => {
 .book-carousel.few-books .book-item {
   flex: 0 0 calc(33.33% - 15px);
   max-width: calc(33.33% - 15px);
+}
+
+/* 修改轮播图指示器样式 */
+:deep(.el-carousel__indicators) {
+  transform: translateY(10px);
+}
+
+:deep(.el-carousel__indicator) {
+  padding: 8px;
+}
+
+:deep(.el-carousel__button) {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 182, 193, 0.5);
+  transition: all 0.3s;
+}
+
+:deep(.el-carousel__indicator.is-active .el-carousel__button) {
+  background-color: rgba(255, 105, 180, 0.8);
+  transform: scale(1.2);
+}
+
+/* 修改轮播图箭头样式 */
+:deep(.el-carousel__arrow) {
+  border-radius: 50%;
+  background-color: rgba(255, 182, 193, 0.7);
+}
+
+:deep(.el-carousel__arrow:hover) {
+  background-color: rgba(255, 105, 180, 0.9);
+}
+
+/* 修改按钮样式 */
+.banner-info .el-button {
+  border-radius: 20px;
+  padding: 10px 20px;
 }
 </style>

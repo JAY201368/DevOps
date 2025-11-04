@@ -52,6 +52,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/banner-products/:bannerId',
+    name: 'BannerProducts',
+    component: ProductList,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/products/:id',
     name: 'ProductDetail',
     component: ProductDetail,

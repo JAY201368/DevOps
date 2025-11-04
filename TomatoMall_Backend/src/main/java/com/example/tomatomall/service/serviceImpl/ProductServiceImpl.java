@@ -1,10 +1,8 @@
 package com.example.tomatomall.service.serviceImpl;
 
-import com.example.tomatomall.po.CommentPO;
 import com.example.tomatomall.po.ProductPO;
 import com.example.tomatomall.po.SpecificationPO;
 import com.example.tomatomall.po.StockpilePO;
-import com.example.tomatomall.repository.CommentRepository;
 import com.example.tomatomall.repository.ProductRepository;
 import com.example.tomatomall.service.ProductService;
 import com.example.tomatomall.vo.ProductVO;
@@ -12,7 +10,6 @@ import com.example.tomatomall.vo.SpecificationVO;
 import com.example.tomatomall.vo.StockpileVO;
 import com.example.tomatomall.exception.TomatoMallException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,29 +22,10 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private ProductRepository productRepository;
 
-    @Autowired
-    private CommentRepository commentRepository;
-
     @Override
     public List<ProductVO> getAllProducts() {
         return productRepository.findAll().stream()
-                .map(product -> {
-                    ProductVO productVO = ProductVO.fromPO(product);
-                    // 计算基于评论的平均评分
-                    List<CommentPO> comments = commentRepository.findByProductIdAndStatus(product.getId(), 1, Pageable.unpaged()).getContent();
-                    if (!comments.isEmpty()) {
-                        double averageRating = comments.stream()
-                            .mapToDouble(CommentPO::getRating)
-                            .average()
-                            .orElse(0.0);
-                        // 直接使用5分制的评分
-                        productVO.setRate(averageRating);
-                    } else {
-                        // 如果没有评论，设置为null，前端会显示"暂无评分"
-                        productVO.setRate(null);
-                    }
-                    return productVO;
-                })
+                .map(ProductVO::fromPO)
                 .collect(Collectors.toList());
     }
 
@@ -102,10 +80,10 @@ public class ProductServiceImpl implements ProductService {
         ProductPO existingProduct = productRepository.findById(productVO.getId())
                 .orElseThrow(() -> new EntityNotFoundException("商品不存在"));
 
-        // 仅更新基本字段，不处理rate字段（由评论系统自动维护）
+        // 仅更新基本字段，不处理规格集合
         existingProduct.setTitle(productVO.getTitle());
         existingProduct.setPrice(productVO.getPrice());
-        // 不更新rate字段，保持评论系统计算的值
+        existingProduct.setRate(productVO.getRate());
         existingProduct.setDescription(productVO.getDescription());
         existingProduct.setCover(productVO.getCover());
         existingProduct.setDetail(productVO.getDetail());
@@ -212,13 +190,7 @@ public class ProductServiceImpl implements ProductService {
     private void updateProductFromVO(ProductPO productPO, ProductVO productVO) {
         productPO.setTitle(productVO.getTitle());
         productPO.setPrice(productVO.getPrice());
-        // rate字段由评论系统自动维护，不允许手动更新
-        // 对于新商品，rate应该设置为null，由评论系统自动计算（5分制）
-        if (productPO.getId() == null) {
-            // 新商品，设置rate为null
-            productPO.setRate(null);
-        }
-        // 对于编辑现有商品，不修改rate字段，保持评论系统计算的值
+        productPO.setRate(productVO.getRate());
         productPO.setDescription(productVO.getDescription());
         productPO.setCover(productVO.getCover());
         productPO.setDetail(productVO.getDetail());

@@ -153,11 +153,19 @@
               <span class="summary-label">商品总数:</span>
               <span class="summary-value">{{ totalItems }} 件</span>
             </div>
+            <div class="summary-item" v-if="discountAmount > 0">
+              <span class="summary-label">商品原价:</span>
+              <span class="summary-value">¥{{ formatPrice(totalAmount) }}</span>
+            </div>
+            <div class="summary-item" v-if="discountAmount > 0">
+              <span class="summary-label">优惠金额:</span>
+              <span class="summary-value discount-price">-¥{{ formatPrice(discountAmount) }}</span>
+            </div>
             <div class="summary-item total-amount">
               <span class="summary-label">合计金额:</span>
               <span class="summary-value price-total"
                 ><span class="currency">¥</span
-                >{{ formatPrice(totalAmount) }}</span
+                >{{ formatPrice(finalAmount) }}</span
               >
             </div>
           </div>
@@ -306,7 +314,7 @@
             
             <div class="order-row total">
               <span class="label">支付总金额：</span>
-              <span class="value price">¥{{ formatPrice(totalAmount) }}</span>
+              <span class="value price">¥{{ formatPrice(finalAmount) }}</span>
             </div>
             <div class="order-row">
               <span class="label">支付方式：</span>
@@ -684,7 +692,8 @@ export default {
         const payload = {
           cartItemIds: cartItems.value.map(item => item.cartItemId.toString()),
           shipping_address: shippingForm.value,
-          payment_method: "Alipay"  // 修改为与后端匹配的值
+          payment_method: "Alipay",  // 修改为与后端匹配的值
+          couponId: selectedCouponId.value // 添加选择的促销券ID
         };
 
         console.log('Checkout payload:', payload);
@@ -756,7 +765,7 @@ export default {
 .cart-page {
   min-height: 100vh;
   padding: 30px 0;
-  background: linear-gradient(to bottom, #f9f9f9, #f0f2f5);
+  background: linear-gradient(135deg, #f6f9fc, #e9f1f9, #dce9f5);
 }
 
 .cart-container {
@@ -775,7 +784,7 @@ export default {
 .cart-title {
   font-size: 28px;
   font-weight: 600;
-  color: #333;
+  color: #2c3e50;
   margin-bottom: 8px;
   position: relative;
   display: inline-block;
@@ -789,7 +798,7 @@ export default {
   transform: translateX(-50%);
   width: 80px;
   height: 3px;
-  background: linear-gradient(to right, #409eff, #53a8ff);
+  background: linear-gradient(to right, #3498db, #9b59b6);
   border-radius: 3px;
 }
 
@@ -837,12 +846,12 @@ export default {
 
 .cart-header {
   display: flex;
-  background: linear-gradient(to right, #ecf5ff, #f5f7fa);
+  background: linear-gradient(to right, #e1f0ff, #e8f4fd);
   padding: 15px 20px;
   border-radius: 8px 8px 0 0;
   font-weight: 600;
-  color: #606266;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.03);
+  color: #2c3e50;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
 }
 
 /* 购物车项目 */
@@ -855,13 +864,15 @@ export default {
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: none;
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
 }
 
 .cart-item:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 20px rgba(52, 152, 219, 0.15);
 }
 
 .cart-item-content {
@@ -1017,12 +1028,13 @@ export default {
   margin-top: 20px;
   padding: 20px;
   border-radius: 8px;
-  background: linear-gradient(to right, #fff, #f9fafc);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.95), rgba(249, 250, 252, 0.95));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   border: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  backdrop-filter: blur(10px);
 }
 
 .cart-summary {
@@ -1085,14 +1097,15 @@ export default {
   font-size: 16px;
   font-weight: 600;
   border-radius: 8px;
-  background: linear-gradient(to right, #409eff, #53a8ff);
+  background: linear-gradient(to right, #3498db, #9b59b6);
   border: none;
   transition: all 0.3s;
+  color: white;
 }
 
 .checkout-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(64, 158, 255, 0.3);
+  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
 }
 
 /* 动画效果 */
@@ -1222,7 +1235,7 @@ export default {
 
 /* 结算弹窗样式 */
 .checkout-dialog :deep(.el-dialog__header) {
-  background: linear-gradient(to right, #409EFF, #67C23A);
+  background: linear-gradient(to right, #3498db, #9b59b6);
   margin: 0;
   padding: 20px;
   border-radius: 8px 8px 0 0;
@@ -1247,11 +1260,12 @@ export default {
 }
 
 .checkout-section {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
 }
 
 .section-header {
@@ -1259,8 +1273,8 @@ export default {
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 2px solid #f0f2f5;
-  color: #303133;
+  border-bottom: 2px solid #e6f0fa;
+  color: #2c3e50;
   font-size: 16px;
   font-weight: bold;
 }
@@ -1268,7 +1282,7 @@ export default {
 .section-header .el-icon {
   margin-right: 8px;
   font-size: 20px;
-  color: #409EFF;
+  color: #3498db;
 }
 
 .shipping-form {
@@ -1375,7 +1389,7 @@ export default {
 .dialog-footer {
   padding: 20px;
   text-align: right;
-  background: #f8f9fa;
+  background: #f0f7fc;
   border-radius: 0 0 8px 8px;
 }
 
@@ -1394,12 +1408,12 @@ export default {
 }
 
 .order-items::-webkit-scrollbar-thumb {
-  background: #dcdfe6;
+  background: #a0c5e8;
   border-radius: 3px;
 }
 
 .order-items::-webkit-scrollbar-track {
-  background: #f5f7fa;
+  background: #e6f0fa;
   border-radius: 3px;
 }
 

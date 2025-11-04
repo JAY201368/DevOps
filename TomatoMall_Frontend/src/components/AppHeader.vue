@@ -21,21 +21,21 @@
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item @click="goToCart">
-              <el-icon class="cart-icon"><ShoppingCart /></el-icon> 购物车
-              <el-badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" />
+        <el-icon class="cart-icon"><ShoppingCart /></el-icon> 购物车
+        <el-badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" />
             </el-dropdown-item>
             <el-dropdown-item v-if="!isAdmin" @click="goToWishList">
-              <el-icon class="wishlist-icon"><Star /></el-icon> 我的愿望单
-              <el-badge v-if="wishlistStore.wishlistCount > 0" :value="wishlistStore.wishlistCount" class="wishlist-badge" />
+        <el-icon class="wishlist-icon"><Star /></el-icon> 我的愿望单
+        <el-badge v-if="wishlistStore.wishlistCount > 0" :value="wishlistStore.wishlistCount" class="wishlist-badge" />
             </el-dropdown-item>
             <el-dropdown-item @click="goToOrders">
-              <el-icon><Document /></el-icon> 我的订单
+        <el-icon><Document /></el-icon> 我的订单
             </el-dropdown-item>
             <el-dropdown-item v-if="!isAdmin" @click="goToUserCoupons">
               <el-icon><Ticket /></el-icon> 我的促销券
             </el-dropdown-item>
             <el-dropdown-item @click="goToProfile">
-              <el-icon><User /></el-icon> 个人信息
+        <el-icon><User /></el-icon> 个人信息
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -179,9 +179,13 @@ defineExpose({
   justify-content: space-between;
   align-items: center;
   padding: 0 30px;
-  background-color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 12px rgba(52, 152, 219, 0.15);
   height: 70px;
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .logo-container {
@@ -193,13 +197,22 @@ defineExpose({
   width: 50px;
   height: 50px;
   margin-right: 15px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.1) rotate(5deg);
 }
 
 .site-title {
   font-size: 24px;
   font-weight: bold;
-  color: #e53935;
+  background: linear-gradient(to right, #e53935, #e35d5b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .nav-buttons {
@@ -214,6 +227,13 @@ defineExpose({
   display: flex;
   align-items: center;
   gap: 5px;
+  color: var(--text-color);
+  transition: all 0.3s ease;
+}
+
+.nav-buttons .el-button:hover {
+  color: var(--primary-color);
+  transform: translateY(-2px);
 }
 
 .nav-buttons .el-icon {
@@ -244,6 +264,13 @@ defineExpose({
 
 .user-actions .el-button {
   font-size: 16px;
+  color: var(--text-color);
+  transition: all 0.3s ease;
+}
+
+.user-actions .el-button:hover {
+  color: #e53935;
+  transform: translateY(-2px);
 }
 
 .user-center-dropdown {
@@ -253,50 +280,32 @@ defineExpose({
 .user-center-button {
   display: flex;
   align-items: center;
-  gap: 5px;
-  transition: color 0.3s;
 }
 
-.user-center-button:hover {
-  color: #409eff;
+/* 美化下拉菜单 */
+:deep(.el-dropdown-menu) {
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 8px 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
 }
 
-.user-center-dropdown :deep(.el-dropdown-menu__item) {
+:deep(.el-dropdown-menu__item) {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
-  line-height: 1.5;
-  font-size: 14px;
-  transition: all 0.3s;
+  padding: 10px 20px;
+  transition: all 0.3s ease;
 }
 
-.user-center-dropdown :deep(.el-dropdown-menu__item:hover) {
-  background-color: #ecf5ff;
-  color: #409eff;
+:deep(.el-dropdown-menu__item:hover) {
+  background: linear-gradient(to right, rgba(52, 152, 219, 0.1), rgba(155, 89, 182, 0.1));
+  color: var(--primary-color);
 }
 
-.user-center-dropdown :deep(.el-dropdown-menu) {
-  min-width: 180px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 5px 0;
-}
-
-.el-dropdown-menu__item .el-icon {
-  margin-right: 8px;
-  font-size: 16px;
-}
-
-.el-dropdown-menu__item .cart-badge,
-.el-dropdown-menu__item .wishlist-badge {
-  margin-left: 8px;
-}
-
-.el-dropdown-menu__item .el-badge :deep(.el-badge__content) {
-  transform: scale(0.8);
-  height: 16px;
-  line-height: 16px;
-  padding: 0 4px;
+:deep(.el-dropdown-menu__item .el-icon) {
+  margin-right: 10px;
+  font-size: 18px;
 }
 
 @media (max-width: 768px) {

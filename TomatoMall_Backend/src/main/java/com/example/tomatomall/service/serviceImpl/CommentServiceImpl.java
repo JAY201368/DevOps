@@ -2,16 +2,13 @@ package com.example.tomatomall.service.serviceImpl;
 
 import com.example.tomatomall.exception.TomatoMallException;
 import com.example.tomatomall.po.CommentPO;
-import com.example.tomatomall.po.ProductPO;
 import com.example.tomatomall.repository.CommentRepository;
-import com.example.tomatomall.repository.ProductRepository;
 import com.example.tomatomall.repository.UserRepository;
 import com.example.tomatomall.service.CommentService;
 import com.example.tomatomall.vo.CommentVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,9 +24,6 @@ public class CommentServiceImpl implements CommentService {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
 
     @Override
     public List<CommentVO> getCommentsByProductId(Long productId, Integer page, Integer size) {
@@ -89,9 +83,6 @@ public class CommentServiceImpl implements CommentService {
         userRepository.findById(userId).ifPresent(user -> 
             vo.setUsername(user.getUsername())
         );
-
-        // 更新商品的平均评分
-        updateProductRating(productId);
         
         return vo;
     }
@@ -110,33 +101,6 @@ public class CommentServiceImpl implements CommentService {
         // 软删除评论
         comment.setStatus(0);
         commentRepository.save(comment);
-
-        // 更新商品的平均评分
-        updateProductRating(comment.getProductId());
-    }
-
-    // 添加更新商品评分的方法
-    private void updateProductRating(Long productId) {
-        // 获取商品的所有有效评论
-        List<CommentPO> comments = commentRepository.findByProductIdAndStatus(productId, 1, Pageable.unpaged()).getContent();
-        
-        ProductPO product = productRepository.findById(productId)
-            .orElseThrow(() -> new TomatoMallException(404, "商品不存在"));
-            
-        if (!comments.isEmpty()) {
-            // 计算平均评分
-            double averageRating = comments.stream()
-                .mapToDouble(CommentPO::getRating)
-                .average()
-                .orElse(0.0);
-            
-            // 直接使用5分制的评分
-            product.setRate(averageRating);
-        } else {
-            // 如果没有评论，设置评分为null
-            product.setRate(null);
-        }
-        productRepository.save(product);
     }
 
     @Override

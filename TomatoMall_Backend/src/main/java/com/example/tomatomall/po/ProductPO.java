@@ -30,8 +30,8 @@ public class ProductPO {
     private BigDecimal price;
 
     @Min(value = 0, message = "评分不能小于0")
-    @Max(value = 5, message = "评分不能大于5")
-    @Column(nullable = true)
+    @Max(value = 10, message = "评分不能大于10")
+    @Column(nullable = false)
     private Double rate;
 
     private String description;

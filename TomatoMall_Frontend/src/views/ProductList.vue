@@ -4,10 +4,15 @@
       <template #header>
         <div class="card-header">
           <div class="header-left">
-            <h2 class="page-title">商品列表</h2>
-            <el-tag type="info" effect="plain" class="product-count"
-              >共 {{ totalItems }} 个商品</el-tag
-            >
+            <h2 class="page-title" v-if="!isBannerProducts">
+              商品列表
+              <el-tag type="info" effect="plain" class="product-count">
+                共 {{ totalItems }} 个商品
+              </el-tag>
+            </h2>
+            <h2 class="page-title" v-else>
+              图书专题
+            </h2>
           </div>
           <div class="header-right">
             <el-button
@@ -38,6 +43,26 @@
         </div>
       </template>
 
+      <!-- 轮播图专题介绍 -->
+      <div v-if="isBannerProducts && currentBanner" class="banner-detail-container">
+        <div class="banner-detail-content">
+          <div class="banner-detail-icon">
+            <el-icon class="banner-icon"><Collection /></el-icon>
+          </div>
+          <div class="banner-detail-text">
+            <h3 class="banner-detail-title">{{ currentBanner.title }}</h3>
+            <p class="banner-detail-description">{{ currentBanner.description }}</p>
+            <div class="banner-detail-tags">
+              <el-tag size="small" effect="dark" type="success" class="detail-tag">精选推荐</el-tag>
+              <el-tag size="small" effect="dark" type="info" class="detail-tag">共 {{ totalItems }} 本图书</el-tag>
+            </div>
+          </div>
+        </div>
+        <div class="banner-detail-divider">
+          <span class="divider-text">精选图书</span>
+        </div>
+      </div>
+
       <el-alert
         v-if="loadError"
         type="error"
@@ -55,7 +80,7 @@
       </div>
 
       <!-- 卡片视图 -->
-      <div class="card-view-container">
+      <div class="card-view-container" :class="{ 'banner-products': isBannerProducts }">
         <el-row :gutter="20">
           <el-col
             v-for="product in products"
@@ -67,7 +92,7 @@
             :xl="4"
             class="card-col"
           >
-            <el-card class="product-card" shadow="hover">
+            <el-card class="product-card" shadow="hover" :class="{ 'banner-product-card': isBannerProducts }">
               <div class="product-card-header">
                 <h3 class="product-card-title">{{ product.title }}</h3>
               </div>
@@ -87,19 +112,16 @@
 
               <div class="product-card-content">
                 <div class="product-card-rating">
-                  <template v-if="product.rate !== null && product.rate !== undefined">
-                    <el-rate
-                      :model-value="Number(product.rate)"
-                      disabled
-                      text-color="#ff9900"
-                      :allow-half="true"
-                      class="card-rate"
-                    />
-                    <span class="rate-value">{{ Number(product.rate).toFixed(1) }}分</span>
-                  </template>
-                  <template v-else>
-                    <span class="no-rating">暂无评分</span>
-                  </template>
+                  <el-rate
+                    :model-value="Number(product.rate) / 2"
+                    disabled
+                    text-color="#ff9900"
+                    :allow-half="true"
+                    class="card-rate"
+                  />
+                  <span class="rate-value"
+                    >{{ Number(product.rate).toFixed(1) }}分</span
+                  >
                 </div>
 
                 <div class="product-card-description">
@@ -224,19 +246,18 @@
             </el-col>
           </el-row>
 
-          <el-form-item label="评分" prop="rate" v-if="dialogType === 'edit'">
+          <el-form-item label="评分" prop="rate">
             <div class="rate-edit-container">
               <el-rate
                 v-model="productForm.rate"
                 :max="5"
                 :allow-half="true"
                 :colors="['#ffd21e', '#ffd21e', '#ffd21e']"
-                disabled
               />
               <div class="rate-value-display">
-                {{ Number(productForm.rate).toFixed(1) }} 分
+                {{ (productForm.rate * 2).toFixed(1) }} 分
               </div>
-              <div class="rate-hint">（评分由用户评论自动计算，不可手动修改）</div>
+              <div class="rate-hint">（每半颗星代表1分，满分10分）</div>
             </div>
           </el-form-item>
         </div>
@@ -347,8 +368,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Refresh,
@@ -358,6 +379,7 @@ import {
   Box,
   Delete,
   Plus,
+  Collection,
 } from "@element-plus/icons-vue";
 import {
   getAllProducts,
@@ -370,8 +392,13 @@ import {
 } from "../api/product";
 import { getUserInfo } from "../api/user";
 import { checkBackendHealth, checkProductsAPI } from "../api/health";
+import { getBannerById } from '../api/banner';
+import { useUserStore } from '../store/user';
 
 const router = useRouter();
+const route = useRoute();
+const userStore = useUserStore();
+
 const loading = ref(false);
 const products = ref([]);
 const allProducts = ref([]);
@@ -408,6 +435,16 @@ const rules = {
       trigger: "blur",
     },
   ],
+  rate: [
+    { required: true, message: "请选择商品评分", trigger: "change" },
+    {
+      type: "number",
+      min: 0,
+      max: 5,
+      message: "评分必须在0-5之间",
+      trigger: "blur",
+    },
+  ],
   description: [{ required: true, message: "请输入商品描述", trigger: "blur" }],
   cover: [{ required: true, message: "请输入商品封面URL", trigger: "blur" }],
 };
@@ -426,31 +463,14 @@ const stockRules = {
 };
 
 // 从用户状态获取管理员状态
-const isAdmin = ref(false);
+const isAdmin = computed(() => userStore.isAdmin);
 
-// 获取用户信息并设置管理员状态
-const fetchUserInfo = async () => {
-  // 首先从localStorage中获取角色信息
-  const userRole = localStorage.getItem("userRole");
-  if (userRole) {
-    isAdmin.value = userRole === "admin";
-  }
+// 获取路由参数
+const bannerId = computed(() => route.params.bannerId);
+const isBannerProducts = computed(() => route.name === 'BannerProducts');
 
-  // 然后尝试从API获取最新的用户信息
-  try {
-    const username = localStorage.getItem("username");
-    if (username) {
-      const res = await getUserInfo(username);
-      if (res && res.data) {
-        isAdmin.value = res.data.role === "admin";
-        // 更新localStorage中的角色信息
-        localStorage.setItem("userRole", res.data.role);
-      }
-    }
-  } catch (error) {
-    console.error("获取用户信息失败", error);
-  }
-};
+// 当前轮播图信息
+const currentBanner = ref(null);
 
 // 添加错误状态变量
 const loadError = ref(false);
@@ -483,7 +503,7 @@ const diagnoseConnectionIssue = async () => {
 // 添加产品缓存
 const useProductCache = () => {
   const CACHE_KEY = "product_cache";
-  const CACHE_EXPIRY = 2 * 60 * 1000; // 2分钟缓存，确保评分数据的实时性
+  const CACHE_EXPIRY = 5 * 60 * 1000; // 5分钟缓存
 
   const saveToCache = (data) => {
     const cache = {
@@ -554,86 +574,74 @@ const updateDisplayedProducts = () => {
   products.value = allProducts.value.slice(start, end);
 };
 
-// 修改fetchProducts函数以支持分页
+// 获取所有商品
 const fetchProducts = async (forceRefresh = false) => {
   loading.value = true;
   loadError.value = false;
   loadErrorMessage.value = "";
-
-  // 强制刷新时清除缓存
-  if (forceRefresh) {
-    clearCache();
-  }
-
-  // 如果不强制刷新，先尝试从缓存获取
-  if (!forceRefresh) {
-    const cachedProducts = getFromCache();
-    if (cachedProducts) {
-      console.log("从缓存获取商品列表");
-      allProducts.value = cachedProducts;
-      totalItems.value = cachedProducts.length;
-      updateDisplayedProducts();
-      loading.value = false;
-      return;
-    }
-  }
-
+  
   try {
-    if (!navigator.onLine) {
-      throw new Error("网络连接已断开");
-    }
-
-    console.log("开始获取商品列表");
-    const res = await getAllProducts();
-    console.log("获取商品列表响应:", res);
-
-    // 根据响应结构处理数据
-    if (res.code === 200 || res.code === "200") {
-      // 确保每个商品的rate字段正确处理
-      allProducts.value = res.data.map((product) => ({
-        ...product,
-        rate:
-          product.rate !== null && product.rate !== undefined
-            ? Number(product.rate)
-            : null,
-      }));
-      totalItems.value = res.data.length;
-      updateDisplayedProducts();
-      // 只有在非强制刷新时才保存到缓存，确保评分数据的实时性
-      if (!forceRefresh) {
-        saveToCache(allProducts.value);
-      }
-      ElMessage.success("商品列表加载成功");
-    } else if (res.data && res.data.code === "200") {
-      // 确保每个商品的rate字段正确处理
-      allProducts.value = res.data.data.map((product) => ({
-        ...product,
-        rate:
-          product.rate !== null && product.rate !== undefined
-            ? Number(product.rate)
-            : null,
-      }));
-      totalItems.value = res.data.data.length;
-      updateDisplayedProducts();
-      // 只有在非强制刷新时才保存到缓存，确保评分数据的实时性
-      if (!forceRefresh) {
-        saveToCache(allProducts.value);
-      }
-      ElMessage.success("商品列表加载成功");
+    // 如果是轮播图商品页面，则获取轮播图信息
+    if (isBannerProducts.value && bannerId.value) {
+      console.log(`正在获取轮播图(ID:${bannerId.value})的商品列表`);
+      await fetchBannerProducts();
     } else {
-      loadError.value = true;
-      loadErrorMessage.value = res.msg || "获取商品列表失败";
-      ElMessage.error(loadErrorMessage.value);
+      console.log('正在获取所有商品列表');
+      // 正常获取所有商品
+      const res = await getAllProducts(forceRefresh);
+      if (res.code === '200') {
+        allProducts.value = res.data || [];
+        totalItems.value = allProducts.value.length;
+        
+        // 更新分页数据
+        updateDisplayedProducts();
+        
+        console.log(`成功加载${allProducts.value.length}个商品`);
+      } else {
+        handleLoadError(res.msg || '获取商品数据失败');
+      }
     }
   } catch (error) {
-    console.error("获取商品列表失败:", error);
-    loadError.value = true;
-
-    // 使用诊断功能获取更具体的错误信息
-    loadErrorMessage.value = await diagnoseConnectionIssue();
-    ElMessage.error(loadErrorMessage.value);
+    console.error('获取商品列表失败:', error);
+    handleLoadError('获取商品数据失败');
   } finally {
     loading.value = false;
+  }
+};
+
+// 获取轮播图商品
+const fetchBannerProducts = async () => {
+  try {
+    const res = await getBannerById(bannerId.value);
+    if (res.code === '200' && res.data) {
+      currentBanner.value = res.data;
+      
+      // 确保只显示轮播图中的书籍
+      if (res.data.books && Array.isArray(res.data.books)) {
+        products.value = res.data.books;
+        allProducts.value = res.data.books; // 更新allProducts以便分页正常工作
+        totalItems.value = products.value.length;
+        
+        // 重置分页到第一页
+        currentPage.value = 1;
+        
+        // 更新页面标题
+        document.title = `${currentBanner.value.title} - 商品列表`;
+        
+        console.log(`成功加载轮播图(ID:${bannerId.value})的${products.value.length}本图书`);
+      } else {
+        console.error('轮播图中没有图书数据:', res.data);
+        products.value = [];
+        allProducts.value = [];
+        totalItems.value = 0;
+        handleLoadError('该轮播图中没有图书');
+      }
+    } else {
+      handleLoadError(res.msg || '获取轮播图商品失败');
+    }
+  } catch (error) {
+    console.error('获取轮播图商品失败:', error);
+    handleLoadError('获取轮播图商品失败');
   }
 };
 
@@ -642,6 +650,7 @@ const handleAdd = () => {
   productForm.value = {
     title: "",
     price: 0,
+    rate: 0,
     description: "",
     cover: "",
     detail: "",
@@ -679,7 +688,7 @@ const handleEdit = async (row) => {
       id: row.id,
       title: row.title,
       price: row.price,
-      rate: row.rate !== null && row.rate !== undefined ? row.rate : 0, // 5分制评分，null时设为0
+      rate: row.rate / 2, // 转换为5分制
       description: row.description,
       cover: row.cover,
       detail: row.detail || "",
@@ -782,14 +791,10 @@ const handleSubmit = async () => {
         let res;
 
         if (dialogType.value === "add") {
-          // 添加新商品 - 不包含评分字段
+          // 添加新商品
           const submitData = {
-            title: productForm.value.title,
-            price: productForm.value.price,
-            description: productForm.value.description,
-            cover: productForm.value.cover,
-            detail: productForm.value.detail,
-            // 不传递rate字段，让后端自动设置为null
+            ...productForm.value,
+            rate: Number(productForm.value.rate) * 2, // 半颗星代表1分，转换为10分制
           };
 
           console.log("提交新商品数据:", submitData);
@@ -809,7 +814,7 @@ const handleSubmit = async () => {
             id: currentId,
             title: productForm.value.title,
             price: productForm.value.price,
-            // 不传递rate字段，让后端保持评论系统计算的值
+            rate: Number(productForm.value.rate) * 2, // 半颗星代表1分，转换为10分制
             description: productForm.value.description,
             cover: productForm.value.cover,
             detail: productForm.value.detail,
@@ -933,15 +938,7 @@ const handleNetworkChange = () => {
     ElMessage.warning("网络连接已断开，请检查网络设置");
   } else {
     ElMessage.success("网络已连接，正在重新加载数据");
-    fetchProducts(true); // 网络恢复时强制刷新
-  }
-};
-
-// 监听页面可见性变化，当用户返回页面时刷新数据
-const handleVisibilityChange = () => {
-  if (!document.hidden) {
-    console.log("页面变为可见，强制刷新商品列表以获取最新评分");
-    fetchProducts(true);
+    fetchProducts();
   }
 };
 
@@ -973,26 +970,70 @@ const previewCover = () => {
   }
 };
 
-onMounted(() => {
-  fetchProducts(true); // 强制刷新以获取最新评分数据
-  fetchUserInfo();
+// 监听路由参数变化
+watch(() => route.params.bannerId, (newVal) => {
+  if (newVal) {
+    fetchProducts(true);
+  }
+});
 
+// 监听路由名称变化
+watch(() => route.name, (newName, oldName) => {
+  console.log(`路由名称从 ${oldName} 变为 ${newName}`);
+  
+  // 当从BannerProducts切换到ProductList时，强制刷新数据
+  if (oldName === 'BannerProducts' && newName === 'ProductList') {
+    console.log('从轮播图详情页切换到商品列表页，强制刷新数据');
+    // 清除当前轮播图信息
+    currentBanner.value = null;
+    fetchProducts(true);
+  }
+});
+
+// 监听isBannerProducts的变化
+watch(isBannerProducts, (newValue, oldValue) => {
+  console.log(`isBannerProducts从 ${oldValue} 变为 ${newValue}`);
+  
+  // 当从轮播图详情页切换到普通商品列表页时，强制刷新数据
+  if (oldValue === true && newValue === false) {
+    console.log('从轮播图模式切换到普通商品列表模式，强制刷新数据');
+    // 清除当前轮播图信息
+    currentBanner.value = null;
+    fetchProducts(true);
+  }
+});
+
+// 处理加载错误
+const handleLoadError = (message) => {
+  loadError.value = true;
+  loadErrorMessage.value = message || "加载失败";
+  ElMessage.error(loadErrorMessage.value);
+};
+
+onMounted(() => {
+  console.log('ProductList组件已挂载');
+  console.log('当前路由名称:', route.name);
+  console.log('当前路由参数:', route.params);
+  console.log('是否为轮播图商品页面:', isBannerProducts.value);
+  
+  // 获取商品列表
+  fetchProducts(true);
+  
+  // 获取用户信息
+  userStore.fetchUserInfo();
+  
   // 添加网络状态监听器
   window.addEventListener("online", handleNetworkChange);
   window.addEventListener("offline", handleNetworkChange);
 
   // 预加载API
   preloadProductAPI();
-
-  // 监听页面可见性变化
-  document.addEventListener("visibilitychange", handleVisibilityChange);
 });
 
 // 在组件卸载时移除事件监听器
 onUnmounted(() => {
   window.removeEventListener("online", handleNetworkChange);
   window.removeEventListener("offline", handleNetworkChange);
-  document.removeEventListener("visibilitychange", handleVisibilityChange);
 });
 </script>
 
@@ -1177,18 +1218,6 @@ onUnmounted(() => {
 
 .card-rate {
   margin-right: 5px;
-}
-
-.rate-value {
-  color: #ff9900;
-  font-weight: bold;
-  font-size: 14px;
-}
-
-.no-rating {
-  color: #909399;
-  font-size: 14px;
-  font-style: italic;
 }
 
 .product-card-description {
@@ -1395,5 +1424,214 @@ onUnmounted(() => {
   .view-mode-switch {
     display: none;
   }
+}
+
+.banner-description {
+  margin-top: 8px;
+  color: #606266;
+  font-size: 14px;
+}
+
+.banner-info-container {
+  margin-top: 8px;
+  color: #606266;
+  font-size: 14px;
+}
+
+.banner-tag-container {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.banner-tag {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+}
+
+.banner-detail-container {
+  margin: 0 0 30px 0;
+  padding: 30px;
+  background-color: #f9fafc;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border-left: 4px solid #3a8ee6;
+}
+
+.banner-detail-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.banner-detail-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 150px;
+  height: 150px;
+  background: linear-gradient(135deg, rgba(58, 142, 230, 0.1), transparent);
+  border-radius: 0 0 0 100%;
+  z-index: 0;
+}
+
+.banner-detail-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.banner-detail-icon {
+  font-size: 40px;
+  color: #3a8ee6;
+  background-color: rgba(58, 142, 230, 0.1);
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.banner-detail-container:hover .banner-detail-icon {
+  transform: rotate(10deg);
+}
+
+.banner-icon {
+  font-size: 32px;
+}
+
+.banner-detail-text {
+  flex: 1;
+}
+
+.banner-detail-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #303133;
+  position: relative;
+  padding-bottom: 12px;
+}
+
+.banner-detail-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background-color: #3a8ee6;
+  border-radius: 3px;
+}
+
+.banner-detail-description {
+  margin: 15px 0;
+  color: #606266;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.banner-detail-tags {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.detail-tag {
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.detail-tag:hover {
+  transform: translateY(-2px);
+}
+
+.banner-detail-divider {
+  position: relative;
+  margin-top: 25px;
+  height: 1px;
+  background: linear-gradient(to right, #dcdfe6, transparent);
+  text-align: center;
+}
+
+.divider-text {
+  position: relative;
+  top: -10px;
+  background-color: #f9fafc;
+  padding: 0 15px;
+  font-size: 14px;
+  color: #909399;
+  font-weight: 600;
+}
+
+/* 轮播图专题商品列表样式 */
+.banner-products {
+  margin-top: 10px;
+  position: relative;
+}
+
+.banner-products::before {
+  content: '';
+  position: absolute;
+  top: -15px;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(to right, #3a8ee6, transparent);
+  border-radius: 5px;
+}
+
+.banner-product-card {
+  transition: all 0.3s ease;
+  border: none;
+  overflow: hidden;
+}
+
+.banner-product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.banner-product-card .product-card-image {
+  height: 200px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.banner-product-card .product-image {
+  transition: transform 0.5s ease;
+}
+
+.banner-product-card:hover .product-image {
+  transform: scale(1.08);
+}
+
+.banner-product-card .product-card-title {
+  font-weight: 600;
+  color: #303133;
+  transition: color 0.3s ease;
+}
+
+.banner-product-card:hover .product-card-title {
+  color: #3a8ee6;
+}
+
+.banner-product-card .product-card-actions {
+  opacity: 0;
+  transform: translateY(100%);
+  transition: all 0.3s ease;
+}
+
+.banner-product-card:hover .product-card-actions {
+  opacity: 1;
+  transform: translateY(0);
 }
 </style>
