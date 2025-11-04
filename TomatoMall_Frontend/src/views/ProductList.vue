@@ -112,16 +112,19 @@
 
               <div class="product-card-content">
                 <div class="product-card-rating">
-                  <el-rate
-                    :model-value="Number(product.rate) / 2"
-                    disabled
-                    text-color="#ff9900"
-                    :allow-half="true"
-                    class="card-rate"
-                  />
-                  <span class="rate-value"
-                    >{{ Number(product.rate).toFixed(1) }}分</span
-                  >
+                  <template v-if="product.rate !== null && product.rate !== undefined">
+                    <el-rate
+                      :model-value="Number(product.rate)"
+                      disabled
+                      text-color="#ff9900"
+                      :allow-half="true"
+                      class="card-rate"
+                    />
+                    <span class="rate-value">{{ Number(product.rate).toFixed(1) }}分</span>
+                  </template>
+                  <template v-else>
+                    <span class="no-rating">暂无评分</span>
+                  </template>
                 </div>
 
                 <div class="product-card-description">
@@ -246,18 +249,19 @@
             </el-col>
           </el-row>
 
-          <el-form-item label="评分" prop="rate">
+          <el-form-item label="评分" prop="rate" v-if="dialogType === 'edit'">
             <div class="rate-edit-container">
               <el-rate
                 v-model="productForm.rate"
                 :max="5"
                 :allow-half="true"
                 :colors="['#ffd21e', '#ffd21e', '#ffd21e']"
+                disabled
               />
               <div class="rate-value-display">
-                {{ (productForm.rate * 2).toFixed(1) }} 分
+                {{ Number(productForm.rate).toFixed(1) }} 分
               </div>
-              <div class="rate-hint">（每半颗星代表1分，满分10分）</div>
+              <div class="rate-hint">（评分由用户评论自动计算，不可手动修改）</div>
             </div>
           </el-form-item>
         </div>
@@ -435,16 +439,6 @@ const rules = {
       trigger: "blur",
     },
   ],
-  rate: [
-    { required: true, message: "请选择商品评分", trigger: "change" },
-    {
-      type: "number",
-      min: 0,
-      max: 5,
-      message: "评分必须在0-5之间",
-      trigger: "blur",
-    },
-  ],
   description: [{ required: true, message: "请输入商品描述", trigger: "blur" }],
   cover: [{ required: true, message: "请输入商品封面URL", trigger: "blur" }],
 };
@@ -503,7 +497,7 @@ const diagnoseConnectionIssue = async () => {
 // 添加产品缓存
 const useProductCache = () => {
   const CACHE_KEY = "product_cache";
-  const CACHE_EXPIRY = 5 * 60 * 1000; // 5分钟缓存
+  const CACHE_EXPIRY = 2 * 60 * 1000; // 2分钟缓存，确保评分数据的实时性
 
   const saveToCache = (data) => {
     const cache = {
@@ -579,65 +573,62 @@ const fetchProducts = async (forceRefresh = false) => {
   loading.value = true;
   loadError.value = false;
   loadErrorMessage.value = "";
-  
-  try {
-    // 如果是轮播图商品页面，则获取轮播图信息
-    if (isBannerProducts.value && bannerId.value) {
-      console.log(`正在获取轮播图(ID:${bannerId.value})的商品列表`);
-      await fetchBannerProducts();
-    } else {
-      console.log('正在获取所有商品列表');
-      // 正常获取所有商品
-      const res = await getAllProducts(forceRefresh);
-      if (res.code === '200') {
-        allProducts.value = res.data || [];
-        totalItems.value = allProducts.value.length;
-        
-        // 更新分页数据
-        updateDisplayedProducts();
-        
-        console.log(`成功加载${allProducts.value.length}个商品`);
-      } else {
-        handleLoadError(res.msg || '获取商品数据失败');
-      }
-    }
-  } catch (error) {
-    console.error('获取商品列表失败:', error);
-    handleLoadError('获取商品数据失败');
-  } finally {
-    loading.value = false;
-  }
-};
 
-// 获取轮播图商品
-const fetchBannerProducts = async () => {
+  // 如果不强制刷新，先尝试从缓存获取
+  if (!forceRefresh) {
+    const cachedProducts = getFromCache();
+    if (cachedProducts) {
+      console.log("从缓存获取商品列表");
+      allProducts.value = cachedProducts;
+      totalItems.value = cachedProducts.length;
+      updateDisplayedProducts();
+      loading.value = false;
+      return;
+    }
+  }
+
   try {
-    const res = await getBannerById(bannerId.value);
-    if (res.code === '200' && res.data) {
-      currentBanner.value = res.data;
-      
-      // 确保只显示轮播图中的书籍
-      if (res.data.books && Array.isArray(res.data.books)) {
-        products.value = res.data.books;
-        allProducts.value = res.data.books; // 更新allProducts以便分页正常工作
-        totalItems.value = products.value.length;
-        
-        // 重置分页到第一页
-        currentPage.value = 1;
-        
-        // 更新页面标题
-        document.title = `${currentBanner.value.title} - 商品列表`;
-        
-        console.log(`成功加载轮播图(ID:${bannerId.value})的${products.value.length}本图书`);
-      } else {
-        console.error('轮播图中没有图书数据:', res.data);
-        products.value = [];
-        allProducts.value = [];
-        totalItems.value = 0;
-        handleLoadError('该轮播图中没有图书');
-      }
+    if (!navigator.onLine) {
+      throw new Error("网络连接已断开");
+    }
+
+    console.log("开始获取商品列表");
+    const res = await getAllProducts();
+    console.log("获取商品列表响应:", res);
+
+    // 根据响应结构处理数据
+    if (res.code === 200 || res.code === "200") {
+      // 确保每个商品的rate字段是数字类型
+      allProducts.value = res.data.map((product) => ({
+        ...product,
+        rate:
+          product.rate !== null && product.rate !== undefined
+            ? Number(product.rate)
+            : 0,
+      }));
+      totalItems.value = res.data.length;
+      updateDisplayedProducts();
+      // 保存到缓存
+      saveToCache(allProducts.value);
+      ElMessage.success("商品列表加载成功");
+    } else if (res.data && res.data.code === "200") {
+      // 确保每个商品的rate字段是数字类型
+      allProducts.value = res.data.data.map((product) => ({
+        ...product,
+        rate:
+          product.rate !== null && product.rate !== undefined
+            ? Number(product.rate)
+            : 0,
+      }));
+      totalItems.value = res.data.data.length;
+      updateDisplayedProducts();
+      // 保存到缓存
+      saveToCache(allProducts.value);
+      ElMessage.success("商品列表加载成功");
     } else {
-      handleLoadError(res.msg || '获取轮播图商品失败');
+      loadError.value = true;
+      loadErrorMessage.value = res.msg || "获取商品列表失败";
+      ElMessage.error(loadErrorMessage.value);
     }
   } catch (error) {
     console.error('获取轮播图商品失败:', error);
@@ -650,7 +641,6 @@ const handleAdd = () => {
   productForm.value = {
     title: "",
     price: 0,
-    rate: 0,
     description: "",
     cover: "",
     detail: "",
@@ -688,7 +678,7 @@ const handleEdit = async (row) => {
       id: row.id,
       title: row.title,
       price: row.price,
-      rate: row.rate / 2, // 转换为5分制
+      rate: row.rate !== null && row.rate !== undefined ? row.rate : 0, // 5分制评分，null时设为0
       description: row.description,
       cover: row.cover,
       detail: row.detail || "",
@@ -791,10 +781,14 @@ const handleSubmit = async () => {
         let res;
 
         if (dialogType.value === "add") {
-          // 添加新商品
+          // 添加新商品 - 不包含评分字段
           const submitData = {
-            ...productForm.value,
-            rate: Number(productForm.value.rate) * 2, // 半颗星代表1分，转换为10分制
+            title: productForm.value.title,
+            price: productForm.value.price,
+            description: productForm.value.description,
+            cover: productForm.value.cover,
+            detail: productForm.value.detail,
+            // 不传递rate字段，让后端自动设置为null
           };
 
           console.log("提交新商品数据:", submitData);
@@ -814,7 +808,7 @@ const handleSubmit = async () => {
             id: currentId,
             title: productForm.value.title,
             price: productForm.value.price,
-            rate: Number(productForm.value.rate) * 2, // 半颗星代表1分，转换为10分制
+            // 不传递rate字段，让后端保持评论系统计算的值
             description: productForm.value.description,
             cover: productForm.value.cover,
             detail: productForm.value.detail,
@@ -938,7 +932,15 @@ const handleNetworkChange = () => {
     ElMessage.warning("网络连接已断开，请检查网络设置");
   } else {
     ElMessage.success("网络已连接，正在重新加载数据");
-    fetchProducts();
+    fetchProducts(true); // 网络恢复时强制刷新
+  }
+};
+
+// 监听页面可见性变化，当用户返回页面时刷新数据
+const handleVisibilityChange = () => {
+  if (!document.hidden) {
+    console.log("页面变为可见，强制刷新商品列表以获取最新评分");
+    fetchProducts(true);
   }
 };
 
@@ -1011,29 +1013,25 @@ const handleLoadError = (message) => {
 };
 
 onMounted(() => {
-  console.log('ProductList组件已挂载');
-  console.log('当前路由名称:', route.name);
-  console.log('当前路由参数:', route.params);
-  console.log('是否为轮播图商品页面:', isBannerProducts.value);
-  
-  // 获取商品列表
-  fetchProducts(true);
-  
-  // 获取用户信息
-  userStore.fetchUserInfo();
-  
+  fetchProducts();
+  fetchUserInfo();
+
   // 添加网络状态监听器
   window.addEventListener("online", handleNetworkChange);
   window.addEventListener("offline", handleNetworkChange);
 
   // 预加载API
   preloadProductAPI();
+
+  // 监听页面可见性变化
+  document.addEventListener("visibilitychange", handleVisibilityChange);
 });
 
 // 在组件卸载时移除事件监听器
 onUnmounted(() => {
   window.removeEventListener("online", handleNetworkChange);
   window.removeEventListener("offline", handleNetworkChange);
+  document.removeEventListener("visibilitychange", handleVisibilityChange);
 });
 </script>
 
@@ -1218,6 +1216,18 @@ onUnmounted(() => {
 
 .card-rate {
   margin-right: 5px;
+}
+
+.rate-value {
+  color: #ff9900;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.no-rating {
+  color: #909399;
+  font-size: 14px;
+  font-style: italic;
 }
 
 .product-card-description {
