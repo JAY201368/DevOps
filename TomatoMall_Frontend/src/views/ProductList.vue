@@ -1012,6 +1012,30 @@ const handleLoadError = (message) => {
   ElMessage.error(loadErrorMessage.value);
 };
 
+// 添加获取用户信息并设置管理员状态的函数
+const fetchUserInfo = async () => {
+  try {
+    // 首先从localStorage中获取角色信息
+    const userRole = localStorage.getItem("userRole");
+    if (userRole) {
+      isAdmin.value = userRole === "admin";
+    }
+
+    // 然后尝试从API获取最新的用户信息
+    const username = localStorage.getItem("username");
+    if (username) {
+      const res = await getUserInfo(username);
+      if (res && res.data) {
+        isAdmin.value = res.data.role === "admin";
+        // 更新localStorage中的角色信息
+        localStorage.setItem("userRole", res.data.role);
+      }
+    }
+  } catch (error) {
+    console.error("获取用户信息失败", error);
+  }
+};
+
 onMounted(() => {
   fetchProducts();
   fetchUserInfo();
