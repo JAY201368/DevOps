@@ -574,22 +574,57 @@ const fetchProducts = async (forceRefresh = false) => {
   loadError.value = false;
   loadErrorMessage.value = "";
 
-  // 如果不强制刷新，先尝试从缓存获取
-  if (!forceRefresh) {
-    const cachedProducts = getFromCache();
-    if (cachedProducts) {
-      console.log("从缓存获取商品列表");
-      allProducts.value = cachedProducts;
-      totalItems.value = cachedProducts.length;
-      updateDisplayedProducts();
-      loading.value = false;
-      return;
-    }
-  }
-
   try {
     if (!navigator.onLine) {
       throw new Error("网络连接已断开");
+    }
+
+    // 检查是否是轮播图商品页面
+    if (isBannerProducts.value && bannerId.value) {
+      console.log("获取轮播图商品，轮播图ID:", bannerId.value);
+      
+      // 获取轮播图信息
+      const bannerResponse = await getBannerById(bannerId.value);
+      console.log("轮播图信息响应:", bannerResponse);
+      
+      if (bannerResponse.code === '200' && bannerResponse.data) {
+        // 保存轮播图信息
+        currentBanner.value = bannerResponse.data;
+        
+        // 如果轮播图有关联的书籍，则显示这些书籍
+        if (bannerResponse.data.books && bannerResponse.data.books.length > 0) {
+          console.log("轮播图关联书籍数量:", bannerResponse.data.books.length);
+          
+          // 使用轮播图中的书籍数据
+          allProducts.value = bannerResponse.data.books.map(product => ({
+            ...product,
+            rate: product.rate !== null && product.rate !== undefined ? Number(product.rate) : 0,
+          }));
+          
+          totalItems.value = allProducts.value.length;
+          updateDisplayedProducts();
+          loading.value = false;
+          return;
+        } else {
+          console.log("轮播图没有关联书籍，将获取所有商品");
+        }
+      } else {
+        console.error("获取轮播图信息失败:", bannerResponse.msg);
+      }
+    }
+
+    // 如果不是轮播图商品页面，或者轮播图没有关联书籍，则获取所有商品
+    // 如果不强制刷新，先尝试从缓存获取
+    if (!forceRefresh) {
+      const cachedProducts = getFromCache();
+      if (cachedProducts) {
+        console.log("从缓存获取商品列表");
+        allProducts.value = cachedProducts;
+        totalItems.value = cachedProducts.length;
+        updateDisplayedProducts();
+        loading.value = false;
+        return;
+      }
     }
 
     console.log("开始获取商品列表");
@@ -631,8 +666,10 @@ const fetchProducts = async (forceRefresh = false) => {
       ElMessage.error(loadErrorMessage.value);
     }
   } catch (error) {
-    console.error('获取轮播图商品失败:', error);
-    handleLoadError('获取轮播图商品失败');
+    console.error('获取商品失败:', error);
+    handleLoadError('获取商品失败');
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -749,6 +786,7 @@ const handleDelete = (row) => {
 };
 
 const handleView = (row) => {
+  console.log("查看商品详情:", row.id);
   router.push(`/products/${row.id}`);
 };
 
@@ -1037,7 +1075,12 @@ const fetchUserInfo = async () => {
 };
 
 onMounted(() => {
-  fetchProducts();
+  console.log("组件挂载，当前路由名称:", route.name);
+  console.log("是否是轮播图商品页面:", isBannerProducts.value);
+  console.log("轮播图ID:", bannerId.value);
+  
+  // 强制刷新，确保获取最新数据
+  fetchProducts(true);
   fetchUserInfo();
 
   // 添加网络状态监听器
