@@ -573,97 +573,65 @@ const fetchProducts = async (forceRefresh = false) => {
   loading.value = true;
   loadError.value = false;
   loadErrorMessage.value = "";
-
+  
   try {
-    if (!navigator.onLine) {
-      throw new Error("网络连接已断开");
-    }
-
-    // 检查是否是轮播图商品页面
+    // 如果是轮播图商品页面，则获取轮播图信息
     if (isBannerProducts.value && bannerId.value) {
-      console.log("获取轮播图商品，轮播图ID:", bannerId.value);
-      
-      // 获取轮播图信息
-      const bannerResponse = await getBannerById(bannerId.value);
-      console.log("轮播图信息响应:", bannerResponse);
-      
-      if (bannerResponse.code === '200' && bannerResponse.data) {
-        // 保存轮播图信息
-        currentBanner.value = bannerResponse.data;
-        
-        // 如果轮播图有关联的书籍，则显示这些书籍
-        if (bannerResponse.data.books && bannerResponse.data.books.length > 0) {
-          console.log("轮播图关联书籍数量:", bannerResponse.data.books.length);
-          
-          // 使用轮播图中的书籍数据
-          allProducts.value = bannerResponse.data.books.map(product => ({
-            ...product,
-            rate: product.rate !== null && product.rate !== undefined ? Number(product.rate) : 0,
-          }));
-          
-          totalItems.value = allProducts.value.length;
-          updateDisplayedProducts();
-          loading.value = false;
-          return;
-        } else {
-          console.log("轮播图没有关联书籍，将获取所有商品");
-        }
-      } else {
-        console.error("获取轮播图信息失败:", bannerResponse.msg);
-      }
-    }
-
-    // 如果不是轮播图商品页面，或者轮播图没有关联书籍，则获取所有商品
-    // 如果不强制刷新，先尝试从缓存获取
-    if (!forceRefresh) {
-      const cachedProducts = getFromCache();
-      if (cachedProducts) {
-        console.log("从缓存获取商品列表");
-        allProducts.value = cachedProducts;
-        totalItems.value = cachedProducts.length;
-        updateDisplayedProducts();
-        loading.value = false;
-        return;
-      }
-    }
-
-    console.log("开始获取商品列表");
-    const res = await getAllProducts();
-    console.log("获取商品列表响应:", res);
-
-    // 根据响应结构处理数据
-    if (res.code === 200 || res.code === "200") {
-      // 确保每个商品的rate字段是数字类型
-      allProducts.value = res.data.map((product) => ({
-        ...product,
-        rate:
-          product.rate !== null && product.rate !== undefined
-            ? Number(product.rate)
-            : 0,
-      }));
-      totalItems.value = res.data.length;
-      updateDisplayedProducts();
-      // 保存到缓存
-      saveToCache(allProducts.value);
-      ElMessage.success("商品列表加载成功");
-    } else if (res.data && res.data.code === "200") {
-      // 确保每个商品的rate字段是数字类型
-      allProducts.value = res.data.data.map((product) => ({
-        ...product,
-        rate:
-          product.rate !== null && product.rate !== undefined
-            ? Number(product.rate)
-            : 0,
-      }));
-      totalItems.value = res.data.data.length;
-      updateDisplayedProducts();
-      // 保存到缓存
-      saveToCache(allProducts.value);
-      ElMessage.success("商品列表加载成功");
+      console.log(`正在获取轮播图(ID:${bannerId.value})的商品列表`);
+      await fetchBannerProducts();
     } else {
-      loadError.value = true;
-      loadErrorMessage.value = res.msg || "获取商品列表失败";
-      ElMessage.error(loadErrorMessage.value);
+      console.log('正在获取所有商品列表');
+      // 正常获取所有商品
+      const res = await getAllProducts(forceRefresh);
+      if (res.code === '200') {
+        allProducts.value = res.data || [];
+        totalItems.value = allProducts.value.length;
+        
+        // 更新分页数据
+        updateDisplayedProducts();
+        
+        console.log(`成功加载${allProducts.value.length}个商品`);
+      } else {
+        handleLoadError(res.msg || '获取商品数据失败');
+      }
+    }
+  } catch (error) {
+    console.error('获取商品列表失败:', error);
+    handleLoadError('获取商品数据失败');
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 获取轮播图商品
+const fetchBannerProducts = async () => {
+  try {
+    const res = await getBannerById(bannerId.value);
+    if (res.code === '200' && res.data) {
+      currentBanner.value = res.data;
+      
+      // 确保只显示轮播图中的书籍
+      if (res.data.books && Array.isArray(res.data.books)) {
+        products.value = res.data.books;
+        allProducts.value = res.data.books; // 更新allProducts以便分页正常工作
+        totalItems.value = products.value.length;
+        
+        // 重置分页到第一页
+        currentPage.value = 1;
+        
+        // 更新页面标题
+        document.title = `${currentBanner.value.title} - 商品列表`;
+        
+        console.log(`成功加载轮播图(ID:${bannerId.value})的${products.value.length}本图书`);
+      } else {
+        console.error('轮播图中没有图书数据:', res.data);
+        products.value = [];
+        allProducts.value = [];
+        totalItems.value = 0;
+        handleLoadError('该轮播图中没有图书');
+      }
+    } else {
+      handleLoadError(res.msg || '获取轮播图商品失败');
     }
   } catch (error) {
     console.error('获取商品失败:', error);
@@ -1075,14 +1043,17 @@ const fetchUserInfo = async () => {
 };
 
 onMounted(() => {
-  console.log("组件挂载，当前路由名称:", route.name);
-  console.log("是否是轮播图商品页面:", isBannerProducts.value);
-  console.log("轮播图ID:", bannerId.value);
+  console.log('ProductList组件已挂载');
+  console.log('当前路由名称:', route.name);
+  console.log('当前路由参数:', route.params);
+  console.log('是否为轮播图商品页面:', isBannerProducts.value);
   
-  // 强制刷新，确保获取最新数据
+  // 获取商品列表
   fetchProducts(true);
-  fetchUserInfo();
-
+  
+  // 获取用户信息
+  userStore.fetchUserInfo();
+  
   // 添加网络状态监听器
   window.addEventListener("online", handleNetworkChange);
   window.addEventListener("offline", handleNetworkChange);
