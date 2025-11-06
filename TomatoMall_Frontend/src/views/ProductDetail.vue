@@ -278,43 +278,68 @@
           <!-- 评论对话框 -->
           <el-dialog
             v-model="showCommentDialog"
-            title="写评价"
+            :title="' '"
             width="500px"
             class="comment-dialog"
+            :append-to-body="true"
+            :close-on-click-modal="false"
+            :destroy-on-close="true"
+            :show-close="true"
+            center
           >
-            <el-form
-              ref="commentFormRef"
-              :model="commentForm"
-              :rules="commentRules"
-              label-width="80px"
-            >
-              <el-form-item label="评分" prop="rating">
-                <el-rate
-                  v-model="commentForm.rating"
-                  :max="5"
-                  :allow-half="true"
-                  :colors="['#ffd21e', '#ffd21e', '#ffd21e']"
-                />
-                <div class="rate-hint">（每半颗星代表1分，满分5分）</div>
-              </el-form-item>
-              <el-form-item label="评价内容" prop="content">
-                <el-input
-                  v-model="commentForm.content"
-                  type="textarea"
-                  :rows="4"
-                  placeholder="请输入您的评价内容（最多500字）"
-                  maxlength="500"
-                  show-word-limit
-                />
-              </el-form-item>
-            </el-form>
+            <div class="comment-dialog-content">
+              <div class="comment-dialog-header">
+                <div class="comment-icon">💬</div>
+                <div class="comment-title">我的书评</div>
+                <div class="comment-subtitle">分享您的阅读体验，帮助其他读者做出选择</div>
+              </div>
+              
+              <el-form
+                ref="commentFormRef"
+                :model="commentForm"
+                :rules="commentRules"
+                label-width="80px"
+                class="comment-form"
+              >
+                <el-form-item label="评分" prop="rating">
+                  <div class="rating-container">
+                    <el-rate
+                      v-model="commentForm.rating"
+                      :max="5"
+                      :allow-half="true"
+                      :colors="['#ffd21e', '#ffd21e', '#ffd21e']"
+                      class="comment-rate"
+                      :show-score="false"
+                    />
+                    <div class="rating-value" v-if="commentForm.rating > 0">
+                      <span class="rating-text">{{ getRatingText(commentForm.rating) }}</span>
+                    </div>
+                  </div>
+                  <div class="rate-hint">（请选择您对这本书的评价）</div>
+                </el-form-item>
+                <el-form-item label="书评" prop="content">
+                  <el-input
+                    v-model="commentForm.content"
+                    type="textarea"
+                    :rows="4"
+                    placeholder="写下您对这本书的感受、收获或建议..."
+                    maxlength="500"
+                    show-word-limit
+                    resize="none"
+                    class="comment-textarea"
+                  />
+                </el-form-item>
+              </el-form>
+            </div>
+            
             <template #footer>
-              <span class="dialog-footer">
-                <el-button @click="showCommentDialog = false">取消</el-button>
-                <el-button type="primary" @click="handleSubmitComment" :loading="submittingComment">
-                  提交评价
+              <div class="dialog-footer">
+                <el-button @click="showCommentDialog = false" plain class="cancel-button">取消</el-button>
+                <el-button type="primary" @click="handleSubmitComment" :loading="submittingComment" class="submit-button">
+                  <el-icon class="submit-icon"><ChatDotRound /></el-icon>
+                  发布书评
                 </el-button>
-              </span>
+              </div>
             </template>
           </el-dialog>
         </div>
@@ -705,6 +730,8 @@ const fetchProduct = async () => {
           const stockRes = await getStockpile(product.value.id);
           if (stockRes.code === 200 || stockRes.code === "200") {
             product.value.stockpile = stockRes.data;
+          } else if (stockRes.data && stockRes.data.code === "200") {
+            product.value.stockpile = stockRes.data.data;
           }
         } catch (stockError) {
           console.error("获取库存信息失败", stockError);
@@ -727,8 +754,6 @@ const fetchProduct = async () => {
         try {
           const stockRes = await getStockpile(product.value.id);
           if (stockRes.code === 200 || stockRes.code === "200") {
-            product.value.stockpile = stockRes.data;
-          } else if (stockRes.data && stockRes.data.code === "200") {
             product.value.stockpile = stockRes.data.data;
           }
         } catch (stockError) {
@@ -1208,6 +1233,16 @@ const openExternalReview = () => {
   }
 };
 
+// 根据评分获取评价文本
+const getRatingText = (rating) => {
+  if (rating >= 4.5) return "超赞读物";
+  if (rating >= 4) return "很棒";
+  if (rating >= 3) return "不错";
+  if (rating >= 2) return "一般";
+  if (rating >= 1) return "失望";
+  return "不推荐";
+};
+
 onMounted(async () => {
   await fetchUserInfo(); // 获取用户角色信息
   await checkCanComment(); // 获取当前用户ID和评论权限
@@ -1586,6 +1621,20 @@ onMounted(async () => {
   font-size: 18px;
   font-weight: 600;
   color: #ff9900;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.rating-text {
+  background: linear-gradient(to right, #ff9900, #ffb700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 153, 0, 0.2);
+  background-color: rgba(255, 153, 0, 0.05);
 }
 
 .comment-button {
@@ -1670,10 +1719,115 @@ onMounted(async () => {
   overflow: hidden;
 }
 
+/* 修改评论对话框的样式，使其在屏幕中心显示 */
+:deep(.comment-dialog .el-dialog) {
+  margin: 0 auto !important;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+:deep(.comment-dialog .el-dialog__header) {
+  padding: 0;
+  background: none;
+  color: white;
+  border-bottom: none;
+}
+
+:deep(.comment-dialog .el-dialog__headerbtn) {
+  top: 15px;
+  right: 15px;
+  z-index: 10;
+}
+
+:deep(.comment-dialog .el-dialog__headerbtn .el-dialog__close) {
+  color: #909399;
+}
+
+:deep(.comment-dialog .el-dialog__headerbtn:hover .el-dialog__close) {
+  color: #409eff;
+}
+
+:deep(.comment-dialog .el-dialog__body) {
+  padding: 25px;
+}
+
+:deep(.comment-dialog .el-dialog__footer) {
+  padding: 15px 20px;
+  border-top: 1px solid #ebeef5;
+}
+
+:deep(.comment-dialog .el-form-item__label) {
+  font-weight: 600;
+  color: #606266;
+  font-size: 16px;
+  position: relative;
+  padding-left: 10px;
+}
+
+:deep(.comment-dialog .el-form-item__label)::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 16px;
+  background: linear-gradient(to bottom, #3a8ee6, #53a8ff);
+  border-radius: 2px;
+}
+
+:deep(.comment-dialog .el-form-item) {
+  margin-bottom: 20px;
+}
+
 .rate-hint {
   color: #909399;
   font-size: 12px;
   margin-top: 5px;
+}
+
+/* 评论表单样式 */
+.comment-form {
+  padding: 10px;
+}
+
+.rating-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.comment-rate {
+  transform: scale(1.2);
+  transform-origin: left;
+}
+
+.rating-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ff9900;
+  min-width: 40px;
+}
+
+:deep(.comment-textarea .el-textarea__inner) {
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  border: 1px solid #dcdfe6;
+}
+
+:deep(.comment-textarea .el-textarea__inner:focus) {
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
 }
 
 /* 响应式调整 */
@@ -1707,6 +1861,186 @@ onMounted(async () => {
   .wishlist-button,
   .view-cart-button {
     width: 100%;
+  }
+}
+
+/* 评论对话框动画效果 */
+:deep(.comment-dialog.el-dialog-fade-enter-active) {
+  animation: dialog-fade-in 0.4s;
+}
+
+:deep(.comment-dialog.el-dialog-fade-leave-active) {
+  animation: dialog-fade-out 0.4s;
+}
+
+@keyframes dialog-fade-in {
+  0% {
+    transform: translate3d(0, -30px, 0);
+    opacity: 0;
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes dialog-fade-out {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, -30px, 0);
+    opacity: 0;
+  }
+}
+
+/* 评论对话框内容样式 */
+.comment-dialog-content {
+  padding: 20px 10px 0;
+}
+
+.comment-dialog-header {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-top: 10px;
+}
+
+.comment-icon {
+  font-size: 36px;
+  margin-bottom: 10px;
+  animation: float-icon 3s ease-in-out infinite;
+}
+
+@keyframes float-icon {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(10deg);
+  }
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+}
+
+.comment-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 5px;
+}
+
+.comment-subtitle {
+  font-size: 14px;
+  color: #909399;
+  margin-bottom: 15px;
+}
+
+/* 评论表单样式 */
+.comment-form {
+  padding: 10px;
+  background-color: rgba(245, 247, 250, 0.5);
+  border-radius: 10px;
+}
+
+.rating-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background-color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.comment-rate {
+  transform: scale(1.2);
+  transform-origin: left;
+}
+
+.rating-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ff9900;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.rating-text {
+  background: linear-gradient(to right, #ff9900, #ffb700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 153, 0, 0.2);
+  background-color: rgba(255, 153, 0, 0.05);
+}
+
+:deep(.comment-textarea .el-textarea__inner) {
+  border-radius: 8px;
+  padding: 15px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  border: 1px solid #dcdfe6;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+:deep(.comment-textarea .el-textarea__inner:focus) {
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+}
+
+.rate-hint {
+  color: #909399;
+  font-size: 12px;
+  margin-top: 8px;
+  text-align: center;
+  font-style: italic;
+}
+
+/* 对话框底部按钮样式 */
+.dialog-footer {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.cancel-button {
+  min-width: 100px;
+  transition: all 0.3s ease;
+}
+
+.submit-button {
+  min-width: 120px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.submit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+}
+
+.submit-icon {
+  animation: pulse-icon 1.5s infinite;
+}
+
+@keyframes pulse-icon {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 </style>
