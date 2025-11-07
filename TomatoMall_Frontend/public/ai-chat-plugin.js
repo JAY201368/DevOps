@@ -1,0 +1,413 @@
+// AI 聊天插件
+(function () {
+  const _Ai = {
+    config: {
+      model: '',
+      key: '',
+      apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
+      img: ''
+    },
+
+    Init: function (options) {
+      this.config.model = options.model || '';
+      this.config.key = options.key || '';
+      this.config.img = options.img || '';
+      this.createUI();
+      this.bindEvents();
+      return this;
+    },
+
+    createUI: function () {
+      // 创建样式
+      const style = document.createElement('style');
+      style.textContent = `
+        .ai-chat-icon {
+          position: fixed;
+          bottom: 20px;
+          left: 20px;
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          background-color: #1890ff;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          z-index: 9999;
+          transition: all 0.3s;
+        }
+        
+        .ai-chat-icon:hover {
+          transform: scale(1.1);
+        }
+        
+        .ai-chat-icon svg {
+          width: 30px;
+          height: 30px;
+          fill: white;
+        }
+        
+        .ai-chat-container {
+          position: fixed;
+          bottom: 90px;
+          left: 20px;
+          width: 350px;
+          height: 500px;
+          background-color: white;
+          border-radius: 10px;
+          box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+          display: flex;
+          flex-direction: column;
+          z-index: 9998;
+          overflow: hidden;
+          transition: all 0.3s;
+          opacity: 0;
+          transform: translateY(20px);
+          pointer-events: none;
+        }
+        
+        .ai-chat-container.active {
+          opacity: 1;
+          transform: translateY(0);
+          pointer-events: all;
+        }
+        
+        .ai-chat-header {
+          padding: 15px;
+          background-color: #1890ff;
+          color: white;
+          font-weight: bold;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .ai-chat-close {
+          cursor: pointer;
+        }
+        
+        .ai-chat-messages {
+          flex: 1;
+          padding: 15px;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .ai-chat-message {
+          margin-bottom: 10px;
+          max-width: 80%;
+          word-wrap: break-word;
+        }
+        
+        .ai-chat-message-user {
+          align-self: flex-end;
+          background-color: #e6f7ff;
+          padding: 10px;
+          border-radius: 10px 10px 0 10px;
+        }
+        
+        .ai-chat-message-ai {
+          align-self: flex-start;
+          background-color: #f5f5f5;
+          padding: 10px;
+          border-radius: 10px 10px 10px 0;
+        }
+        
+        .ai-chat-message-error {
+          color: #ff4d4f;
+          font-size: 0.9em;
+          margin-top: 5px;
+        }
+        
+        .ai-chat-input-container {
+          padding: 15px;
+          border-top: 1px solid #eee;
+          display: flex;
+        }
+        
+        .ai-chat-input {
+          flex: 1;
+          padding: 10px;
+          border: 1px solid #ddd;
+          border-radius: 20px;
+          outline: none;
+        }
+        
+        .ai-chat-send {
+          margin-left: 10px;
+          padding: 10px 15px;
+          background-color: #1890ff;
+          color: white;
+          border: none;
+          border-radius: 20px;
+          cursor: pointer;
+        }
+
+        .ai-chat-loading {
+          display: inline-block;
+          width: 20px;
+          height: 20px;
+          border: 2px solid #f3f3f3;
+          border-radius: 50%;
+          border-top: 2px solid #1890ff;
+          animation: ai-spin 1s linear infinite;
+          margin-right: 10px;
+        }
+        
+        @keyframes ai-spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .ai-chat-message h1 {
+          font-size: 1.8em;
+          margin: 0.5em 0;
+          color: #333;
+          border-bottom: 2px solid #eee;
+          padding-bottom: 0.3em;
+        }
+        
+        .ai-chat-message h2 {
+          font-size: 1.5em;
+          margin: 0.5em 0;
+          color: #444;
+          border-bottom: 1px solid #eee;
+          padding-bottom: 0.3em;
+        }
+        
+        .ai-chat-message h3 {
+          font-size: 1.3em;
+          margin: 0.5em 0;
+          color: #555;
+        }
+        
+        .ai-chat-message pre {
+          background-color: #f6f8fa;
+          padding: 1em;
+          border-radius: 4px;
+          overflow-x: auto;
+        }
+        
+        .ai-chat-message code {
+          font-family: Consolas, Monaco, 'Andale Mono', monospace;
+          background-color: #f6f8fa;
+          padding: 0.2em 0.4em;
+          border-radius: 3px;
+          font-size: 0.9em;
+        }
+        
+        .ai-chat-message strong {
+          font-weight: 600;
+        }
+        
+        .ai-chat-message em {
+          font-style: italic;
+        }
+      `;
+      document.head.appendChild(style);
+
+      // 创建图标
+      const iconContainer = document.createElement('div');
+      iconContainer.className = 'ai-chat-icon';
+
+      if (this.config.img) {
+        iconContainer.innerHTML = `<img src="${this.config.img}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" alt="AI助手">`;
+      } else {
+        iconContainer.innerHTML = `
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM17 16.5C17 17.33 16.33 18 15.5 18H8.5C7.67 18 7 17.33 7 16.5V15H17V16.5ZM17 14H7V9C7 8.17 7.67 7.5 8.5 7.5H15.5C16.33 7.5 17 8.17 17 9V14ZM10 11.5C10 12.05 9.55 12.5 9 12.5C8.45 12.5 8 12.05 8 11.5C8 10.95 8.45 10.5 9 10.5C9.55 10.5 10 10.95 10 11.5ZM16 11.5C16 12.05 15.55 12.5 15 12.5C14.45 12.5 14 12.05 14 11.5C14 10.95 14.45 10.5 15 10.5C15.55 10.5 16 10.95 16 11.5Z"/>
+        </svg>
+      `;
+      }
+
+      // 创建聊天容器
+      const chatContainer = document.createElement('div');
+      chatContainer.className = 'ai-chat-container';
+      chatContainer.innerHTML = `
+        <div class="ai-chat-header">
+          <div>AI 助手</div>
+          <div class="ai-chat-close">✕</div>
+        </div>
+        <div class="ai-chat-messages"></div>
+        <div class="ai-chat-input-container">
+          <input type="text" class="ai-chat-input" placeholder="请输入您的问题...">
+          <button class="ai-chat-send">发送</button>
+        </div>
+      `;
+
+      document.body.appendChild(iconContainer);
+      document.body.appendChild(chatContainer);
+
+      // 存储DOM引用
+      this.elements = {
+        icon: iconContainer,
+        container: chatContainer,
+        messages: chatContainer.querySelector('.ai-chat-messages'),
+        input: chatContainer.querySelector('.ai-chat-input'),
+        sendButton: chatContainer.querySelector('.ai-chat-send'),
+        closeButton: chatContainer.querySelector('.ai-chat-close')
+      };
+
+      // 添加欢迎消息
+      this.addMessage('你好！我是 AI 助手，有什么可以帮助你的吗？', 'ai');
+    },
+
+    bindEvents: function () {
+      // 点击图标打开聊天
+      this.elements.icon.addEventListener('click', () => {
+        this.elements.container.classList.add('active');
+      });
+
+      // 点击关闭按钮
+      this.elements.closeButton.addEventListener('click', () => {
+        this.elements.container.classList.remove('active');
+      });
+
+      // 发送消息
+      const sendMessage = () => {
+        const message = this.elements.input.value.trim();
+        if (message) {
+          this.addMessage(message, 'user');
+          this.elements.input.value = '';
+          this.sendToAI(message);
+        }
+      };
+
+      this.elements.sendButton.addEventListener('click', sendMessage);
+
+      this.elements.input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          sendMessage();
+        }
+      });
+    },
+
+    addMessage: function (text, sender) {
+      const messageElement = document.createElement('div');
+      messageElement.className = `ai-chat-message ai-chat-message-${sender}`;
+
+      // 处理Markdown语法
+      let formattedText = text;
+
+      // 去除开头的换行符（针对AI回复）
+      if (sender === 'ai') {
+        formattedText = formattedText.replace(/^\n+/, '');
+      }
+
+      // 处理标题 (### 标题)
+      formattedText = formattedText.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+      formattedText = formattedText.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+      formattedText = formattedText.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+
+      // 处理加粗文本 (**text** 或 __text__)
+      formattedText = formattedText.replace(/\*\*(.*?)\*\*|__(.*?)__/g, '<strong>$1$2</strong>');
+
+      // 处理斜体文本 (*text* 或 _text_)
+      formattedText = formattedText.replace(/\*(.*?)\*|_(.*?)_/g, '<em>$1$2</em>');
+
+      // 处理代码块 (```text```)
+      formattedText = formattedText.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+
+      // 处理行内代码 (`text`)
+      formattedText = formattedText.replace(/`(.*?)`/g, '<code>$1</code>');
+
+      // 处理换行符
+      formattedText = formattedText.replace(/\n/g, '<br>');
+
+      messageElement.innerHTML = formattedText;
+      this.elements.messages.appendChild(messageElement);
+      this.elements.messages.scrollTop = this.elements.messages.scrollHeight;
+    },
+
+    addLoadingIndicator: function () {
+      const loadingElement = document.createElement('div');
+      loadingElement.className = 'ai-chat-message ai-chat-message-ai';
+      loadingElement.innerHTML = '<div class="ai-chat-loading"></div>正在思考...';
+      loadingElement.id = 'ai-loading-indicator';
+
+      this.elements.messages.appendChild(loadingElement);
+      this.elements.messages.scrollTop = this.elements.messages.scrollHeight;
+    },
+
+    removeLoadingIndicator: function () {
+      const loadingElement = document.getElementById('ai-loading-indicator');
+      if (loadingElement) {
+        loadingElement.remove();
+      }
+    },
+
+    sendToAI: async function (message) {
+      // 检查配置
+      if (!this.config.model || !this.config.key) {
+        this.addMessage('错误：请先设置 model 和 key', 'ai');
+        return;
+      }
+
+      this.addLoadingIndicator();
+
+      try {
+        const response = await fetch(this.config.apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.config.key}`
+          },
+          body: JSON.stringify({
+            model: this.config.model,
+            messages: [
+              {
+                role: 'user',
+                content: message
+              }
+            ]
+          })
+        });
+
+        const data = await response.json();
+        this.removeLoadingIndicator();
+
+        if (data.error) {
+          const errorMsg = `错误：${data.error.message || '请求失败'}\n请检查您选择的模型类型，部分模型不支持赠送金额`;
+          this.addMessage(errorMsg, 'ai');
+          return;
+        }
+
+        if (data.choices && data.choices.length > 0) {
+          const reply = data.choices[0].message.content;
+          this.addMessage(reply, 'ai');
+        } else {
+          this.addMessage('抱歉，我无法处理您的请求\n请检查您选择的模型类型，部分模型不支持赠送金额', 'ai');
+        }
+      } catch (error) {
+        this.removeLoadingIndicator();
+        this.addMessage(`错误：${error.message || '请求失败'}\n请检查您选择的模型类型，部分模型不支持赠送金额`, 'ai');
+      }
+    },
+
+    // 新增外部调用发送消息的方法
+    send: function (message) {
+      if (!message || typeof message !== 'string') {
+        console.error('发送的消息必须是非空字符串');
+        return this;
+      }
+
+      // 如果聊天窗口未打开，先打开它
+      if (!this.elements.container.classList.contains('active')) {
+        this.elements.container.classList.add('active');
+      }
+
+      // 显示用户消息
+      this.addMessage(message, 'user');
+
+      // 发送到AI
+      this.sendToAI(message);
+
+      return this;
+    }
+  };
+
+  // 暴露到全局
+  window._Ai = _Ai;
+})(); 

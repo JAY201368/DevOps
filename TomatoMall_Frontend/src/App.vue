@@ -19,6 +19,7 @@ import AppHeader from './components/AppHeader.vue'
 import Live2D from './components/Live2D.vue'
 import { useWishListStore } from './store/wishlist'
 
+
 const appHeaderRef = ref(null)
 provide('appHeaderRef', appHeaderRef)
 
@@ -96,6 +97,15 @@ onMounted(() => {
       wishlistStore.fetchWishListCount(true)
     }
   })
+
+  // 初始化AI聊天插件
+  if (window._Ai) {
+    window._Ai.Init({
+      model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B", // 暂时保留为空
+      key: "sk-utyghbpjoynmggavhksfwufzclqztuhvkzhlnmlebmhdfpop",   // 暂时保留为空
+      img: ""    // 可选，自定义图标
+    })
+  }
 })
 </script>
 
