@@ -77,7 +77,7 @@ const banners = ref([]);
 // AI助手相关方法
 const openAiChat = () => {
   if (window._Ai) {
-    window._Ai.send("您好，我是番茄书城的AI助手，有什么可以帮助您的吗？");
+    window._Ai.send("你好，我想找一些好书推荐，有什么热门小说可以推荐吗？");
   } else {
     ElMessage.warning('AI助手加载失败，请刷新页面重试');
   }

@@ -101,8 +101,8 @@ onMounted(() => {
   // 初始化AI聊天插件
   if (window._Ai) {
     window._Ai.Init({
-      model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B", // 暂时保留为空
-      key: "sk-utyghbpjoynmggavhksfwufzclqztuhvkzhlnmlebmhdfpop",   // 暂时保留为空
+      model: "Qwen/Qwen3-14B", // 暂时保留为空
+      key: "sk-szrfqqlzjbkbysppmurhkqjufcxuswzgoewuocxdmxlqjjfq",   // 暂时保留为空
       img: ""    // 可选，自定义图标
     })
   }

@@ -8,6 +8,39 @@
       img: ''
     },
 
+    // 添加与图书相关的关键词库和屏蔽词库
+    bookKeywords: [
+      "书", "图书", "小说", "文学", "作者", "出版", "阅读", "书籍", "故事", "章节", 
+      "书店", "bookstore", "book", "novel", "literature", "author", "publisher", "reader",
+      "出版社", "杂志", "期刊", "文集", "丛书", "书系", "系列", "文章", "散文", "诗歌",
+      "绘本", "漫画", "电子书", "有声书", "教材", "教辅", "工具书", "词典", "百科全书",
+      "畅销书", "经典", "名著", "传记", "自传", "科幻", "奇幻", "悬疑", "推理", "言情",
+      "武侠", "历史", "哲学", "心理", "艺术", "摄影", "建筑", "设计", "料理", "旅行",
+      "生活", "健康", "经济", "管理", "科学", "技术", "编程", "计算机", "医学", "法律",
+      "教育", "考试", "考研", "考证", "考公", "textbook", "dictionary", "encyclopedia",
+      "novel", "fiction", "nonfiction", "biography", "autobiography", "sci-fi", "fantasy",
+      "romance", "history", "philosophy", "psychology", "art", "photography", "architecture",
+      "design", "cooking", "travel", "lifestyle", "health", "economics", "management",
+      "science", "technology", "programming", "computer", "medicine", "law", "education",
+      "test", "exam", "certification", "public service", "comic", "manga", "audiobook",
+      "ebook", "digital book", "printed book", "hardcover", "paperback", "poetry", "essay",
+      "anthology", "collection", "series", "trilogy", "sequel", "prequel", "adaptation",
+      "translation", "edition", "publication", "copyright", "library", "bibliography",
+      "reference", "index", "contents", "chapter", "page", "bookshelf", "bookmark",
+      "recommended reading", "bestseller", "classic", "prize", "award", "review", "rating",
+      "comment", "isbn", "book cover", "illustration", "bookstore", "书店", "新书", "二手书",
+      "租书", "借书", "图书馆", "藏书", "绝版书", "古籍", "书评", "读后感", "读书笔记",
+      "购书", "藏书票", "书签", "书架", "书柜", "书房", "书单", "书目", "书号", "定价",
+      "折扣", "特价", "促销", "封面", "封底", "书脊", "装帧", "开本", "字体", "排版",
+      "书摘", "书虫", "书迷", "书友", "读者", "作家", "编辑", "校对", "书稿", "书商",
+      "番茄书城", "下单", "购买", "购物车", "收藏", "愿望单", "热门图书", "推荐", "评分",
+      "评论", "书评", "bestselling", "new release", "book club", "reading list",
+      "bookworm", "bookish", "bibliophile", "publisher", "imprint", "print run",
+      "edition", "title", "subtitle", "table of contents", "appendix", "glossary",
+      "note", "footnote", "bibliography", "index", "preface", "foreword", "introduction",
+      "conclusion", "epilogue", "prologue", "abstract", "synopsis"
+    ],
+
     Init: function (options) {
       this.config.model = options.model || '';
       this.config.key = options.key || '';
@@ -15,6 +48,12 @@
       this.createUI();
       this.bindEvents();
       return this;
+    },
+
+    // 添加方法检查消息是否与图书相关
+    isBookRelated: function(message) {
+      message = message.toLowerCase();
+      return this.bookKeywords.some(keyword => message.includes(keyword.toLowerCase()));
     },
 
     createUI: function () {
@@ -251,7 +290,7 @@
       };
 
       // 添加欢迎消息
-      this.addMessage('你好！我是 AI 助手，有什么可以帮助你的吗？', 'ai');
+      this.addMessage('你好！我是番茄书城的AI助手，有关于图书的问题都可以向我咨询哦！', 'ai');
     },
 
     bindEvents: function () {
@@ -345,6 +384,12 @@
         return;
       }
 
+      // 检查是否与图书相关
+      if (!this.isBookRelated(message)) {
+        this.addMessage('抱歉，我是番茄书城的专业图书助手，暂时无法回答与图书无关的问题。您可以向我咨询关于图书、阅读、作者、出版等相关问题，我会尽力为您解答！', 'ai');
+        return;
+      }
+
       this.addLoadingIndicator();
 
       try {
@@ -357,6 +402,10 @@
           body: JSON.stringify({
             model: this.config.model,
             messages: [
+              {
+                role: 'system',
+                content: '你是番茄书城的专业图书助手，只能回答与图书相关的问题。你擅长推荐图书、解答关于阅读的问题、提供图书信息和作者背景等。'
+              },
               {
                 role: 'user',
                 content: message
