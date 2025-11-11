@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineEmits } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { StarFilled, Picture } from '@element-plus/icons-vue';
 import { getPersonalizedRecommendations, getPopularRecommendations } from '../api/recommendation';
@@ -90,9 +90,6 @@ const props = defineProps({
     default: 9
   }
 });
-
-// 定义事件
-const emit = defineEmits(['loaded']);
 
 const router = useRouter();
 const books = ref([]);
@@ -119,17 +116,11 @@ const fetchRecommendations = async () => {
         rate: book.rate !== null && book.rate !== undefined ? Number(book.rate) : null // 数据库已经是5分制，直接使用
       }));
       console.log(`成功获取${books.value.length}本推荐书籍`);
-      // 发射加载成功事件
-      emit('loaded', { success: true, count: books.value.length });
     } else {
       console.error(`获取${props.type}推荐失败:`, response.msg || '未知错误');
-      // 发射加载失败事件
-      emit('loaded', { success: false, error: response.msg || '未知错误' });
     }
   } catch (error) {
     console.error(`获取${props.type}推荐书籍失败:`, error);
-    // 发射加载失败事件
-    emit('loaded', { success: false, error: error.message || '网络错误' });
   } finally {
     loading.value = false;
   }

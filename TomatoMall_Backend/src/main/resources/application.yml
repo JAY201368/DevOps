@@ -22,12 +22,14 @@ server:
 
 logging:
   level:
-    root: OFF
-    org.hibernate.SQL: OFF
-    org.hibernate.type.descriptor.sql.BasicBinder: OFF
-    com.example.tomatomall: OFF
-    com.zaxxer.hikari: INFO
-    org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator: INFO
+    root: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    com.example.tomatomall: INFO
+    com.zaxxer.hikari: WARN
+    org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator: WARN
+    org.springframework.boot.autoconfigure: WARN
+    org.springframework.boot.diagnostics: WARN
 
 aliyun:
   oss:

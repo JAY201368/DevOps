@@ -5,7 +5,8 @@
       model: '',
       key: '',
       apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
-      img: ''
+      img: '',
+      backendUrl: 'http://localhost:8080/api' // 添加后端API地址
     },
 
     // 添加与图书相关的关键词库和屏蔽词库
@@ -377,6 +378,26 @@
       }
     },
 
+    // 添加获取图书上下文的方法
+    getBookContext: async function() {
+      try {
+        const response = await fetch('http://localhost:8080/api/ai-chat/context');
+        
+        if (!response.ok) {
+          return null;
+        }
+        const result = await response.json();
+
+        if (result.code === '200' && result.data) {
+          return result.data;
+        } else {
+          return null;
+        }
+      } catch (error) {
+        return null;
+      }
+    },
+
     sendToAI: async function (message) {
       // 检查配置
       if (!this.config.model || !this.config.key) {
@@ -393,6 +414,26 @@
       this.addLoadingIndicator();
 
       try {
+        // 获取图书上下文
+        const bookContext = await this.getBookContext();
+        
+        // 构建系统提示
+        let systemPrompt = '你是番茄书城的专业图书助手，你的主要职责是：\n' +
+          '1. 回答用户关于图书的问题\n' +
+          '2. 根据用户需求推荐合适的图书\n' +
+          '3. 提供图书的详细信息，包括书名、描述、标签和评分\n' +
+          '4. 解答关于阅读、作者、出版等相关问题\n\n' +
+          '请注意：\n' +
+          '1. 你只能回答与图书相关的问题\n' +
+          '2. 如果用户的问题与图书无关，请礼貌地告知用户您只能回答与图书相关的问题\n' +
+          '3. 在回答问题时，请优先使用以下图书信息作为参考\n\n';
+
+        if (bookContext) {
+          systemPrompt += bookContext;
+        } else {
+          systemPrompt += '（当前无法获取图书信息，请稍后再试）';
+        }
+
         const response = await fetch(this.config.apiUrl, {
           method: 'POST',
           headers: {
@@ -404,7 +445,7 @@
             messages: [
               {
                 role: 'system',
-                content: '你是番茄书城的专业图书助手，只能回答与图书相关的问题。你擅长推荐图书、解答关于阅读的问题、提供图书信息和作者背景等。'
+                content: systemPrompt
               },
               {
                 role: 'user',

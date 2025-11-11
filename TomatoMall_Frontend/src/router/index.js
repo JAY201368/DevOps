@@ -6,7 +6,6 @@ import ProductList from '../views/ProductList.vue'
 import ProductDetail from '../views/ProductDetail.vue'
 import Cart from '../views/Cart.vue'
 import WishList from '../views/WishList.vue'
-import DbTest from '../views/DbTest.vue'
 import Advertisement from '../views/Advertisement.vue'
 import OrderList from '../views/OrderList.vue'
 import CouponManagement from '../views/CouponManagement.vue'
@@ -39,11 +38,6 @@ const routes = [
     name: 'UserProfile',
     component: UserProfile,
     meta: { requiresAuth: true }
-  },
-  {
-    path: '/dbtest',
-    name: 'DbTest',
-    component: DbTest
   },
   {
     path: '/products',

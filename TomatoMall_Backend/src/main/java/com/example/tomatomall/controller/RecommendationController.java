@@ -52,9 +52,7 @@ public class RecommendationController {
     public ResultVO<List<ProductVO>> getPopularRecommendations(
             @RequestParam(defaultValue = "9") int limit) {
         try {
-            System.out.println("获取热门推荐，数量限制: " + limit);
             List<ProductVO> popularBooks = recommendationService.getPopularRecommendations(limit);
-            System.out.println("成功获取热门推荐，数量: " + popularBooks.size());
             return ResultVO.buildSuccess(popularBooks);
         } catch (Exception e) {
             e.printStackTrace(); // 打印详细错误堆栈
