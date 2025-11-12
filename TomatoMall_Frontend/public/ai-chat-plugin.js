@@ -11,7 +11,7 @@
 
     // 添加与图书相关的关键词库和屏蔽词库
     bookKeywords: [
-      "书", "图书", "小说", "文学", "作者", "出版", "阅读", "书籍", "故事", "章节", 
+      "书", "图书", "小说", "文学", "作者", "出版", "阅读", "书籍", "故事", "章节",
       "书店", "bookstore", "book", "novel", "literature", "author", "publisher", "reader",
       "出版社", "杂志", "期刊", "文集", "丛书", "书系", "系列", "文章", "散文", "诗歌",
       "绘本", "漫画", "电子书", "有声书", "教材", "教辅", "工具书", "词典", "百科全书",
@@ -42,6 +42,51 @@
       "conclusion", "epilogue", "prologue", "abstract", "synopsis"
     ],
 
+    // 添加系统提示词
+    systemPrompt: `你是番茄书城的专业图书助手，你的主要职责是：
+
+    1. 回答用户关于图书的问题，包括但不限于：
+      - 书城内图书的信息、评价、价格、库存等
+      - 图书相关的知识（如作者、出版社、文学流派等）
+      - 阅读建议和图书推荐（包括书城内外的图书）
+      - 文学、文化、历史等相关知识
+
+    2. 根据用户需求推荐合适的图书，包括：
+      - 优先推荐书城内的相关图书
+      - 如果书城内没有合适的图书，可以推荐其他相关图书
+      - 解释推荐理由，分享相关的文学知识
+
+    3. 提供图书的详细信息，包括：
+      - 书城内图书的完整信息（书名、描述、标签、评分等）
+      - 书城外图书的基本信息（如作者、出版社、出版年份等）
+      - 相关的文学背景和知识
+
+    4. 解答关于阅读、作者、出版等相关问题
+
+    在回答时，请注意：
+    1. 对于书城内图书的问题：
+      - 优先使用图书的基本信息（书名、描述、评分、价格、标签）
+      - 参考该图书的评论信息
+      - 告知当前可用的优惠券信息
+      - 提供具体的库存数量
+      - 提供详细的规格信息
+
+    2. 对于书城外图书的问题：
+      - 提供准确的图书信息（如作者、出版社、出版年份等）
+      - 分享相关的文学知识或背景信息
+      - 如果书城有类似主题的图书，可以适当推荐
+      - 解释推荐理由，帮助用户做出选择
+
+    3. 对于一般性的图书问题：
+      - 提供专业的阅读建议
+      - 分享相关的文学知识
+      - 结合书城内的图书进行举例说明
+      - 根据用户兴趣推荐合适的图书
+
+    4. 如果用户的问题与图书完全无关，请礼貌地告知用户您主要回答与图书相关的问题
+
+    请基于以上信息，灵活地回答用户的问题。在回答时，既要准确提供书城内图书的信息，也要能够分享更广泛的图书知识。`,
+
     Init: function (options) {
       this.config.model = options.model || '';
       this.config.key = options.key || '';
@@ -52,7 +97,7 @@
     },
 
     // 添加方法检查消息是否与图书相关
-    isBookRelated: function(message) {
+    isBookRelated: function (message) {
       message = message.toLowerCase();
       return this.bookKeywords.some(keyword => message.includes(keyword.toLowerCase()));
     },
@@ -379,10 +424,10 @@
     },
 
     // 添加获取图书上下文的方法
-    getBookContext: async function() {
+    getBookContext: async function () {
       try {
         const response = await fetch('http://localhost:8080/api/ai-chat/context');
-        
+
         if (!response.ok) {
           return null;
         }
@@ -416,23 +461,17 @@
       try {
         // 获取图书上下文
         const bookContext = await this.getBookContext();
-        
+
         // 构建系统提示
-        let systemPrompt = '你是番茄书城的专业图书助手，你的主要职责是：\n' +
-          '1. 回答用户关于图书的问题\n' +
-          '2. 根据用户需求推荐合适的图书\n' +
-          '3. 提供图书的详细信息，包括书名、描述、标签和评分\n' +
-          '4. 解答关于阅读、作者、出版等相关问题\n\n' +
-          '请注意：\n' +
-          '1. 你只能回答与图书相关的问题\n' +
-          '2. 如果用户的问题与图书无关，请礼貌地告知用户您只能回答与图书相关的问题\n' +
-          '3. 在回答问题时，请优先使用以下图书信息作为参考\n\n';
+        let systemPrompt = this.systemPrompt;
 
         if (bookContext) {
-          systemPrompt += bookContext;
+          systemPrompt += '\n\n' + bookContext;
         } else {
-          systemPrompt += '（当前无法获取图书信息，请稍后再试）';
+          systemPrompt += '\n\n（当前无法获取图书信息，请稍后再试）';
         }
+
+        console.log(systemPrompt);
 
         const response = await fetch(this.config.apiUrl, {
           method: 'POST',
@@ -477,24 +516,56 @@
     },
 
     // 新增外部调用发送消息的方法
-    send: function (message) {
-      if (!message || typeof message !== 'string') {
-        console.error('发送的消息必须是非空字符串');
-        return this;
-      }
+    send: async function (message) {
+      if (!message.trim()) return;
 
-      // 如果聊天窗口未打开，先打开它
-      if (!this.elements.container.classList.contains('active')) {
-        this.elements.container.classList.add('active');
-      }
-
-      // 显示用户消息
+      // 添加用户消息到聊天界面
       this.addMessage(message, 'user');
 
-      // 发送到AI
-      this.sendToAI(message);
+      // 获取图书上下文信息
+      let bookContext = '';
+      try {
+        const response = await fetch(`${this.config.backendUrl}/ai-chat/context`);
+        const data = await response.json();
+        if (data.code === '200' || data.code === 200) {
+          bookContext = data.data;
+        }
+      } catch (error) {
+        console.error('获取图书上下文失败:', error);
+      }
 
-      return this;
+      // 构建完整的系统提示词
+      const fullSystemPrompt = `${this.systemPrompt}\n\n${bookContext}`;
+
+      // 发送消息到 AI 服务
+      try {
+        const response = await fetch(this.config.apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.config.key}`
+          },
+          body: JSON.stringify({
+            model: this.config.model,
+            messages: [
+              { role: 'system', content: fullSystemPrompt },
+              { role: 'user', content: message }
+            ],
+            temperature: 0.7,
+            max_tokens: 2000
+          })
+        });
+
+        const data = await response.json();
+        if (data.choices && data.choices[0]) {
+          this.addMessage(data.choices[0].message.content, 'ai');
+        } else {
+          throw new Error('AI 响应格式错误');
+        }
+      } catch (error) {
+        console.error('AI 服务调用失败:', error);
+        this.addMessage('抱歉，我暂时无法回答您的问题。请稍后再试。', 'ai', true);
+      }
     }
   };
 

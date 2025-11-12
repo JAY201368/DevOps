@@ -111,16 +111,6 @@ public class AiChatController {
                 context.append("\n");
             }
             
-            // 添加系统提示
-            context.append("\n请基于以上图书信息，回答用户的问题。如果用户的问题与图书无关，请礼貌地告知用户您只能回答与图书相关的问题。\n");
-            context.append("在回答时，请注意：\n");
-            context.append("1. 优先使用图书的基本信息（书名、描述、评分、价格、标签）回答用户问题\n");
-            context.append("2. 如果用户询问具体图书的评价，可以参考该图书的评论信息\n");
-            context.append("3. 如果用户询问价格或优惠，请告知当前可用的优惠券信息\n");
-            context.append("4. 如果用户询问库存，请告知具体的库存数量\n");
-            context.append("5. 如果用户询问图书规格，请提供详细的规格信息\n");
-            context.append("6. 如果用户的问题涉及多本图书，请综合考虑所有相关信息\n");
-            
             return ResultVO.buildSuccess(context.toString());
         } catch (Exception e) {
             log.error("获取图书上下文失败", e);

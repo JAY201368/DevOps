@@ -37,7 +37,7 @@ public class AiChatServiceImpl implements AiChatService {
         }
         
         // 添加系统提示
-        context.append("\n请基于以上图书信息，回答用户的问题。如果用户的问题与图书无关，请礼貌地告知用户您只能回答与图书相关的问题。");
+        context.append("\n请基于以上图书信息，回答用户的问题。");
         
         return context.toString();
     }
