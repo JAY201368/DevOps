@@ -9,38 +9,38 @@
       backendUrl: 'http://localhost:8080/api' // 添加后端API地址
     },
 
-    // 添加与图书相关的关键词库和屏蔽词库
-    bookKeywords: [
-      "书", "图书", "小说", "文学", "作者", "出版", "阅读", "书籍", "故事", "章节",
-      "书店", "bookstore", "book", "novel", "literature", "author", "publisher", "reader",
-      "出版社", "杂志", "期刊", "文集", "丛书", "书系", "系列", "文章", "散文", "诗歌",
-      "绘本", "漫画", "电子书", "有声书", "教材", "教辅", "工具书", "词典", "百科全书",
-      "畅销书", "经典", "名著", "传记", "自传", "科幻", "奇幻", "悬疑", "推理", "言情",
-      "武侠", "历史", "哲学", "心理", "艺术", "摄影", "建筑", "设计", "料理", "旅行",
-      "生活", "健康", "经济", "管理", "科学", "技术", "编程", "计算机", "医学", "法律",
-      "教育", "考试", "考研", "考证", "考公", "textbook", "dictionary", "encyclopedia",
-      "novel", "fiction", "nonfiction", "biography", "autobiography", "sci-fi", "fantasy",
-      "romance", "history", "philosophy", "psychology", "art", "photography", "architecture",
-      "design", "cooking", "travel", "lifestyle", "health", "economics", "management",
-      "science", "technology", "programming", "computer", "medicine", "law", "education",
-      "test", "exam", "certification", "public service", "comic", "manga", "audiobook",
-      "ebook", "digital book", "printed book", "hardcover", "paperback", "poetry", "essay",
-      "anthology", "collection", "series", "trilogy", "sequel", "prequel", "adaptation",
-      "translation", "edition", "publication", "copyright", "library", "bibliography",
-      "reference", "index", "contents", "chapter", "page", "bookshelf", "bookmark",
-      "recommended reading", "bestseller", "classic", "prize", "award", "review", "rating",
-      "comment", "isbn", "book cover", "illustration", "bookstore", "书店", "新书", "二手书",
-      "租书", "借书", "图书馆", "藏书", "绝版书", "古籍", "书评", "读后感", "读书笔记",
-      "购书", "藏书票", "书签", "书架", "书柜", "书房", "书单", "书目", "书号", "定价",
-      "折扣", "特价", "促销", "封面", "封底", "书脊", "装帧", "开本", "字体", "排版",
-      "书摘", "书虫", "书迷", "书友", "读者", "作家", "编辑", "校对", "书稿", "书商",
-      "番茄书城", "下单", "购买", "购物车", "收藏", "愿望单", "热门图书", "推荐", "评分",
-      "评论", "书评", "bestselling", "new release", "book club", "reading list",
-      "bookworm", "bookish", "bibliophile", "publisher", "imprint", "print run",
-      "edition", "title", "subtitle", "table of contents", "appendix", "glossary",
-      "note", "footnote", "bibliography", "index", "preface", "foreword", "introduction",
-      "conclusion", "epilogue", "prologue", "abstract", "synopsis"
-    ],
+    // // 添加与图书相关的关键词库和屏蔽词库
+    // bookKeywords: [
+    //   "书", "图书", "小说", "文学", "作者", "出版", "阅读", "书籍", "故事", "章节",
+    //   "书店", "bookstore", "book", "novel", "literature", "author", "publisher", "reader",
+    //   "出版社", "杂志", "期刊", "文集", "丛书", "书系", "系列", "文章", "散文", "诗歌",
+    //   "绘本", "漫画", "电子书", "有声书", "教材", "教辅", "工具书", "词典", "百科全书",
+    //   "畅销书", "经典", "名著", "传记", "自传", "科幻", "奇幻", "悬疑", "推理", "言情",
+    //   "武侠", "历史", "哲学", "心理", "艺术", "摄影", "建筑", "设计", "料理", "旅行",
+    //   "生活", "健康", "经济", "管理", "科学", "技术", "编程", "计算机", "医学", "法律",
+    //   "教育", "考试", "考研", "考证", "考公", "textbook", "dictionary", "encyclopedia",
+    //   "novel", "fiction", "nonfiction", "biography", "autobiography", "sci-fi", "fantasy",
+    //   "romance", "history", "philosophy", "psychology", "art", "photography", "architecture",
+    //   "design", "cooking", "travel", "lifestyle", "health", "economics", "management",
+    //   "science", "technology", "programming", "computer", "medicine", "law", "education",
+    //   "test", "exam", "certification", "public service", "comic", "manga", "audiobook",
+    //   "ebook", "digital book", "printed book", "hardcover", "paperback", "poetry", "essay",
+    //   "anthology", "collection", "series", "trilogy", "sequel", "prequel", "adaptation",
+    //   "translation", "edition", "publication", "copyright", "library", "bibliography",
+    //   "reference", "index", "contents", "chapter", "page", "bookshelf", "bookmark",
+    //   "recommended reading", "bestseller", "classic", "prize", "award", "review", "rating",
+    //   "comment", "isbn", "book cover", "illustration", "bookstore", "书店", "新书", "二手书",
+    //   "租书", "借书", "图书馆", "藏书", "绝版书", "古籍", "书评", "读后感", "读书笔记",
+    //   "购书", "藏书票", "书签", "书架", "书柜", "书房", "书单", "书目", "书号", "定价",
+    //   "折扣", "特价", "促销", "封面", "封底", "书脊", "装帧", "开本", "字体", "排版",
+    //   "书摘", "书虫", "书迷", "书友", "读者", "作家", "编辑", "校对", "书稿", "书商",
+    //   "番茄书城", "下单", "购买", "购物车", "收藏", "愿望单", "热门图书", "推荐", "评分",
+    //   "评论", "书评", "bestselling", "new release", "book club", "reading list",
+    //   "bookworm", "bookish", "bibliophile", "publisher", "imprint", "print run",
+    //   "edition", "title", "subtitle", "table of contents", "appendix", "glossary",
+    //   "note", "footnote", "bibliography", "index", "preface", "foreword", "introduction",
+    //   "conclusion", "epilogue", "prologue", "abstract", "synopsis"
+    // ],
 
     // 添加系统提示词
     systemPrompt: `你是番茄书城的专业图书助手，你的主要职责是：
@@ -109,17 +109,17 @@
         .ai-chat-icon {
           position: fixed;
           bottom: 20px;
-          left: 20px;
+          right: 5px;
           width: 60px;
           height: 60px;
           border-radius: 50%;
-          background-color: #1890ff;
+          background-color:rgb(2, 175, 255);
           box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          z-index: 9999;
+          z-index: 10001;
           transition: all 0.3s;
         }
         
@@ -136,7 +136,7 @@
         .ai-chat-container {
           position: fixed;
           bottom: 90px;
-          left: 20px;
+          right: 300px;
           width: 350px;
           height: 500px;
           background-color: white;
@@ -144,7 +144,7 @@
           box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
           display: flex;
           flex-direction: column;
-          z-index: 9998;
+          z-index: 10001;
           overflow: hidden;
           transition: all 0.3s;
           opacity: 0;
@@ -160,7 +160,7 @@
         
         .ai-chat-header {
           padding: 15px;
-          background-color: #1890ff;
+          background-color: rgb(2, 175, 255);
           color: white;
           font-weight: bold;
           display: flex;
@@ -223,7 +223,7 @@
         .ai-chat-send {
           margin-left: 10px;
           padding: 10px 15px;
-          background-color: #1890ff;
+          background-color: rgb(2, 175, 255);
           color: white;
           border: none;
           border-radius: 20px;
@@ -450,11 +450,11 @@
         return;
       }
 
-      // 检查是否与图书相关
-      if (!this.isBookRelated(message)) {
-        this.addMessage('抱歉，我是番茄书城的专业图书助手，暂时无法回答与图书无关的问题。您可以向我咨询关于图书、阅读、作者、出版等相关问题，我会尽力为您解答！', 'ai');
-        return;
-      }
+      // // 检查是否与图书相关
+      // if (!this.isBookRelated(message)) {
+      //   this.addMessage('抱歉，我是番茄书城的专业图书助手，暂时无法回答与图书无关的问题。您可以向我咨询关于图书、阅读、作者、出版等相关问题，我会尽力为您解答！', 'ai');
+      //   return;
+      // }
 
       this.addLoadingIndicator();
 

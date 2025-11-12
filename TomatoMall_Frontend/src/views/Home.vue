@@ -41,22 +41,6 @@
         @loaded="recommendationLoaded('popular', $event)"
       />
     </div>
-    
-    <!-- AI助手按钮 -->
-    <div class="ai-assistant-container container">
-      <el-card class="ai-assistant-card">
-        <div class="ai-assistant-content">
-          <div class="ai-assistant-info">
-            <h3>智能AI助手</h3>
-            <p>有任何问题都可以向我咨询，我会为您提供专业的解答</p>
-            <el-button type="primary" @click="openAiChat">开始对话</el-button>
-          </div>
-          <div class="ai-assistant-icon">
-            <el-icon :size="40" color="#1890ff"><ChatDotRound /></el-icon>
-          </div>
-        </div>
-      </el-card>
-    </div>
   </div>
 </template>
 
@@ -64,7 +48,6 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { ChatDotRound } from '@element-plus/icons-vue';
 import BookRecommendation from '../components/BookRecommendation.vue';
 import { getPopularRecommendations } from '../api/recommendation';
 import { getAllBanners } from '../api/banner';
@@ -73,15 +56,6 @@ const router = useRouter();
 
 // 轮播图数据
 const banners = ref([]);
-
-// AI助手相关方法
-const openAiChat = () => {
-  if (window._Ai) {
-    window._Ai.send("你好");
-  } else {
-    ElMessage.warning('AI助手加载失败，请刷新页面重试');
-  }
-};
 
 // 导航到指定链接
 const navigateTo = (banner) => {
@@ -238,53 +212,6 @@ onMounted(() => {
   margin: 0 auto;
 }
 
-/* AI助手相关样式 */
-.ai-assistant-container {
-  margin: 30px auto;
-}
-
-.ai-assistant-card {
-  border-radius: 16px;
-  border: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  background: linear-gradient(to right, #ffeef2, #fff5f7);
-  overflow: hidden;
-}
-
-.ai-assistant-content {
-  display: flex;
-  align-items: center;
-  padding: 20px;
-}
-
-.ai-assistant-info {
-  flex: 1;
-}
-
-.ai-assistant-info h3 {
-  font-size: 20px;
-  margin-bottom: 10px;
-  color: #303133;
-}
-
-.ai-assistant-info p {
-  font-size: 14px;
-  color: #606266;
-  margin-bottom: 15px;
-}
-
-.ai-assistant-icon {
-  margin-left: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 60px;
-  background-color: #fff;
-  border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
 .banner-content {
   height: 100%;
   display: flex;
@@ -418,17 +345,6 @@ onMounted(() => {
   
   .book-carousel {
     gap: 10px;
-  }
-  
-  /* AI助手响应式 */
-  .ai-assistant-content {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .ai-assistant-icon {
-    margin-left: 0;
-    margin-top: 15px;
   }
 }
 
