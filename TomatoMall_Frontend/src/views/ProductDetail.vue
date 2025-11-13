@@ -79,7 +79,7 @@
                 class="stock-value"
                 :class="{ 'low-stock': product.stockpile?.amount < 20 }"
               >
-                {{ product.stockpile?.amount || 1 }}
+                {{ product.stockpile?.amount ?? 0 }}
                 <el-tag
                   v-if="product.stockpile?.amount < 20"
                   type="danger"
@@ -107,9 +107,10 @@
               <span class="quantity-label">数量：</span>
               <el-input-number
                 v-model="purchaseQuantity"
-                :min="1"
-                :max="product.stockpile?.amount || 1"
+                :min="product.stockpile?.amount > 0 ? 1 : 0"
+                :max="product.stockpile?.amount ?? 0"
                 size="large"
+                :disabled="product.stockpile?.amount <= 0"
               />
             </div>
             <div class="action-buttons">
@@ -727,14 +728,17 @@ const fetchProduct = async () => {
       // 如果没有库存信息，查询库存API
       if (!product.value.stockpile) {
         try {
+          console.log("开始获取库存");
           const stockRes = await getStockpile(product.value.id);
           if (stockRes.code === 200 || stockRes.code === "200") {
-            product.value.stockpile = stockRes.data;
-          } else if (stockRes.data && stockRes.data.code === "200") {
-            product.value.stockpile = stockRes.data.data;
+            // 确保stockpile是一个对象，包含amount属性
+            product.value.stockpile = { amount: stockRes.data.amount };
+            console.log("库存信息:", product.value.stockpile.amount);
           }
         } catch (stockError) {
           console.error("获取库存信息失败", stockError);
+          // 设置默认库存对象，避免界面错误
+          product.value.stockpile = { amount: 0 };
         }
       }
     } else if (res.data && res.data.code === "200") {
@@ -754,12 +758,17 @@ const fetchProduct = async () => {
         try {
           const stockRes = await getStockpile(product.value.id);
           if (stockRes.code === 200 || stockRes.code === "200") {
-            product.value.stockpile = stockRes.data.data;
+            // 确保stockpile是一个对象，包含amount属性
+            product.value.stockpile = { amount: stockRes.data.amount };
+            console.log("库存信息:", product.value.stockpile);
           }
         } catch (stockError) {
           console.error("获取库存信息失败", stockError);
+          // 设置默认库存对象，避免界面错误
+          product.value.stockpile = { amount: 0 };
         }
-      }    } else {
+      }
+    } else {
       ElMessage.error(res.msg || "获取商品详情失败");
     }
 
