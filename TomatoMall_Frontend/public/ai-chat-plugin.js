@@ -6,7 +6,8 @@
       key: '',
       apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
       img: '',
-      backendUrl: 'http://localhost:8080/api' // 添加后端API地址
+      backendUrl: 'http://localhost:8080/api', // 添加后端API地址
+      userId: null // 添加用户ID字段
     },
 
     // // 添加与图书相关的关键词库和屏蔽词库
@@ -43,7 +44,7 @@
     // ],
 
     // 添加系统提示词
-    systemPrompt: `你是番茄书城的专业图书助手，你的主要职责是：
+    systemPrompt: `你是番茄书城的专业图书助手，你的设定是一只可爱的小猫咪，你的主要职责是：
 
     1. 回答用户关于图书的问题，包括但不限于：
       - 书城内图书的信息、评价、价格、库存等
@@ -91,6 +92,7 @@
       this.config.model = options.model || '';
       this.config.key = options.key || '';
       this.config.img = options.img || '';
+      this.config.userId = options.userId || null; // 初始化用户ID
       this.createUI();
       this.bindEvents();
       return this;
@@ -450,29 +452,27 @@
         return;
       }
 
-      // // 检查是否与图书相关
-      // if (!this.isBookRelated(message)) {
-      //   this.addMessage('抱歉，我是番茄书城的专业图书助手，暂时无法回答与图书无关的问题。您可以向我咨询关于图书、阅读、作者、出版等相关问题，我会尽力为您解答！', 'ai');
-      //   return;
-      // }
-
       this.addLoadingIndicator();
 
       try {
-        // 获取图书上下文
-        const bookContext = await this.getBookContext();
-
-        // 构建系统提示
-        let systemPrompt = this.systemPrompt;
-
-        if (bookContext) {
-          systemPrompt += '\n\n' + bookContext;
-        } else {
-          systemPrompt += '\n\n（当前无法获取图书信息，请稍后再试）';
+        // 获取图书上下文和对话历史
+        const contextUrl = this.config.userId 
+          ? `${this.config.backendUrl}/ai-chat/context?userId=${encodeURIComponent(this.config.userId)}`
+          : `${this.config.backendUrl}/ai-chat/context`;
+        
+        const contextResponse = await fetch(contextUrl);
+        if (!contextResponse.ok) {
+          throw new Error('获取上下文失败');
+        }
+        const contextResult = await contextResponse.json();
+        
+        if (contextResult.code !== '200' && contextResult.code !== 200) {
+          throw new Error('获取上下文失败: ' + contextResult.message);
         }
 
-        console.log(systemPrompt);
+        const systemPrompt = contextResult.data;
 
+        // 发送消息到AI服务
         const response = await fetch(this.config.apiUrl, {
           method: 'POST',
           headers: {
@@ -506,6 +506,25 @@
         if (data.choices && data.choices.length > 0) {
           const reply = data.choices[0].message.content;
           this.addMessage(reply, 'ai');
+
+          // 如果有用户ID，保存对话历史
+          if (this.config.userId) {
+            try {
+              await fetch(`${this.config.backendUrl}/ai-chat/conversation`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                  userId: this.config.userId,
+                  question: message,
+                  answer: reply
+                })
+              });
+            } catch (error) {
+              console.error('保存对话历史失败:', error);
+            }
+          }
         } else {
           this.addMessage('抱歉，我无法处理您的请求\n请检查您选择的模型类型，部分模型不支持赠送金额', 'ai');
         }
@@ -515,56 +534,34 @@
       }
     },
 
-    // 新增外部调用发送消息的方法
-    send: async function (message) {
-      if (!message.trim()) return;
+    // 设置用户ID的方法
+    setUserId: function(userId) {
+      this.config.userId = userId;
+    },
 
-      // 添加用户消息到聊天界面
-      this.addMessage(message, 'user');
-
-      // 获取图书上下文信息
-      let bookContext = '';
-      try {
-        const response = await fetch(`${this.config.backendUrl}/ai-chat/context`);
-        const data = await response.json();
-        if (data.code === '200' || data.code === 200) {
-          bookContext = data.data;
-        }
-      } catch (error) {
-        console.error('获取图书上下文失败:', error);
+    // 清除对话历史的方法
+    clearHistory: async function() {
+      if (!this.config.userId) {
+        return;
       }
 
-      // 构建完整的系统提示词
-      const fullSystemPrompt = `${this.systemPrompt}\n\n${bookContext}`;
-
-      // 发送消息到 AI 服务
       try {
-        const response = await fetch(this.config.apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.config.key}`
-          },
-          body: JSON.stringify({
-            model: this.config.model,
-            messages: [
-              { role: 'system', content: fullSystemPrompt },
-              { role: 'user', content: message }
-            ],
-            temperature: 0.7,
-            max_tokens: 2000
-          })
-        });
-
-        const data = await response.json();
-        if (data.choices && data.choices[0]) {
-          this.addMessage(data.choices[0].message.content, 'ai');
-        } else {
-          throw new Error('AI 响应格式错误');
+        const response = await fetch(
+          `${this.config.backendUrl}/ai-chat/conversation/history?userId=${encodeURIComponent(this.config.userId)}`,
+          { method: 'DELETE' }
+        );
+        
+        if (!response.ok) {
+          throw new Error('清除历史记录失败');
         }
+        
+        // 清空聊天界面
+        this.elements.messages.innerHTML = '';
+        // 重新添加欢迎消息
+        this.addMessage('你好！我是番茄书城的AI助手，有关于图书的问题都可以向我咨询哦！', 'ai');
       } catch (error) {
-        console.error('AI 服务调用失败:', error);
-        this.addMessage('抱歉，我暂时无法回答您的问题。请稍后再试。', 'ai', true);
+        console.error('清除历史记录失败:', error);
+        this.addMessage('清除历史记录失败，请稍后重试', 'ai');
       }
     }
   };

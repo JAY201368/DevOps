@@ -100,11 +100,39 @@ onMounted(() => {
 
   // 初始化AI聊天插件
   if (window._Ai) {
+    // 获取用户ID
+    let userId = null;
+    if (username) {
+      // 从localStorage获取用户ID，如果没有则从后端获取
+      userId = localStorage.getItem('userId');
+      if (!userId) {
+        // 这里可以添加获取用户ID的逻辑
+        // 例如调用后端API获取用户ID
+        // 暂时使用username作为userId
+        userId = username;
+      }
+    }
+
     window._Ai.Init({
-      model: "Qwen/Qwen3-14B", // 暂时保留为空
-      key: "sk-szrfqqlzjbkbysppmurhkqjufcxuswzgoewuocxdmxlqjjfq",   // 暂时保留为空
-      img: ""    // 可选，自定义图标
-    })
+      model: "Qwen/Qwen3-14B",
+      key: "sk-szrfqqlzjbkbysppmurhkqjufcxuswzgoewuocxdmxlqjjfq",
+      img: "",
+      userId: userId // 添加用户ID
+    });
+
+    // 监听登录状态变化
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'token' || event.key === 'username') {
+        const newUsername = localStorage.getItem('username');
+        if (newUsername) {
+          // 更新AI聊天插件的用户ID
+          window._Ai.setUserId(newUsername);
+        } else {
+          // 用户登出，清除用户ID
+          window._Ai.setUserId(null);
+        }
+      }
+    });
   }
 })
 </script>
