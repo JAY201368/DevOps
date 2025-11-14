@@ -44,7 +44,7 @@
     // ],
 
     // 添加系统提示词
-    systemPrompt: `你是番茄书城的专业图书助手，你的设定是一只可爱的小猫咪，所以你的回答的语气要像一只小猫。你的主要职责是：
+    systemPrompt: `你是番茄书城的专业图书助手，你的主要职责是：
 
     1. 回答用户关于图书的问题，包括但不限于：
       - 书城内图书的信息、评价、价格、库存等
@@ -141,7 +141,7 @@
           right: 300px;
           width: 350px;
           height: 500px;
-          background-color: white;
+          background-color: rgba(255, 245, 247, 0.95);
           border-radius: 10px;
           box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
           display: flex;
@@ -162,7 +162,7 @@
         
         .ai-chat-header {
           padding: 15px;
-          background-color: rgb(2, 175, 255);
+          background-color: rgba(2, 175, 255, 0);
           color: white;
           font-weight: bold;
           display: flex;
@@ -190,14 +190,14 @@
         
         .ai-chat-message-user {
           align-self: flex-end;
-          background-color: #e6f7ff;
+          background-color: white;
           padding: 10px;
           border-radius: 10px 10px 0 10px;
         }
         
         .ai-chat-message-ai {
           align-self: flex-start;
-          background-color: #f5f5f5;
+          background-color: white;
           padding: 10px;
           border-radius: 10px 10px 10px 0;
         }
@@ -314,8 +314,8 @@
       chatContainer.className = 'ai-chat-container';
       chatContainer.innerHTML = `
         <div class="ai-chat-header">
-          <div>AI 助手</div>
-          <div class="ai-chat-close">✕</div>
+          <div></div>
+          <div class="ai-chat-close" style="color: #606266;">✕</div>
         </div>
         <div class="ai-chat-messages"></div>
         <div class="ai-chat-input-container">

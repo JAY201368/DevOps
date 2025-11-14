@@ -132,43 +132,47 @@
                 </div>
               </div>
 
-              <!-- 操作按钮 - 移到卡片外部并使用绝对定位 -->
+              <!-- 操作按钮 -->
               <div class="product-card-actions">
-                <el-button
-                  type="primary"
-                  link
-                  @click="handleView(product)"
-                  class="card-action-button"
-                >
-                  <el-icon><View /></el-icon> 查看
-                </el-button>
-                <el-button
-                  v-if="isAdmin"
-                  type="success"
-                  link
-                  @click="handleEdit(product)"
-                  class="card-action-button"
-                >
-                  <el-icon><Edit /></el-icon> 编辑
-                </el-button>
-                <el-button
-                  v-if="isAdmin"
-                  type="warning"
-                  link
-                  @click="handleStock(product)"
-                  class="card-action-button"
-                >
-                  <el-icon><Box /></el-icon> 库存
-                </el-button>
-                <el-button
-                  v-if="isAdmin"
-                  type="danger"
-                  link
-                  @click="handleDelete(product)"
-                  class="card-action-button"
-                >
-                  <el-icon><Delete /></el-icon> 删除
-                </el-button>
+                <div class="button-row">
+                  <el-button
+                    type="primary"
+                    link
+                    @click="handleView(product)"
+                    class="card-action-button"
+                  >
+                    <el-icon><View /></el-icon> 查看
+                  </el-button>
+                  <el-button
+                    v-if="isAdmin"
+                    type="success"
+                    link
+                    @click="handleEdit(product)"
+                    class="card-action-button"
+                  >
+                    <el-icon><Edit /></el-icon> 编辑
+                  </el-button>
+                </div>
+                <div class="button-row">
+                  <el-button
+                    v-if="isAdmin"
+                    type="warning"
+                    link
+                    @click="handleStock(product)"
+                    class="card-action-button"
+                  >
+                    <el-icon><Box /></el-icon> 库存
+                  </el-button>
+                  <el-button
+                    v-if="isAdmin"
+                    type="danger"
+                    link
+                    @click="handleDelete(product)"
+                    class="card-action-button"
+                  >
+                    <el-icon><Delete /></el-icon> 删除
+                  </el-button>
+                </div>
               </div>
             </el-card>
           </el-col>
@@ -1286,15 +1290,23 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   display: flex;
-  justify-content: space-around;
-  background-color: rgba(255, 255, 255, 0.9);
+  flex-direction: column;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(4px);
-  padding: 15px;
+  padding: 12px 8px;
   border-radius: 0 0 8px 8px;
   transform: translateY(100%);
   transition: transform 0.3s ease;
   z-index: 1;
   opacity: 0;
+}
+
+.button-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
 }
 
 .product-card:hover .product-card-actions {
@@ -1303,7 +1315,19 @@ onUnmounted(() => {
 }
 
 .card-action-button {
-  padding: 5px 10px;
+  padding: 4px 8px;
+  font-size: 13px;
+  min-width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 1;
+  max-width: 80px;
+}
+
+.card-action-button .el-icon {
+  font-size: 14px;
 }
 
 .empty-state {
