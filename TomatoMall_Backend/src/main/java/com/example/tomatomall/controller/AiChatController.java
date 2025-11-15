@@ -60,9 +60,9 @@ public class AiChatController {
         } catch (Exception e) {
             log.error("获取聊天上下文失败", e);
             return ResultVO.buildFailure("获取聊天上下文失败", "500");
-        }
-    }
-
+                    }
+                }
+                
     @PostMapping("/conversation")
     public ResultVO<Void> addConversation(
             @RequestParam String userId,
@@ -74,9 +74,9 @@ public class AiChatController {
         } catch (Exception e) {
             log.error("添加对话历史失败", e);
             return ResultVO.buildFailure("添加对话历史失败", "500");
-        }
-    }
-
+                    }
+                }
+                
     @GetMapping("/conversation/history")
     public ResultVO<List<Map<String, String>>> getConversationHistory(@RequestParam String userId) {
         try {

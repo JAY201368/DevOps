@@ -135,43 +135,43 @@
               <!-- 操作按钮 -->
               <div class="product-card-actions">
                 <div class="button-row">
-                  <el-button
-                    type="primary"
-                    link
-                    @click="handleView(product)"
-                    class="card-action-button"
-                  >
-                    <el-icon><View /></el-icon> 查看
-                  </el-button>
-                  <el-button
-                    v-if="isAdmin"
-                    type="success"
-                    link
-                    @click="handleEdit(product)"
-                    class="card-action-button"
-                  >
-                    <el-icon><Edit /></el-icon> 编辑
-                  </el-button>
+                <el-button
+                  type="primary"
+                  link
+                  @click="handleView(product)"
+                  class="card-action-button"
+                >
+                  <el-icon><View /></el-icon> 查看
+                </el-button>
+                <el-button
+                  v-if="isAdmin"
+                  type="success"
+                  link
+                  @click="handleEdit(product)"
+                  class="card-action-button"
+                >
+                  <el-icon><Edit /></el-icon> 编辑
+                </el-button>
                 </div>
                 <div class="button-row">
-                  <el-button
-                    v-if="isAdmin"
-                    type="warning"
-                    link
-                    @click="handleStock(product)"
-                    class="card-action-button"
-                  >
-                    <el-icon><Box /></el-icon> 库存
-                  </el-button>
-                  <el-button
-                    v-if="isAdmin"
-                    type="danger"
-                    link
-                    @click="handleDelete(product)"
-                    class="card-action-button"
-                  >
-                    <el-icon><Delete /></el-icon> 删除
-                  </el-button>
+                <el-button
+                  v-if="isAdmin"
+                  type="warning"
+                  link
+                  @click="handleStock(product)"
+                  class="card-action-button"
+                >
+                  <el-icon><Box /></el-icon> 库存
+                </el-button>
+                <el-button
+                  v-if="isAdmin"
+                  type="danger"
+                  link
+                  @click="handleDelete(product)"
+                  class="card-action-button"
+                >
+                  <el-icon><Delete /></el-icon> 删除
+                </el-button>
                 </div>
               </div>
             </el-card>
