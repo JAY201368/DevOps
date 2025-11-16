@@ -7,15 +7,6 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  
-  /* 全局颜色变量 */
-  --primary-color: #3498db;
-  --secondary-color: #9b59b6;
-  --text-color: #2c3e50;
-  --light-bg: #f6f9fc;
-  --card-bg: rgba(255, 255, 255, 0.9);
-  --border-color: #e6f0fa;
-  --shadow-color: rgba(52, 152, 219, 0.15);
 }
 
 * {
@@ -25,100 +16,20 @@
 }
 
 body {
-  color: var(--text-color);
-  background: linear-gradient(135deg, #f6f9fc, #e9f1f9, #dce9f5);
-  min-height: 100vh;
+  color: #333;
+  background-color: #f5f7fa;
 }
 
 a {
-  color: var(--primary-color);
+  color: #409eff;
   text-decoration: none;
-  transition: color 0.3s ease;
 }
 
 a:hover {
-  color: var(--secondary-color);
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 #app {
   width: 100%;
   min-height: 100vh;
-}
-
-/* 全局卡片样式 */
-.el-card {
-  border: none !important;
-  border-radius: 8px !important;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-  background-color: var(--card-bg) !important;
-  backdrop-filter: blur(10px);
-}
-
-.el-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px var(--shadow-color) !important;
-}
-
-/* 全局按钮样式 */
-.el-button--primary {
-  background: linear-gradient(to right, var(--primary-color), var(--secondary-color)) !important;
-  border: none !important;
-  color: white !important;
-}
-
-.el-button--primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4) !important;
-}
-
-/* 全局滚动条样式 */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #a0c5e8;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-track {
-  background: #e6f0fa;
-  border-radius: 3px;
-}
-
-/* 全局标题样式 */
-h1, h2, h3, h4, h5, h6 {
-  color: var(--text-color);
-  margin-bottom: 1rem;
-}
-
-/* 页面容器通用样式 */
-.page-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 30px 20px;
-}
-
-/* 页面标题通用样式 */
-.page-title {
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--text-color);
-  margin-bottom: 20px;
-  position: relative;
-  display: inline-block;
-}
-
-.page-title::after {
-  content: "";
-  position: absolute;
-  bottom: -10px;
-  left: 0;
-  width: 80px;
-  height: 3px;
-  background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
-  border-radius: 3px;
 }
