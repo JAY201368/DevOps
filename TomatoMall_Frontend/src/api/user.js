@@ -1,29 +1,42 @@
-import axios from 'axios'
+import request from './request'
 
-const api = axios.create({
-  baseURL: 'http://localhost:8080/api'
-})
-
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.token = token
-  }
-  return config
-})
-
-export const login = (username, password) => {
-  return api.post('/accounts/login', { username, password })
+export function login(username, password) {
+  return request({
+    url: '/api/accounts/login',
+    method: 'post',
+    data: {
+      username,
+      password
+    }
+  })
 }
 
-export const register = (userData) => {
-  return api.post('/accounts/register', userData)
+export function register(data) {
+  return request({
+    url: '/api/accounts',
+    method: 'post',
+    data
+  })
 }
 
-export const getUserInfo = (username) => {
-  return api.get(`/accounts/${username}`)
+export function getUserInfo(username) {
+  return request({
+    url: `/api/accounts/${username}`,
+    method: 'get'
+  })
 }
 
-export const updateUserInfo = (userData) => {
-  return api.put('/accounts', userData)
+export function updateUserInfo(data) {
+  return request({
+    url: '/api/accounts',
+    method: 'put',
+    data
+  })
+}
+
+export function getAllUsers() {
+  return request({
+    url: '/api/accounts/all',
+    method: 'get'
+  })
 } 
