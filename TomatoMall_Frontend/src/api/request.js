@@ -1,14 +1,15 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import env from '../config/env'
 
 // 创建请求实例
 const request = axios.create({
-  baseURL: 'http://localhost:8080',
-  timeout: 10000,
+  baseURL: env.VITE_API_BASE_URL,
+  timeout: env.VITE_API_TIMEOUT,
   // 启用HTTP持久连接
   keepAlive: true,
   // 允许跨域请求携带cookie
-  withCredentials: false,
+  withCredentials: env.VITE_WITH_CREDENTIALS,
   // 添加HTTP请求头以优化性能
   headers: {
     'Cache-Control': 'no-cache', // 禁用缓存
@@ -20,7 +21,7 @@ const request = axios.create({
 
 // 启用简单请求缓存
 const cache = new Map();
-const CACHE_DURATION = 30 * 1000; // 30秒缓存
+const CACHE_DURATION = env.VITE_CACHE_DURATION; // 使用环境变量中的缓存时间
 
 // 清除所有缓存
 export const clearCache = () => {

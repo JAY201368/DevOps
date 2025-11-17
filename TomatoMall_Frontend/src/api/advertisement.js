@@ -1,6 +1,7 @@
 import axios from 'axios'
+import env from '../config/env'
 
-const BASE_URL = 'http://localhost:8080/api/advertisements'
+const BASE_URL = `${env.VITE_API_BASE_URL}/api/advertisements`
 
 export const getAdvertisements = async () => {
   try {

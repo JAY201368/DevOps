@@ -8,6 +8,7 @@
 import { onMounted, ref, onBeforeUnmount, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import * as live2d from 'live2d-render';
+import env from '../config/env'
 
 // 是否已登录
 const isLoggedIn = ref(false);
@@ -81,19 +82,19 @@ const initLive2D = async () => {
       BackgroundRGBA: [0.0, 0.0, 0.0, 0.0],
 
       // live2d 的 model3.json 文件的相对 根目录 的路径
-      ResourcesPath: './rabbit/psd_b.model3.json',
+      ResourcesPath: env.VITE_LIVE2D_MODEL_PATH,
 
       // live2d 的大小
       CanvasSize: {
-        height: 350,
-        width: 280
+        height: env.VITE_LIVE2D_CANVAS_HEIGHT,
+        width: env.VITE_LIVE2D_CANVAS_WIDTH
       },
 
       // 展示工具箱（可以控制 live2d 的展出隐藏，使用特定表情）
-      ShowToolBox: true,
+      ShowToolBox: env.VITE_LIVE2D_SHOW_TOOLBOX,
 
       // 是否使用 indexDB 进行缓存优化
-      LoadFromCache: true,
+      LoadFromCache: env.VITE_LIVE2D_USE_CACHE,
       
       // 指定要使用的Canvas元素ID
       CanvasID: 'live2d-canvas'

@@ -1,7 +1,8 @@
 import request from './request';
 import axios from 'axios';
+import env from '../config/env';
 
-const BASE_URL = 'http://localhost:8080/api/products';
+const BASE_URL = `${env.VITE_API_BASE_URL}/api/products`;
 
 export const getAllProducts = async () => {
   try {

@@ -18,6 +18,7 @@ import { useRoute, useRouter } from 'vue-router'
 import AppHeader from './components/AppHeader.vue'
 import Live2D from './components/Live2D.vue'
 import { useWishListStore } from './store/wishlist'
+import env from './config/env'
 
 
 const appHeaderRef = ref(null)
@@ -114,9 +115,9 @@ onMounted(() => {
     }
 
     window._Ai.Init({
-      model: "Qwen/Qwen3-14B",
-      key: "sk-szrfqqlzjbkbysppmurhkqjufcxuswzgoewuocxdmxlqjjfq",
-      img: "",
+      model: env.VITE_AI_MODEL,
+      key: env.VITE_AI_API_KEY,
+      img: env.VITE_AI_AVATAR_IMG,
       userId: userId // 添加用户ID
     });
 

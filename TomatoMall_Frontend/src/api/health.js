@@ -1,9 +1,10 @@
 import axios from 'axios';
+import env from '../config/env';
 
 // 创建一个简单的axios实例，不添加复杂的配置
 const instance = axios.create({
-  baseURL: 'http://localhost:8080',
-  timeout: 5000
+  baseURL: env.VITE_API_BASE_URL,
+  timeout: env.VITE_API_TIMEOUT
 });
 
 /**
