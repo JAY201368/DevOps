@@ -101,6 +101,11 @@ onMounted(() => {
 
   // 初始化AI聊天插件
   if (window._Ai) {
+    // 配置AI聊天插件的后端URL
+    window._AiConfig = {
+      backendUrl: env.VITE_API_BASE_URL + '/api'
+    };
+
     // 获取用户ID
     let userId = null;
     if (username) {
@@ -118,7 +123,7 @@ onMounted(() => {
       model: env.VITE_AI_MODEL,
       key: env.VITE_AI_API_KEY,
       img: env.VITE_AI_AVATAR_IMG,
-      userId: userId // 添加用户ID
+      userId: userId
     });
 
     // 监听登录状态变化

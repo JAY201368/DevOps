@@ -2,11 +2,11 @@
 (function () {
   const _Ai = {
     config: {
-      model: '',
-      key: '',
+      model: 'Qwen/Qwen3-14B',
+      key: 'sk-szrfqqlzjbkbysppmurhkqjufcxuswzgoewuocxdmxlqjjfq',
       apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
       img: '',
-      backendUrl: 'http://localhost:8080/api', // 添加后端API地址
+      backendUrl: window._AiConfig?.backendUrl || '/api', // 使用配置的后端URL或默认值
       userId: null // 添加用户ID字段
     },
 
@@ -428,7 +428,11 @@
     // 添加获取图书上下文的方法
     getBookContext: async function () {
       try {
-        const response = await fetch('http://localhost:8080/api/ai-chat/context');
+        const contextUrl = this.config.userId 
+          ? `${this.config.backendUrl}/ai-chat/context?userId=${encodeURIComponent(this.config.userId)}`
+          : `${this.config.backendUrl}/ai-chat/context`;
+
+        const response = await fetch(contextUrl);
 
         if (!response.ok) {
           return null;

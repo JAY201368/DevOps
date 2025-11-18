@@ -402,6 +402,7 @@ import { getUserInfo } from "../api/user";
 import { checkBackendHealth, checkProductsAPI } from "../api/health";
 import { getBannerById } from '../api/banner';
 import { useUserStore } from '../store/user';
+import env from '../config/env';
 
 const router = useRouter();
 const route = useRoute();
@@ -959,12 +960,12 @@ const preloadProductAPI = () => {
   // 利用Service Worker或资源预获取
   const link = document.createElement("link");
   link.rel = "prefetch";
-  link.href = "http://localhost:8080/api/products";
+  link.href = `${env.VITE_API_BASE_URL}/api/products`;
   document.head.appendChild(link);
 
   // 预热API连接
   setTimeout(() => {
-    fetch("http://localhost:8080/api/products", {
+    fetch(`${env.VITE_API_BASE_URL}/api/products`, {
       method: "HEAD",
       mode: "no-cors",
     }).catch(() => {
