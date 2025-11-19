@@ -974,7 +974,7 @@ const preloadProductAPI = () => {
   }, 1000);
 };
 
-// 添加预览封面方法
+// 添加预览封面的方法
 const previewCover = () => {
   if (productForm.value.cover) {
     window.open(productForm.value.cover, "_blank");
