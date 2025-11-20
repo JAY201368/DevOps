@@ -6,7 +6,7 @@
       key: 'sk-szrfqqlzjbkbysppmurhkqjufcxuswzgoewuocxdmxlqjjfq',
       apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
       img: '',
-      backendUrl: window._AiConfig?.backendUrl || '/api', // 使用配置的后端URL或默认值
+      backendUrl: window._AiConfig?.backendUrl || (window.location.origin + '/api'), // 使用绝对URL而不是相对路径
       userId: null // 添加用户ID字段
     },
 

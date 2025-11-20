@@ -28,8 +28,8 @@ const env = {
   VITE_LIVE2D_MODEL_PATH: import.meta.env.VITE_LIVE2D_MODEL_PATH || './rabbit/psd_b.model3.json',
   VITE_LIVE2D_CANVAS_WIDTH: import.meta.env.VITE_LIVE2D_CANVAS_WIDTH || 280,
   VITE_LIVE2D_CANVAS_HEIGHT: import.meta.env.VITE_LIVE2D_CANVAS_HEIGHT || 350,
-  VITE_LIVE2D_SHOW_TOOLBOX: import.meta.env.VITE_LIVE2D_SHOW_TOOLBOX !== 'true',
-  VITE_LIVE2D_USE_CACHE: import.meta.env.VITE_LIVE2D_USE_CACHE !== 'true',
+  VITE_LIVE2D_SHOW_TOOLBOX: import.meta.env.VITE_LIVE2D_SHOW_TOOLBOX !== 'false',
+  VITE_LIVE2D_USE_CACHE: import.meta.env.VITE_LIVE2D_USE_CACHE !== 'false',
 }
 
 export default env 
