@@ -492,11 +492,20 @@ export default {
       try {
         loading.value = true;
         const response = await getCartItems();
+        
+        // 添加调试日志
+        console.log('购物车API响应:', response);
+        console.log('response.data:', response.data);
+        
         if (response.code === "200") {
           const items = response.data.items || [];
+          
+          console.log('购物车商品数组:', items);
+          console.log('商品数组长度:', items.length);
 
           // 为每个商品添加显示属性
           for (const item of items) {
+            console.log('处理商品:', item);
             // 添加用于显示的数量字段，与实际数量分开
             item.displayQuantity = item.quantity;
             // 添加更新状态标志
@@ -528,6 +537,7 @@ export default {
           }
 
           cartItems.value = items;
+          console.log('设置后的 cartItems.value:', cartItems.value);
         } else {
           ElMessage.error(response.msg || "获取购物车失败");
         }
@@ -604,7 +614,9 @@ export default {
     };
 
     const calculateSubtotal = (item) => {
-      return item.price * item.quantity;
+      const subtotal = item.price * item.quantity;
+      console.log(`计算小计: ${item.title}, 单价: ${item.price}, 数量: ${item.quantity}, 小计: ${subtotal}`);
+      return subtotal;
     };
 
     const formatPrice = (price) => {

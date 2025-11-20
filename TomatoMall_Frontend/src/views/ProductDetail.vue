@@ -108,7 +108,7 @@
               <el-input-number
                 v-model="purchaseQuantity"
                 :min="product.stockpile?.amount > 0 ? 1 : 0"
-                :max="product.stockpile?.amount ?? 0"
+                :max="Math.max(product.stockpile?.amount ?? 0, 0)"
                 size="large"
                 :disabled="product.stockpile?.amount <= 0"
               />
@@ -117,7 +117,7 @@
               <el-button
                 type="primary"
                 size="large"
-                :disabled="product.stockpile?.amount <= 0"
+                :disabled="product.stockpile?.amount <= 0 || purchaseQuantity <= 0"
                 @click="addToCart"
                 class="cart-button"
               >
@@ -741,6 +741,13 @@ const fetchProduct = async () => {
           product.value.stockpile = { amount: 0 };
         }
       }
+      
+      // 根据库存情况调整购买数量
+      if (product.value.stockpile?.amount <= 0) {
+        purchaseQuantity.value = 0;
+      } else if (purchaseQuantity.value <= 0) {
+        purchaseQuantity.value = 1;
+      }
     } else if (res.data && res.data.code === "200") {
       // 确保评分是数字
       product.value = {
@@ -767,6 +774,13 @@ const fetchProduct = async () => {
           // 设置默认库存对象，避免界面错误
           product.value.stockpile = { amount: 0 };
         }
+      }
+      
+      // 根据库存情况调整购买数量
+      if (product.value.stockpile?.amount <= 0) {
+        purchaseQuantity.value = 0;
+      } else if (purchaseQuantity.value <= 0) {
+        purchaseQuantity.value = 1;
       }
     } else {
       ElMessage.error(res.msg || "获取商品详情失败");
@@ -1250,6 +1264,10 @@ const getRatingText = (rating) => {
   if (rating >= 2) return "一般";
   if (rating >= 1) return "失望";
   return "不推荐";
+};
+
+const calculateSubtotal = (item) => {
+  return item.price * item.quantity;
 };
 
 onMounted(async () => {

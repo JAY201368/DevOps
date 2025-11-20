@@ -13,6 +13,8 @@ import env from '../config/env'
 // 是否已登录
 const isLoggedIn = ref(false);
 const route = useRoute();
+const modelLoaded = ref(false);
+const live2dError = ref(false);
 
 // 检查用户是否已登录
 const checkLoginStatus = () => {
@@ -24,7 +26,9 @@ const checkLoginStatus = () => {
 // 显示消息
 const showMessage = (message, duration = 3000) => {
   try {
-    live2d.setMessageBox(message, duration);
+    if (modelLoaded.value && live2d && typeof live2d.setMessageBox === 'function') {
+      live2d.setMessageBox(message, duration);
+    }
   } catch (e) {
     console.log('显示消息失败:', e);
   }
@@ -33,7 +37,9 @@ const showMessage = (message, duration = 3000) => {
 // 设置随机表情
 const setRandomExpression = () => {
   try {
-    live2d.setRandomExpression();
+    if (modelLoaded.value && live2d && typeof live2d.setRandomExpression === 'function') {
+      live2d.setRandomExpression();
+    }
   } catch (e) {
     console.log('设置随机表情失败:', e);
   }
@@ -77,12 +83,30 @@ const handleLive2DClick = () => {
 // 初始化Live2D
 const initLive2D = async () => {
   try {
+    console.log('开始初始化Live2D...');
+    console.log('模型路径:', env.VITE_LIVE2D_MODEL_PATH);
+    
+    // 重置状态
+    modelLoaded.value = false;
+    live2dError.value = false;
+    
+    // 验证模型路径
+    const modelPath = env.VITE_LIVE2D_MODEL_PATH;
+    if (!modelPath || !modelPath.endsWith('.model3.json')) {
+      throw new Error('模型路径无效，必须以.model3.json结尾');
+    }
+    
+    // 检查live2d模块是否可用
+    if (!live2d || typeof live2d.initializeLive2D !== 'function') {
+      throw new Error('Live2D库未正确加载');
+    }
+    
     await live2d.initializeLive2D({
       // live2d 所在区域的背景颜色
       BackgroundRGBA: [0.0, 0.0, 0.0, 0.0],
 
       // live2d 的 model3.json 文件的相对 根目录 的路径
-      ResourcesPath: env.VITE_LIVE2D_MODEL_PATH,
+      ResourcesPath: modelPath,
 
       // live2d 的大小
       CanvasSize: {
@@ -100,6 +124,7 @@ const initLive2D = async () => {
       CanvasID: 'live2d-canvas'
     });
 
+    modelLoaded.value = true;
     console.log('Live2D 加载完成');
     
     // 初始化完成后显示欢迎消息
@@ -108,6 +133,10 @@ const initLive2D = async () => {
     }, 1000);
   } catch (error) {
     console.error('Live2D 加载失败:', error);
+    live2dError.value = true;
+    modelLoaded.value = false;
+    // 可以选择在界面上显示错误信息
+    // ElMessage.error('Live2D加载失败: ' + error.message);
   }
 };
 
