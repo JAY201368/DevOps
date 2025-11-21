@@ -26,4 +26,6 @@ app.use(ElementPlus, {
 app.use(createPinia())
 app.use(router)
 
+console.log("mode:" + import.meta.env.MODE);
+
 app.mount('#app')

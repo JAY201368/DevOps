@@ -6,7 +6,7 @@
       key: 'sk-szrfqqlzjbkbysppmurhkqjufcxuswzgoewuocxdmxlqjjfq',
       apiUrl: 'https://api.siliconflow.cn/v1/chat/completions',
       img: '',
-      backendUrl: window._AiConfig?.backendUrl || (window.location.origin + '/api'), // 使用绝对URL而不是相对路径
+      backendUrl: null,
       userId: null // 添加用户ID字段
     },
 
@@ -89,12 +89,14 @@
     请基于以上信息，灵活地回答用户的问题。在回答时，既要准确提供书城内图书的信息，也要能够分享更广泛的图书知识。`,
 
     Init: function (options) {
+      // 动态设置后端URL
+      this.config.backendUrl = (window.TOMATO_MALL_CONFIG?.apiBaseUrl + '/api') || '';
       this.config.model = options.model || '';
       this.config.key = options.key || '';
       this.config.img = options.img || '';
       this.config.userId = options.userId || null; // 初始化用户ID
       this.createUI();
-      this.bindEvents();
+      this.bindEvents(); 
       return this;
     },
 

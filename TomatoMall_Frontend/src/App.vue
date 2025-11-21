@@ -101,9 +101,9 @@ onMounted(() => {
 
   // 初始化AI聊天插件
   if (window._Ai) {
-    // 配置AI聊天插件的后端URL
-    window._AiConfig = {
-      backendUrl: env.VITE_API_BASE_URL + '/api'
+    // 设置全局配置供AI聊天插件使用
+    window.TOMATO_MALL_CONFIG = {
+      apiBaseUrl: env.VITE_API_BASE_URL
     };
 
     // 获取用户ID
@@ -120,6 +120,7 @@ onMounted(() => {
     }
 
     window._Ai.Init({
+      backendUrl: env.VITE_API_BASE_URL,
       model: env.VITE_AI_MODEL,
       key: env.VITE_AI_API_KEY,
       img: env.VITE_AI_AVATAR_IMG,
