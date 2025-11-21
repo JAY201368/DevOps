@@ -12,6 +12,24 @@
         <el-icon><Goods /></el-icon> 商品列表
       </el-button>
       
+      <!-- 根据用户角色显示不同的广告相关菜单 -->
+      <el-button v-if="isAdmin" type="text" @click="goToAdvertisements">
+        <el-icon><Setting /></el-icon> 广告管理
+      </el-button>
+      <el-button v-else type="text" @click="goToAdsRecommend">
+        <el-icon><Bell /></el-icon> 广告推荐
+      </el-button>
+      
+      <!-- 促销券管理入口 -->
+      <el-button v-if="isAdmin" type="text" @click="goToCouponManagement">
+        <el-icon><Discount /></el-icon> 促销券管理
+      </el-button>
+
+      <!-- 轮播图管理入口 -->
+      <el-button v-if="isAdmin" type="text" @click="goToBannerManagement">
+        <el-icon><Picture /></el-icon> 轮播图管理
+      </el-button>
+      
       <!-- 个人中心下拉菜单 -->
       <el-dropdown trigger="click" class="user-center-dropdown">
         <el-button type="text" class="user-center-button">
@@ -40,24 +58,6 @@
           </el-dropdown-menu>
         </template>
       </el-dropdown>
-      
-      <!-- 根据用户角色显示不同的广告相关菜单 -->
-      <el-button v-if="isAdmin" type="text" @click="goToAdvertisements">
-        <el-icon><Setting /></el-icon> 广告管理
-      </el-button>
-      <el-button v-else type="text" @click="goToAdsRecommend">
-        <el-icon><Bell /></el-icon> 广告推荐
-      </el-button>
-      
-      <!-- 促销券管理入口 -->
-      <el-button v-if="isAdmin" type="text" @click="goToCouponManagement">
-        <el-icon><Discount /></el-icon> 促销券管理
-      </el-button>
-
-      <!-- 轮播图管理入口 -->
-      <el-button v-if="isAdmin" type="text" @click="goToBannerManagement">
-        <el-icon><Picture /></el-icon> 轮播图管理
-      </el-button>
     </div>
     <div class="user-actions" v-if="logined">
       <el-button type="text" @click="logout">

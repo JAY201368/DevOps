@@ -29,6 +29,18 @@ export const clearCache = () => {
   console.log('已清除所有API请求缓存');
 };
 
+// 清除特定URL的缓存
+export const clearUrlCache = (urlPattern) => {
+  const keysToDelete = [];
+  for (const [key, value] of cache.entries()) {
+    if (key.includes(urlPattern)) {
+      keysToDelete.push(key);
+    }
+  }
+  keysToDelete.forEach(key => cache.delete(key));
+  console.log(`已清除匹配 "${urlPattern}" 的缓存，共 ${keysToDelete.length} 个`);
+};
+
 // 请求拦截器
 request.interceptors.request.use(
   config => {
@@ -81,11 +93,12 @@ request.interceptors.response.use(
     // 检查是否是推荐相关的URL
     const isRecommendationUrl = response.config.url.includes('/recommendations');
     
-    // 缓存GET请求的成功响应，但排除推荐、购物车和愿望单相关的请求
+    // 缓存GET请求的成功响应，但排除推荐、购物车、愿望单和库存相关的请求
     if (response.config.method.toLowerCase() === 'get' && 
         !isRecommendationUrl &&
         !response.config.url.includes('/cart') && 
-        !response.config.url.includes('/wishlist')) {
+        !response.config.url.includes('/wishlist') &&
+        !response.config.url.includes('/stockpile')) {
       const cacheKey = `${response.config.url}${JSON.stringify(response.config.params || {})}`;
       cache.set(cacheKey, {
         data: res,

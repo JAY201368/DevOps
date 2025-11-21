@@ -392,6 +392,7 @@
                   :precision="2"
                   :step="0.1"
                   :min="0"
+                  :max="999999.99"
                   style="width: 100%"
                   placeholder="请输入商品价格"
                 />
@@ -406,33 +407,19 @@
                 :max="5"
                 :allow-half="true"
                 :colors="['#ffd21e', '#ffd21e', '#ffd21e']"
+                disabled
               />
               <div class="rate-value-display">
-                {{ (productForm.rate * 2).toFixed(1) }} 分
+                {{ Number(productForm.rate).toFixed(1) }} 分
               </div>
-              <div class="rate-hint">（每半颗星代表1分，满分10分）</div>
+              <div class="rate-hint">（评分由用户评论自动计算，不可手动修改）</div>
             </div>
           </el-form-item>
         </div>
 
-        <div class="form-section image-section">
+        <div class="form-section description-info">
           <div class="section-header">
-            <div class="section-title">图片信息</div>
-            <div class="section-line"></div>
-          </div>
-
-          <el-form-item label="封面图片" prop="cover">
-            <ImageUploader
-              v-model="productForm.cover"
-              @upload-success="handleImageUploadSuccess"
-              @upload-error="handleImageUploadError"
-            />
-          </el-form-item>
-        </div>
-
-        <div class="form-section detail-section">
-          <div class="section-header">
-            <div class="section-title">详细描述</div>
+            <div class="section-title">描述信息</div>
             <div class="section-line"></div>
           </div>
 
@@ -453,6 +440,30 @@
               placeholder="请输入商品详细说明"
             />
           </el-form-item>
+        </div>
+
+        <div class="form-section cover-info">
+          <div class="section-header">
+            <div class="section-title">封面图片</div>
+            <div class="section-line"></div>
+          </div>
+
+          <el-form-item label="封面URL" prop="cover">
+            <el-input
+              v-model="productForm.cover"
+              placeholder="请输入商品封面图片URL"
+            >
+              <template #append>
+                <el-button @click="previewCover">
+                  <el-icon><Picture /></el-icon> 预览
+                </el-button>
+              </template>
+            </el-input>
+          </el-form-item>
+
+          <div v-if="productForm.cover" class="cover-preview">
+            <img :src="productForm.cover" alt="商品封面预览" />
+          </div>
         </div>
       </el-form>
 
@@ -529,6 +540,7 @@ import {
 import { addToCart as addProductToCart, getCartItems } from "../api/cart";
 import { getUserInfo } from "../api/user";
 import { addToWishList, removeFromWishList, checkInWishList } from "../api/wishlist";
+import { clearCache, clearUrlCache } from "../api/request";
 import {
   Edit,
   Goods,
@@ -543,7 +555,6 @@ import {
   Reading,
   ChatDotRound,
 } from "@element-plus/icons-vue";
-import ImageUploader from "../components/ImageUploader.vue";
 import { getComments, addComment, deleteComment, checkPurchaseStatus } from "../api/comment";
 
 const route = useRoute();
@@ -808,7 +819,7 @@ const handleEdit = () => {
     ...product.value,
     rate:
       product.value.rate !== null && product.value.rate !== undefined
-        ? Number(product.value.rate) / 2
+        ? Number(product.value.rate)
         : 0,
     specifications: specifications, // 明确设置规格信息
   };
@@ -848,7 +859,6 @@ const handleSubmit = async () => {
           id: currentId,
           title: productForm.value.title,
           price: productForm.value.price,
-          rate: Number(productForm.value.rate) * 2, // 半颗星代表1分，转换为10分制
           description: productForm.value.description,
           cover: productForm.value.cover,
           detail: productForm.value.detail,
@@ -913,11 +923,27 @@ const handleStockSubmit = async () => {
         if (res.code === 200 || res.code === "200") {
           ElMessage.success("调整库存成功");
           stockDialogVisible.value = false;
-          fetchProduct();
+          
+          // 清除相关缓存：商品详情和库存信息
+          localStorage.removeItem(`product_${product.value.id}`);
+          clearUrlCache(`/api/products/${product.value.id}`);
+          clearUrlCache(`/api/products/stockpile/${product.value.id}`);
+          clearUrlCache('/api/products'); // 清除商品列表缓存
+          
+          // 重新获取商品数据
+          await fetchProduct();
         } else if (res.data && res.data.code === "200") {
           ElMessage.success("调整库存成功");
           stockDialogVisible.value = false;
-          fetchProduct();
+          
+          // 清除相关缓存：商品详情和库存信息
+          localStorage.removeItem(`product_${product.value.id}`);
+          clearUrlCache(`/api/products/${product.value.id}`);
+          clearUrlCache(`/api/products/stockpile/${product.value.id}`);
+          clearUrlCache('/api/products'); // 清除商品列表缓存
+          
+          // 重新获取商品数据
+          await fetchProduct();
         } else {
           ElMessage.error(res.msg || "调整库存失败");
         }
@@ -939,6 +965,16 @@ const handleImageUploadSuccess = (url) => {
 const handleImageUploadError = (error) => {
   console.error("图片上传失败：", error);
   ElMessage.error("图片上传失败：" + (error.message || "未知错误"));
+};
+
+// 预览封面图片
+const previewCover = () => {
+  if (!productForm.value.cover) {
+    ElMessage.warning('请先输入封面图片URL');
+    return;
+  }
+  // 封面预览已通过 v-if="productForm.cover" 自动显示
+  ElMessage.success('封面预览已显示在下方');
 };
 
 // 添加购物车
@@ -2069,5 +2105,144 @@ onMounted(async () => {
   100% {
     transform: scale(1);
   }
+}
+
+.rate-edit-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rate-value-display {
+  font-size: 16px;
+  font-weight: bold;
+  color: #ff9900;
+  margin-left: 5px;
+}
+
+.rate-edit-container .rate-hint {
+  color: #909399;
+  font-size: 12px;
+}
+
+.cover-preview {
+  margin-top: 10px;
+  width: 200px;
+  height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.cover-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 表单样式 - 与商品列表保持一致 */
+.form-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  background: linear-gradient(to right, #f0f5ff, #ffffff);
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.form-icon {
+  font-size: 32px;
+  margin-right: 15px;
+}
+
+.form-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.form-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #f9fafc;
+  border-radius: 8px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  margin-right: 15px;
+}
+
+.section-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, #dcdfe6, transparent);
+}
+
+.product-name {
+  font-weight: bold;
+  font-size: 16px;
+  color: #303133;
+}
+
+.product-price {
+  font-weight: bold;
+  font-size: 16px;
+  color: #f56c6c;
+}
+
+.stock-hint {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 5px;
+}
+
+/* Dialog 美化 - 与商品列表保持一致 */
+:deep(.product-dialog .el-dialog__header) {
+  background: linear-gradient(to right, #3a8ee6, #53a8ff);
+  color: white;
+  padding: 15px 20px;
+  margin-right: 0;
+}
+
+:deep(.product-dialog .el-dialog__title) {
+  color: white;
+  font-weight: bold;
+}
+
+:deep(.product-dialog .el-dialog__headerbtn .el-dialog__close) {
+  color: white;
+}
+
+:deep(.product-dialog .el-dialog__body) {
+  padding: 30px 20px;
+}
+
+:deep(.product-dialog .el-form-item__label) {
+  font-weight: 600;
+}
+
+:deep(.product-dialog .el-input .el-input__inner),
+:deep(.product-dialog .el-textarea .el-textarea__inner) {
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+:deep(.product-dialog .el-input .el-input__inner:focus),
+:deep(.product-dialog .el-textarea .el-textarea__inner:focus) {
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+}
+
+.submitting-icon {
+  margin-right: 5px;
 }
 </style>

@@ -113,14 +113,16 @@
               <div class="product-card-content">
                 <div class="product-card-rating">
                   <template v-if="product.rate !== null && product.rate !== undefined">
-                    <el-rate
-                      :model-value="Number(product.rate)"
-                      disabled
-                      text-color="#ff9900"
-                      :allow-half="true"
-                      class="card-rate"
-                    />
-                    <span class="rate-value">{{ Number(product.rate).toFixed(1) }}分</span>
+                    <div class="rating-horizontal">
+                      <el-rate
+                        :model-value="Number(product.rate)"
+                        disabled
+                        text-color="#ff9900"
+                        :allow-half="true"
+                        class="card-rate"
+                      />
+                      <span class="rate-value">{{ Number(product.rate).toFixed(1) }}分</span>
+                    </div>
                   </template>
                   <template v-else>
                     <span class="no-rating">暂无评分</span>
@@ -134,44 +136,42 @@
 
               <!-- 操作按钮 -->
               <div class="product-card-actions">
-                <div class="button-row">
-                <el-button
-                  type="primary"
-                  link
-                  @click="handleView(product)"
-                  class="card-action-button"
-                >
-                  <el-icon><View /></el-icon> 查看
-                </el-button>
-                <el-button
-                  v-if="isAdmin"
-                  type="success"
-                  link
-                  @click="handleEdit(product)"
-                  class="card-action-button"
-                >
-                  <el-icon><Edit /></el-icon> 编辑
-                </el-button>
-                </div>
-                <div class="button-row">
-                <el-button
-                  v-if="isAdmin"
-                  type="warning"
-                  link
-                  @click="handleStock(product)"
-                  class="card-action-button"
-                >
-                  <el-icon><Box /></el-icon> 库存
-                </el-button>
-                <el-button
-                  v-if="isAdmin"
-                  type="danger"
-                  link
-                  @click="handleDelete(product)"
-                  class="card-action-button"
-                >
-                  <el-icon><Delete /></el-icon> 删除
-                </el-button>
+                <div class="button-row single-row">
+                  <el-button
+                    type="primary"
+                    link
+                    @click="handleView(product)"
+                    class="card-action-button"
+                  >
+                    <el-icon><View /></el-icon> 查看
+                  </el-button>
+                  <el-button
+                    v-if="isAdmin"
+                    type="success"
+                    link
+                    @click="handleEdit(product)"
+                    class="card-action-button"
+                  >
+                    <el-icon><Edit /></el-icon> 编辑
+                  </el-button>
+                  <el-button
+                    v-if="isAdmin"
+                    type="warning"
+                    link
+                    @click="handleStock(product)"
+                    class="card-action-button"
+                  >
+                    <el-icon><Box /></el-icon> 库存
+                  </el-button>
+                  <el-button
+                    v-if="isAdmin"
+                    type="danger"
+                    link
+                    @click="handleDelete(product)"
+                    class="card-action-button"
+                  >
+                    <el-icon><Delete /></el-icon> 删除
+                  </el-button>
                 </div>
               </div>
             </el-card>
@@ -401,6 +401,7 @@ import {
 import { getUserInfo } from "../api/user";
 import { checkBackendHealth, checkProductsAPI } from "../api/health";
 import { getBannerById } from '../api/banner';
+import { clearCache as clearApiCache, clearUrlCache } from "../api/request";
 import { useUserStore } from '../store/user';
 import env from '../config/env';
 
@@ -916,12 +917,22 @@ const handleStockSubmit = async () => {
         if (res.code === 200 || res.code === "200") {
           ElMessage.success("调整库存成功");
           stockDialogVisible.value = false;
-          clearCache();
+          
+          // 清除所有相关缓存
+          clearCache(); // 本地商品缓存
+          clearApiCache(); // API请求缓存
+          clearUrlCache('/api/products'); // 清除商品相关的所有API缓存
+          
           fetchProducts(true);
         } else if (res.data && res.data.code === "200") {
           ElMessage.success("调整库存成功");
           stockDialogVisible.value = false;
-          clearCache();
+          
+          // 清除所有相关缓存
+          clearCache(); // 本地商品缓存
+          clearApiCache(); // API请求缓存
+          clearUrlCache('/api/products'); // 清除商品相关的所有API缓存
+          
           fetchProducts(true);
         } else {
           ElMessage.error(res.msg || "调整库存失败");
@@ -1255,22 +1266,38 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: flex-start;
   gap: 5px;
+  margin-bottom: 5px;
+}
+
+.rating-horizontal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 20px;
 }
 
 .card-rate {
-  margin-right: 5px;
+  margin-right: 0;
+  flex-shrink: 0;
+  transform: scale(0.9);
+  transform-origin: left center;
 }
 
 .rate-value {
   color: #ff9900;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 13px;
+  white-space: nowrap;
+  line-height: 1;
+  padding-left: 2px;
 }
 
 .no-rating {
   color: #909399;
   font-size: 14px;
   font-style: italic;
+  margin-left: 2px;
 }
 
 .product-card-description {
@@ -1292,10 +1319,10 @@ onUnmounted(() => {
   right: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(4px);
-  padding: 12px 8px;
+  padding: 8px 6px;
   border-radius: 0 0 8px 8px;
   transform: translateY(100%);
   transition: transform 0.3s ease;
@@ -1310,25 +1337,53 @@ onUnmounted(() => {
   width: 100%;
 }
 
+.single-row {
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
 .product-card:hover .product-card-actions {
   transform: translateY(0);
   opacity: 1;
 }
 
 .card-action-button {
-  padding: 4px 8px;
-  font-size: 13px;
-  min-width: 60px;
+  padding: 3px 6px;
+  font-size: 12px;
+  min-width: 45px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
   flex: 1;
-  max-width: 80px;
+  max-width: 60px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
 }
 
 .card-action-button .el-icon {
-  font-size: 14px;
+  font-size: 12px;
+}
+
+.card-action-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.card-action-button[type="primary"] {
+  background-color: rgba(64, 158, 255, 0.1);
+}
+
+.card-action-button[type="success"] {
+  background-color: rgba(103, 194, 58, 0.1);
+}
+
+.card-action-button[type="warning"] {
+  background-color: rgba(230, 162, 60, 0.1);
+}
+
+.card-action-button[type="danger"] {
+  background-color: rgba(245, 108, 108, 0.1);
 }
 
 .empty-state {
@@ -1496,6 +1551,40 @@ onUnmounted(() => {
 
   .view-mode-switch {
     display: none;
+  }
+  
+  /* 小屏幕下的按钮优化 */
+  .card-action-button {
+    padding: 4px 3px;
+    font-size: 11px;
+    min-width: 35px;
+    max-width: 50px;
+  }
+  
+  .card-action-button .el-icon {
+    font-size: 11px;
+  }
+  
+  .single-row {
+    gap: 2px;
+    justify-content: space-between;
+  }
+  
+  .product-card-actions {
+    padding: 6px 4px;
+  }
+  
+  /* 小屏幕下的评分优化 */
+  .rating-horizontal {
+    gap: 6px;
+  }
+  
+  .card-rate {
+    transform: scale(0.8);
+  }
+  
+  .rate-value {
+    font-size: 12px;
   }
 }
 
