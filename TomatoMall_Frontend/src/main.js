@@ -14,7 +14,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
 
-// 配置 Element Plus
+// 配置了 Element Plus
 app.use(ElementPlus, {
   size: 'default',
   zIndex: 3000,
