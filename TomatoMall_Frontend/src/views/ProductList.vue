@@ -397,6 +397,7 @@ import {
   deleteProduct,
   updateStockpile,
   getProductDetails,
+  getStockpile,
 } from "../api/product";
 import { getUserInfo } from "../api/user";
 import { checkBackendHealth, checkProductsAPI } from "../api/health";
@@ -764,14 +765,34 @@ const handleView = (row) => {
   router.push(`/products/${row.id}`);
 };
 
-const handleStock = (row) => {
+const handleStock = async (row) => {
   currentProduct.value = row;
-  // 处理不同的库存数据结构
+  
+  // 首先尝试使用现有的库存数据
+  let stockAmount = 0;
   if (row.stockpile && typeof row.stockpile === "object") {
-    stockForm.value.amount = row.stockpile.amount || 0;
-  } else {
-    stockForm.value.amount = row.stockpile || 0;
+    stockAmount = row.stockpile.amount || 0;
+  } else if (typeof row.stockpile === "number") {
+    stockAmount = row.stockpile;
   }
+  
+  // 如果没有有效的库存数据，主动获取
+  if (stockAmount === 0 || stockAmount === undefined) {
+    try {
+      console.log("商品列表中无库存信息，主动获取库存:", row.id);
+      const stockRes = await getStockpile(row.id);
+      if (stockRes.code === 200 || stockRes.code === "200") {
+        stockAmount = stockRes.data.amount || 0;
+        console.log("获取到的实际库存:", stockAmount);
+      }
+    } catch (error) {
+      console.error("获取库存信息失败:", error);
+      ElMessage.warning("获取库存信息失败，将显示默认值0");
+      stockAmount = 0;
+    }
+  }
+  
+  stockForm.value.amount = stockAmount;
   stockDialogVisible.value = true;
 };
 
