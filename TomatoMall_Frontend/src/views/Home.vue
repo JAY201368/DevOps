@@ -37,8 +37,19 @@
         title="热门图书"
         description="当前最受欢迎的图书"
         type="popular"
-        :limit="12"
+        :limit="9"
         @loaded="recommendationLoaded('popular', $event)"
+      />
+    </div>
+    
+    <!-- 愿望单推荐组件 -->
+    <div class="recommendation-section container">
+      <BookRecommendation 
+        title="猜你喜欢"
+        description="根据您愿望单中的图书标签为您推荐相似图书"
+        type="wishlist"
+        :limit="9"
+        @loaded="recommendationLoaded('wishlist', $event)"
       />
     </div>
   </div>
@@ -140,8 +151,8 @@ const useFallbackBanners = async () => {
 // 获取轮播图中显示的书籍（仅在使用默认数据时调用）
 const fetchBannerBooks = async () => {
   try {
-    // 获取更多的热门书籍用于轮播图，确保有足够的不重复书籍
-    const response = await getPopularRecommendations(30);
+    // 获取热门书籍用于轮播图，确保不超过9本
+    const response = await getPopularRecommendations(9);
     console.log('获取到的书籍数据:', response);
     
     if (response.code === '200' && response.data) {
@@ -153,13 +164,13 @@ const fetchBannerBooks = async () => {
         const shuffledBooks = [...books].sort(() => Math.random() - 0.5);
         
         // 确保有足够的不重复书籍
-        if (shuffledBooks.length >= 12) {
+        if (shuffledBooks.length >= 9) {
           // 为每个轮播图分配不同的书籍
-          banners.value[0].books = shuffledBooks.slice(0, 4);
-          banners.value[1].books = shuffledBooks.slice(4, 8);
-          banners.value[2].books = shuffledBooks.slice(8, 12);
+          banners.value[0].books = shuffledBooks.slice(0, 3);
+          banners.value[1].books = shuffledBooks.slice(3, 6);
+          banners.value[2].books = shuffledBooks.slice(6, 9);
         } else {
-          // 如果书籍不足12本，尽量不重复
+          // 如果书籍不足9本，尽量不重复
           const uniqueBooks = [...new Map(shuffledBooks.map(book => [book.id, book])).values()];
           
           // 计算每个轮播图可以分配的书籍数量

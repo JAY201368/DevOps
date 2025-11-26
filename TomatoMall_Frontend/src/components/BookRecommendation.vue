@@ -5,7 +5,21 @@
         <el-icon><StarFilled /></el-icon>
         {{ title }}
       </h2>
-      <div class="recommendation-description">{{ description }}</div>
+      <div class="recommendation-description">
+        {{ description }}
+        <span v-if="type === 'wishlist' && wishlistTags.length > 0" class="tags-hint">
+          标签匹配: 
+          <el-tag 
+            v-for="tag in wishlistTags" 
+            :key="tag" 
+            size="small" 
+            effect="plain" 
+            class="match-tag"
+          >
+            {{ tag }}
+          </el-tag>
+        </span>
+      </div>
     </div>
 
     <div v-if="loading" class="recommendation-loading">
@@ -66,10 +80,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { StarFilled, Picture } from '@element-plus/icons-vue';
-import { getPersonalizedRecommendations, getPopularRecommendations } from '../api/recommendation';
+import { getPersonalizedRecommendations, getPopularRecommendations, getWishListBasedRecommendations } from '../api/recommendation';
+import { getWishList} from '../api/wishlist';
 
 const props = defineProps({
   title: {
@@ -82,8 +97,8 @@ const props = defineProps({
   },
   type: {
     type: String,
-    default: 'personalized', // 'personalized' 或 'popular'
-    validator: (value) => ['personalized', 'popular'].includes(value)
+    default: 'personalized', // 'personalized', 'popular', 或 'wishlist'
+    validator: (value) => ['personalized', 'popular', 'wishlist'].includes(value)
   },
   limit: {
     type: Number,
@@ -91,9 +106,39 @@ const props = defineProps({
   }
 });
 
+const emit = defineEmits(['loaded']);
 const router = useRouter();
 const books = ref([]);
 const loading = ref(true);
+const wishlistBooks = ref([]);
+const wishlistTags = ref([]);
+
+// 获取愿望单中的标签
+const fetchWishlistTags = async () => {
+  if (props.type !== 'wishlist') return;
+  
+  try {
+    // 获取用户愿望单
+    const response = await getWishListItems();
+    if (response.code === '200' && response.data) {
+      wishlistBooks.value = response.data;
+      
+      // 提取所有愿望单书籍的标签
+      const tagsSet = new Set();
+      wishlistBooks.value.forEach(item => {
+        if (item.book && item.book.tags) {
+          const bookTags = item.book.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+          bookTags.forEach(tag => tagsSet.add(tag));
+        }
+      });
+      
+      wishlistTags.value = Array.from(tagsSet).slice(0, 5); // 最多显示5个标签
+      console.log('提取到愿望单标签:', wishlistTags.value);
+    }
+  } catch (error) {
+    console.error('获取愿望单标签失败:', error);
+  }
+};
 
 // 获取推荐书籍
 const fetchRecommendations = async () => {
@@ -104,6 +149,9 @@ const fetchRecommendations = async () => {
     
     if (props.type === 'personalized') {
       response = await getPersonalizedRecommendations(props.limit);
+    } else if (props.type === 'wishlist') {
+      await fetchWishlistTags(); // 获取愿望单标签
+      response = await getWishListBasedRecommendations(props.limit);
     } else {
       response = await getPopularRecommendations(props.limit);
     }
@@ -116,11 +164,28 @@ const fetchRecommendations = async () => {
         rate: book.rate !== null && book.rate !== undefined ? Number(book.rate) : null // 数据库已经是5分制，直接使用
       }));
       console.log(`成功获取${books.value.length}本推荐书籍`);
+      
+      // 发送加载完成事件
+      emit('loaded', { 
+        success: true, 
+        count: books.value.length,
+        type: props.type
+      });
     } else {
       console.error(`获取${props.type}推荐失败:`, response.msg || '未知错误');
+      emit('loaded', { 
+        success: false, 
+        error: response.msg || '获取推荐失败',
+        type: props.type
+      });
     }
   } catch (error) {
     console.error(`获取${props.type}推荐书籍失败:`, error);
+    emit('loaded', { 
+      success: false, 
+      error: error.message || '获取推荐失败',
+      type: props.type
+    });
   } finally {
     loading.value = false;
   }
@@ -250,6 +315,18 @@ onMounted(() => {
   color: #f56c6c;
   font-size: 18px;
   font-weight: bold;
+}
+
+.match-tag {
+  margin: 0 3px;
+  font-size: 11px;
+}
+
+.tags-hint {
+  display: inline-block;
+  margin-left: 10px;
+  font-size: 12px;
+  color: #606266;
 }
 
 @media (max-width: 992px) {

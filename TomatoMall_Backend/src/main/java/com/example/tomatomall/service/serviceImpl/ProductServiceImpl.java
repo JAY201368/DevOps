@@ -222,6 +222,7 @@ public class ProductServiceImpl implements ProductService {
         productPO.setDescription(productVO.getDescription());
         productPO.setCover(productVO.getCover());
         productPO.setDetail(productVO.getDetail());
+        productPO.setTags(productVO.getTags());
 
         if (productVO.getSpecifications() != null) {
             // 如果是更新操作（已有ID），而不是新建操作

@@ -18,15 +18,14 @@
         style="width: 100%"
       >
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="title" label="标题" width="180" />
-        <el-table-column prop="description" label="描述" />
-        <el-table-column prop="displayOrder" label="显示顺序" width="100" />
-        <el-table-column label="书籍数量" width="100">
+        <el-table-column prop="title" label="标题" width="200" />
+        <el-table-column prop="description" label="描述" min-width="300" />
+        <el-table-column label="书籍数量" width="120" align="center">
           <template #default="scope">
             {{ scope.row.books ? scope.row.books.length : 0 }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280">
+        <el-table-column label="操作" width="300" align="center">
           <template #default="scope">
             <el-button type="primary" size="small" @click="handleEdit(scope.row)">
               <el-icon><Edit /></el-icon> 编辑
@@ -51,23 +50,29 @@
       :title="dialogType === 'add' ? '添加轮播图' : '编辑轮播图'"
       width="50%"
     >
+      <div class="form-info-box">
+        <el-alert
+          title="提示"
+          type="info"
+          description="链接将自动设置为商品列表页，显示顺序将自动设置。"
+          show-icon
+          :closable="false"
+        />
+      </div>
       <el-form
         ref="bannerFormRef"
         :model="bannerForm"
         :rules="rules"
         label-width="100px"
+        class="banner-form"
       >
         <el-form-item label="标题" prop="title">
           <el-input v-model="bannerForm.title" placeholder="请输入标题" />
+          <div class="form-item-tip">轮播图显示的主标题</div>
         </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input v-model="bannerForm.description" placeholder="请输入描述" />
-        </el-form-item>
-        <el-form-item label="链接" prop="link">
-          <el-input v-model="bannerForm.link" placeholder="请输入链接" />
-        </el-form-item>
-        <el-form-item label="显示顺序" prop="displayOrder">
-          <el-input-number v-model="bannerForm.displayOrder" :min="1" :max="100" />
+          <div class="form-item-tip">轮播图显示的副标题或描述文字</div>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -198,16 +203,14 @@ const bannerForm = reactive({
   id: null,
   title: '',
   description: '',
-  link: '',
+  link: '/products',
   displayOrder: 1
 });
 
 // 表单验证规则
 const rules = {
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
-  description: [{ required: true, message: '请输入描述', trigger: 'blur' }],
-  link: [{ required: true, message: '请输入链接', trigger: 'blur' }],
-  displayOrder: [{ required: true, message: '请输入显示顺序', trigger: 'blur' }]
+  description: [{ required: true, message: '请输入描述', trigger: 'blur' }]
 };
 
 // 书籍管理
@@ -271,8 +274,8 @@ const handleEdit = (row) => {
     id: row.id,
     title: row.title,
     description: row.description,
-    link: row.link,
-    displayOrder: row.displayOrder
+    link: row.link || '/products',
+    displayOrder: row.displayOrder || 1
   });
   dialogVisible.value = true;
 };
@@ -306,11 +309,18 @@ const submitForm = async () => {
   await bannerFormRef.value.validate(async (valid) => {
     if (valid) {
       try {
+        // 确保提交的表单数据包含link和displayOrder
+        const formData = {
+          ...bannerForm,
+          link: bannerForm.link || '/products', // 默认链接
+          displayOrder: bannerForm.displayOrder || banners.value.length + 1 // 默认顺序
+        };
+
         let res;
         if (dialogType.value === 'add') {
-          res = await createBanner(bannerForm);
+          res = await createBanner(formData);
         } else {
-          res = await updateBanner(bannerForm.id, bannerForm);
+          res = await updateBanner(formData.id, formData);
         }
 
         if (res.code === '200') {
@@ -414,6 +424,20 @@ onMounted(() => {
 .page-title {
   margin: 0;
   font-size: 20px;
+}
+
+.form-info-box {
+  margin-bottom: 20px;
+}
+
+.banner-form {
+  margin-top: 20px;
+}
+
+.form-item-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 5px;
 }
 
 .banner-info {

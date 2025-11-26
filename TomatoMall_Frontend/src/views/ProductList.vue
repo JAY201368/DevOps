@@ -129,6 +129,23 @@
                   </template>
                 </div>
 
+                <!-- 添加标签展示 -->
+                <div v-if="product.tags" class="product-card-tags">
+                  <div class="tags-list">
+                    <el-tag 
+                      v-for="tag in getTagsArray(product.tags)" 
+                      :key="tag" 
+                      size="small" 
+                      class="product-tag"
+                      type="info"
+                      effect="plain"
+                      @click="handleTagClick(tag)"
+                    >
+                      {{ tag }}
+                    </el-tag>
+                  </div>
+                </div>
+
                 <div class="product-card-description">
                   {{ product.description || "暂无描述" }}
                 </div>
@@ -192,7 +209,7 @@
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50, 100]"
+          :page-sizes="[8, 16, 24, 32]"
           layout="total, sizes, prev, pager, next, jumper"
           :total="totalItems"
           @size-change="handleSizeChange"
@@ -292,6 +309,14 @@
               :rows="5"
               placeholder="请输入商品详细说明"
             />
+          </el-form-item>
+          
+          <el-form-item label="书籍类别" prop="tags">
+            <el-input
+              v-model="productForm.tags"
+              placeholder="请输入书籍类别，多个类别用逗号分隔，如：文学,小说,科幻"
+            />
+            <div class="tags-hint">多个类别用逗号分隔（支持中英文逗号），例如：文学,小说,科幻 或 文学，小说，科幻</div>
           </el-form-item>
         </div>
 
@@ -397,7 +422,6 @@ import {
   deleteProduct,
   updateStockpile,
   getProductDetails,
-  getStockpile,
 } from "../api/product";
 import { getUserInfo } from "../api/user";
 import { checkBackendHealth, checkProductsAPI } from "../api/health";
@@ -428,6 +452,7 @@ const productForm = ref({
   cover: "",
   detail: "",
   specifications: [],
+  tags: "",
 });
 
 const stockForm = ref({
@@ -547,7 +572,7 @@ const { saveToCache, getFromCache, clearCache } = useProductCache();
 
 // 添加分页相关的状态
 const currentPage = ref(1);
-const pageSize = ref(10);
+const pageSize = ref(8);
 const totalItems = ref(0);
 
 // 分页数据的计算属性
@@ -657,6 +682,7 @@ const handleAdd = () => {
     cover: "",
     detail: "",
     specifications: [],
+    tags: "",
   };
   dialogVisible.value = true;
 };
@@ -694,6 +720,7 @@ const handleEdit = async (row) => {
       description: row.description,
       cover: row.cover,
       detail: row.detail || "",
+      tags: row.tags || "",
     };
 
     dialogType.value = "edit";
@@ -765,34 +792,14 @@ const handleView = (row) => {
   router.push(`/products/${row.id}`);
 };
 
-const handleStock = async (row) => {
+const handleStock = (row) => {
   currentProduct.value = row;
-  
-  // 首先尝试使用现有的库存数据
-  let stockAmount = 0;
+  // 处理不同的库存数据结构
   if (row.stockpile && typeof row.stockpile === "object") {
-    stockAmount = row.stockpile.amount || 0;
-  } else if (typeof row.stockpile === "number") {
-    stockAmount = row.stockpile;
+    stockForm.value.amount = row.stockpile.amount || 0;
+  } else {
+    stockForm.value.amount = row.stockpile || 0;
   }
-  
-  // 如果没有有效的库存数据，主动获取
-  if (stockAmount === 0 || stockAmount === undefined) {
-    try {
-      console.log("商品列表中无库存信息，主动获取库存:", row.id);
-      const stockRes = await getStockpile(row.id);
-      if (stockRes.code === 200 || stockRes.code === "200") {
-        stockAmount = stockRes.data.amount || 0;
-        console.log("获取到的实际库存:", stockAmount);
-      }
-    } catch (error) {
-      console.error("获取库存信息失败:", error);
-      ElMessage.warning("获取库存信息失败，将显示默认值0");
-      stockAmount = 0;
-    }
-  }
-  
-  stockForm.value.amount = stockAmount;
   stockDialogVisible.value = true;
 };
 
@@ -821,6 +828,7 @@ const handleSubmit = async () => {
             description: productForm.value.description,
             cover: productForm.value.cover,
             detail: productForm.value.detail,
+            tags: productForm.value.tags,
             // 不传递rate字段，让后端自动设置为null
           };
 
@@ -845,6 +853,7 @@ const handleSubmit = async () => {
             description: productForm.value.description,
             cover: productForm.value.cover,
             detail: productForm.value.detail,
+            tags: productForm.value.tags,
             // 非常重要：保留原有的规格信息
             specifications:
               currentProduct.value && currentProduct.value.specifications
@@ -1013,6 +1022,21 @@ const previewCover = () => {
   } else {
     ElMessage.warning("请先输入封面URL");
   }
+};
+
+// 标签字符串转换为数组
+const getTagsArray = (tags) => {
+  if (!tags) return [];
+  // 先将中文逗号替换为英文逗号，然后按逗号分隔，去除每个标签的前后空格，最后过滤掉空字符串
+  return tags.replace(/，/g, ',').split(',').map(tag => tag.trim()).filter(tag => tag);
+};
+
+// 添加标签点击处理函数
+const handleTagClick = (tag) => {
+  console.log(`点击了标签: ${tag}`);
+  ElMessage.info(`您点击了标签: ${tag}`);
+  // 这里可以添加按标签筛选商品的逻辑
+  // 例如：router.push(`/products?tag=${encodeURIComponent(tag)}`);
 };
 
 // 监听路由参数变化
@@ -1279,46 +1303,55 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 8px;
 }
 
 .product-card-rating {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 5px;
-  margin-bottom: 5px;
+  gap: 0;
+  margin-bottom: 0;
+  padding: 0;
 }
 
 .rating-horizontal {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   width: 100%;
-  min-height: 20px;
+  min-height: 16px;
+  line-height: 1;
 }
 
 .card-rate {
   margin-right: 0;
   flex-shrink: 0;
-  transform: scale(0.9);
+  transform: scale(0.8);
   transform-origin: left center;
+  margin: 0;
+  padding: 0;
+  height: 16px;
+  line-height: 1;
 }
 
 .rate-value {
   color: #ff9900;
   font-weight: bold;
-  font-size: 13px;
+  font-size: 12px;
   white-space: nowrap;
   line-height: 1;
-  padding-left: 2px;
+  padding: 0 0 0 2px;
+  margin: 0;
 }
 
 .no-rating {
   color: #909399;
-  font-size: 14px;
+  font-size: 12px;
   font-style: italic;
   margin-left: 2px;
+  line-height: 1;
+  padding: 0;
 }
 
 .product-card-description {
@@ -1329,8 +1362,8 @@ onUnmounted(() => {
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
-  line-height: 1.5;
-  margin-bottom: 10px;
+  line-height: 1.4;
+  margin-bottom: 5px;
 }
 
 .product-card-actions {
@@ -1816,5 +1849,42 @@ onUnmounted(() => {
 .banner-product-card:hover .product-card-actions {
   opacity: 1;
   transform: translateY(0);
+}
+
+.tags-hint {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 5px;
+}
+
+/* 添加标签展示 */
+.product-card-tags {
+  margin: 3px 0;
+}
+
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.product-tag {
+  border-radius: 12px;
+  font-size: 10px;
+  padding: 0 8px;
+  height: 20px;
+  line-height: 18px;
+  background-color: #f0f9ff;
+  color: #409eff;
+  border-color: #d9ecff;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.product-tag:hover {
+  background-color: #409eff;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>

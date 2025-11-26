@@ -139,7 +139,7 @@
           </div>
 
           <el-divider content-position="left">
-            <el-icon class="divider-icon"><InfoFilled /></el-icon> 商品介绍
+            <el-icon class="divider-icon"><InfoFilled /></el-icon> 商品描述
           </el-divider>
 
           <div class="product-description">
@@ -148,6 +148,25 @@
             </h3>
             <div class="description-content">
               {{ product.description || "暂无描述" }}
+            </div>
+          </div>
+
+          <!-- 添加标签展示 -->
+          <div v-if="product.tags" class="product-tags">
+            <h3 class="section-title">
+              <el-icon><Collection /></el-icon> 图书类别
+            </h3>
+            <div class="tags-container">
+              <el-tag
+                v-for="tag in tagsArray"
+                :key="tag"
+                type="info"
+                effect="light"
+                class="book-tag"
+                @click="handleTagClick(tag)"
+              >
+                {{ tag }}
+              </el-tag>
             </div>
           </div>
 
@@ -440,6 +459,14 @@
               placeholder="请输入商品详细说明"
             />
           </el-form-item>
+          
+          <el-form-item label="书籍类别" prop="tags">
+            <el-input
+              v-model="productForm.tags"
+              placeholder="请输入书籍类别，多个类别用逗号分隔，如：文学,小说,科幻"
+            />
+            <div class="tags-hint">多个类别用逗号分隔（支持中英文逗号），例如：文学,小说,科幻 或 文学，小说，科幻</div>
+          </el-form-item>
         </div>
 
         <div class="form-section cover-info">
@@ -554,6 +581,7 @@ import {
   Link,
   Reading,
   ChatDotRound,
+  Collection,
 } from "@element-plus/icons-vue";
 import { getComments, addComment, deleteComment, checkPurchaseStatus } from "../api/comment";
 
@@ -578,6 +606,7 @@ const productForm = ref({
   description: "",
   cover: "",
   detail: "",
+  tags: "",
 });
 
 const stockForm = ref({
@@ -657,6 +686,21 @@ const averageRating = computed(() => {
   const sum = comments.value.reduce((acc, comment) => acc + comment.rating, 0);
   return sum / comments.value.length;
 });
+
+// 计算标签数组
+const tagsArray = computed(() => {
+  if (!product.value || !product.value.tags) return [];
+  // 先将中文逗号替换为英文逗号，然后按逗号分隔，去除每个标签的前后空格，最后过滤掉空字符串
+  return product.value.tags.replace(/，/g, ',').split(',').map(tag => tag.trim()).filter(tag => tag);
+});
+
+// 添加标签点击处理函数
+const handleTagClick = (tag) => {
+  console.log(`点击了标签: ${tag}`);
+  ElMessage.info(`您点击了标签: ${tag}`);
+  // 这里可以添加按标签筛选相关商品的逻辑
+  // 例如：router.push(`/products?tag=${encodeURIComponent(tag)}`);
+};
 
 // 格式化日期
 const formatDate = (dateString) => {
@@ -822,6 +866,7 @@ const handleEdit = () => {
         ? Number(product.value.rate)
         : 0,
     specifications: specifications, // 明确设置规格信息
+    tags: product.value.tags || "" // 添加tags字段
   };
 
   console.log("编辑表单数据:", JSON.stringify(productForm.value));
@@ -864,6 +909,7 @@ const handleSubmit = async () => {
           detail: productForm.value.detail,
           // 确保传递完整的规格信息
           specifications: product.value.specifications || [],
+          tags: productForm.value.tags || "" // 添加tags字段
         };
 
         console.log("准备更新商品:", JSON.stringify(updateData));
@@ -1077,10 +1123,22 @@ const checkCanComment = async () => {
       currentUserId.value = userRes.data.id;
       currentUsername.value = userRes.data.username;
       console.log('设置当前用户ID:', currentUserId.value);
-      // 检查购买状态
-      const purchaseRes = await checkPurchaseStatus(userRes.data.id, route.params.id);
-      if (purchaseRes.code === 200 || purchaseRes.code === "200") {
-        canComment.value = purchaseRes.data;
+      
+      // 检查用户是否购买过该商品
+      try {
+        const purchaseRes = await checkPurchaseStatus(currentUserId.value, route.params.id);
+        console.log('检查购买状态结果:', purchaseRes);
+        if (purchaseRes.code === 200 || purchaseRes.code === "200") {
+          canComment.value = purchaseRes.data === true;
+          if (!canComment.value) {
+            console.log('用户未购买该商品，不能评论');
+          }
+        } else {
+          canComment.value = false;
+        }
+      } catch (purchaseError) {
+        console.error('检查购买状态失败:', purchaseError);
+        canComment.value = false;
       }
     }
   } catch (error) {
@@ -1248,19 +1306,20 @@ const handleCommentClick = async () => {
     const userRes = await getUserInfo(username);
     if (userRes.code === 200 || userRes.code === "200") {
       currentUserId.value = userRes.data.id;
-      // 检查购买状态
-      const purchaseRes = await checkPurchaseStatus(userRes.data.id, route.params.id);
-      if (purchaseRes.code === 200 || purchaseRes.code === "200") {
-        if (purchaseRes.data) {
-          showCommentDialog.value = true;
-        } else {
-          ElMessage.warning('购买后才能评价哦');
-        }
+      
+      // 检查用户是否购买过该商品
+      const purchaseRes = await checkPurchaseStatus(currentUserId.value, route.params.id);
+      if (purchaseRes.code === 200 || purchaseRes.code === "200" && purchaseRes.data === true) {
+        // 已购买，可以评论
+        showCommentDialog.value = true;
+      } else {
+        // 未购买，提示用户
+        ElMessage.warning('您需要购买此商品后才能评价');
       }
     }
   } catch (error) {
-    console.error('检查评论权限失败:', error);
-    ElMessage.error('检查评论权限失败');
+    console.error('获取用户信息失败:', error);
+    ElMessage.error('获取用户信息失败');
   }
 };
 
@@ -2011,10 +2070,6 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 15px;
-  background-color: white;
-  padding: 10px 15px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .comment-rate {
@@ -2027,8 +2082,6 @@ onMounted(async () => {
   font-weight: 600;
   color: #ff9900;
   min-width: 40px;
-  display: flex;
-  align-items: center;
 }
 
 .rating-text {
@@ -2244,5 +2297,41 @@ onMounted(async () => {
 
 .submitting-icon {
   margin-right: 5px;
+}
+
+.tags-hint {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 5px;
+}
+
+.product-tags {
+  margin-bottom: 20px;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.book-tag {
+  margin: 5px;
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  background-color: #f0f9ff;
+  color: #409eff;
+  border-color: #d9ecff;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.book-tag:hover {
+  background-color: #409eff;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
 }
 </style>

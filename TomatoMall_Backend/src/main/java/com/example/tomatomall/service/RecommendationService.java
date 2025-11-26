@@ -22,4 +22,12 @@ public interface RecommendationService {
      * @return 推荐书籍列表
      */
     List<ProductVO> getPopularRecommendations(int limit);
+    
+    /**
+     * 基于用户愿望单的标签分布推荐相似书籍
+     * @param userId 用户ID
+     * @param limit 推荐数量限制
+     * @return 推荐书籍列表
+     */
+    List<ProductVO> getWishListBasedRecommendations(Long userId, int limit);
 } 
