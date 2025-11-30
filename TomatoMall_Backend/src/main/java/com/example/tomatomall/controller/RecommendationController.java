@@ -14,6 +14,16 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 书籍推荐控制器
+ * 
+ * 提供个性化推荐、热门推荐和基于愿望单的推荐功能。
+ * 支持未登录用户的热门推荐和登录用户的个性化推荐。
+ * 
+ * @author TomatoMall Team
+ * @version 1.0
+ * @since 2024
+ */
 @RestController
 @RequestMapping("/api/recommendations")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -30,6 +40,15 @@ public class RecommendationController {
 
     /**
      * 获取个性化推荐书籍
+     * 
+     * 基于用户历史购买记录和偏好，为用户推荐个性化的书籍。
+     * 如果用户未登录，则返回热门推荐书籍。
+     * 
+     * @param limit 推荐数量限制，默认为9本
+     * @param request HTTP请求对象，用于获取用户认证信息
+     * @return 包含推荐书籍列表的响应结果
+     *         - 成功：返回个性化推荐或热门推荐书籍列表
+     *         - 失败：返回错误信息
      */
     @GetMapping("/personalized")
     public ResultVO<List<ProductVO>> getPersonalizedRecommendations(
@@ -57,6 +76,14 @@ public class RecommendationController {
 
     /**
      * 获取热门推荐书籍
+     * 
+     * 基于书籍评分和销量，获取平台最受欢迎的书籍推荐。
+     * 适用于所有用户，包括未登录用户。
+     * 
+     * @param limit 推荐数量限制，默认为9本，最大不超过9本
+     * @return 包含热门推荐书籍列表的响应结果
+     *         - 成功：返回热门推荐书籍列表
+     *         - 失败：返回错误信息
      */
     @GetMapping("/popular")
     public ResultVO<List<ProductVO>> getPopularRecommendations(
@@ -74,6 +101,16 @@ public class RecommendationController {
 
     /**
      * 基于用户愿望单获取推荐书籍
+     * 
+     * 分析用户愿望单中的书籍标签，推荐相似标签的书籍。
+     * 如果用户未登录，则返回空列表。
+     * 
+     * @param limit 推荐数量限制，默认为9本
+     * @param request HTTP请求对象，用于获取用户认证信息
+     * @return 包含基于愿望单推荐书籍列表的响应结果
+     *         - 成功：返回基于愿望单的推荐书籍列表
+     *         - 失败：返回错误信息
+     *         - 未登录：返回空列表
      */
     @GetMapping("/wishlist")
     public ResultVO<List<ProductVO>> getWishListBasedRecommendations(
@@ -107,6 +144,12 @@ public class RecommendationController {
     
     /**
      * 从请求中获取当前登录用户
+     * 
+     * 从HTTP请求头中提取JWT令牌，验证令牌有效性，
+     * 并返回当前登录用户的信息。
+     * 
+     * @param request HTTP请求对象，包含认证令牌
+     * @return 当前登录用户对象，如果未登录或令牌无效则返回null
      */
     private UserPO getCurrentUser(HttpServletRequest request) {
         // 从请求头中获取token (检查两种可能的header名称)

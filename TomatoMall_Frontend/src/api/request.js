@@ -53,12 +53,11 @@ request.interceptors.request.use(
     config.headers['Cache-Control'] = 'no-cache';
     config.headers['Pragma'] = 'no-cache';
     
-    // 检查是否是推荐相关的URL或评论相关的URL
+    // 检查是否是推荐相关的URL
     const isRecommendationUrl = config.url.includes('/recommendations');
-    const isCommentUrl = config.url.includes('/comments');
     
-    // 只对GET请求使用缓存，且排除推荐相关的请求和评论相关的请求
-    if (config.method.toLowerCase() === 'get' && !isRecommendationUrl && !isCommentUrl) {
+    // 只对GET请求使用缓存，且排除推荐相关的请求
+    if (config.method.toLowerCase() === 'get' && !isRecommendationUrl) {
       const cacheKey = `${config.url}${JSON.stringify(config.params || {})}`;
       const cachedData = cache.get(cacheKey);
       
@@ -91,14 +90,12 @@ request.interceptors.response.use(
     const res = response.data;
     console.log("API响应:", response.config.url, res);
     
-    // 检查是否是推荐相关的URL或评论相关的URL
+    // 检查是否是推荐相关的URL
     const isRecommendationUrl = response.config.url.includes('/recommendations');
-    const isCommentUrl = response.config.url.includes('/comments');
     
-    // 缓存GET请求的成功响应，但排除推荐、购物车、愿望单、库存和评论相关的请求
+    // 缓存GET请求的成功响应，但排除推荐、购物车、愿望单和库存相关的请求
     if (response.config.method.toLowerCase() === 'get' && 
         !isRecommendationUrl &&
-        !isCommentUrl &&
         !response.config.url.includes('/cart') && 
         !response.config.url.includes('/wishlist') &&
         !response.config.url.includes('/stockpile')) {
