@@ -17,6 +17,22 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * 书籍推荐服务实现类
+ * 
+ * 实现基于内容的推荐算法，通过分析用户行为数据和书籍特征，
+ * 为用户提供个性化的书籍推荐服务。
+ * 
+ * 核心算法特点：
+ * 1. 基于标签的相似度计算
+ * 2. 多维度评分机制（标签匹配、评分、库存、愿望单）
+ * 3. 实时库存状态检查
+ * 4. 用户行为分析（购买历史、愿望单）
+ * 
+ * @author TomatoMall Team
+ * @version 1.0
+ * @since 2024
+ */
 @Service
 public class RecommendationServiceImpl implements RecommendationService {
 
@@ -32,7 +48,15 @@ public class RecommendationServiceImpl implements RecommendationService {
     @Autowired
     private WishListItemRepository wishListItemRepository;
 
-    // 辅助方法：处理标签字符串，支持中英文逗号
+    /**
+     * 辅助方法：处理标签字符串，支持中英文逗号
+     * 
+     * 将中文逗号替换为英文逗号，然后按逗号分隔标签。
+     * 用于统一处理书籍标签的格式。
+     * 
+     * @param tags 原始标签字符串，可能包含中文或英文逗号
+     * @return 处理后的标签数组，如果输入为null或空则返回空数组
+     */
     private String[] processTagString(String tags) {
         if (tags == null || tags.isEmpty()) {
             return new String[0];
@@ -41,6 +65,22 @@ public class RecommendationServiceImpl implements RecommendationService {
         return tags.replace("，", ",").split(",");
     }
 
+    /**
+     * 基于用户历史购买记录的标签分布推荐书籍
+     * 
+     * 算法实现：
+     * 1. 获取用户历史订单中的书籍
+     * 2. 提取书籍标签并统计频率
+     * 3. 计算标签权重（频率/总标签数）
+     * 4. 基于标签匹配度计算推荐得分
+     * 5. 考虑评分、库存、愿望单等因素
+     * 6. 按得分排序返回推荐结果
+     * 
+     * @param userId 用户ID，用于获取用户历史购买记录
+     * @param limit 推荐数量限制，控制返回的推荐书籍数量
+     * @return 推荐书籍列表，按推荐得分降序排列
+     * @throws IllegalArgumentException 当userId为null或limit小于等于0时
+     */
     @Override
     public List<ProductVO> getPersonalizedRecommendations(Long userId, int limit) {
         // 1. 获取用户的历史订单
@@ -192,6 +232,21 @@ public class RecommendationServiceImpl implements RecommendationService {
         return recommendations;
     }
 
+    /**
+     * 获取平台畅销书籍推荐
+     * 
+     * 基于书籍评分和库存状态，推荐平台最受欢迎的书籍。
+     * 适用于新用户或未登录用户，提供通用的热门推荐。
+     * 
+     * 推荐标准：
+     * 1. 书籍评分（5分制）
+     * 2. 库存充足（有库存的书籍）
+     * 3. 按评分降序排列
+     * 
+     * @param limit 推荐数量限制，控制返回的推荐书籍数量
+     * @return 热门推荐书籍列表，按评分降序排列
+     * @throws IllegalArgumentException 当limit小于等于0时
+     */
     @Override
     public List<ProductVO> getPopularRecommendations(int limit) {
         // 限制最多返回9个热门推荐商品
@@ -238,6 +293,22 @@ public class RecommendationServiceImpl implements RecommendationService {
         return recommendations;
     }
 
+    /**
+     * 基于用户愿望单的标签分布推荐相似书籍
+     * 
+     * 算法实现：
+     * 1. 获取用户愿望单中的书籍
+     * 2. 提取书籍标签并统计频率
+     * 3. 计算标签权重（频率/总标签数，并放大3倍）
+     * 4. 基于标签匹配度计算推荐得分
+     * 5. 考虑评分、库存等因素
+     * 6. 按得分排序返回推荐结果
+     * 
+     * @param userId 用户ID，用于获取用户愿望单信息
+     * @param limit 推荐数量限制，控制返回的推荐书籍数量
+     * @return 基于愿望单的推荐书籍列表，按推荐得分降序排列
+     * @throws IllegalArgumentException 当userId为null或limit小于等于0时
+     */
     @Override
     public List<ProductVO> getWishListBasedRecommendations(Long userId, int limit) {
         // 1. 获取用户的愿望单
