@@ -12,23 +12,31 @@
         <el-icon><Goods /></el-icon> 商品列表
       </el-button>
       
-      <!-- 根据用户角色显示不同的广告相关菜单 -->
-      <el-button v-if="isAdmin" type="text" @click="goToAdvertisements">
-        <el-icon><Setting /></el-icon> 广告管理
-      </el-button>
-      <el-button v-else type="text" @click="goToAdsRecommend">
+      <!-- 普通用户看到广告推荐 -->
+      <el-button v-if="!isAdmin" type="text" @click="goToAdsRecommend">
         <el-icon><Bell /></el-icon> 广告推荐
       </el-button>
       
-      <!-- 促销券管理入口 -->
-      <el-button v-if="isAdmin" type="text" @click="goToCouponManagement">
-        <el-icon><Discount /></el-icon> 促销券管理
-      </el-button>
-
-      <!-- 轮播图管理入口 -->
-      <el-button v-if="isAdmin" type="text" @click="goToBannerManagement">
-        <el-icon><Picture /></el-icon> 轮播图管理
-      </el-button>
+      <!-- 管理员系统管理下拉菜单 -->
+      <el-dropdown v-if="isAdmin" trigger="click" class="admin-dropdown">
+        <el-button type="text" class="admin-dropdown-button">
+          <el-icon><Setting /></el-icon> 系统管理
+          <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item @click="goToAdvertisements">
+              <el-icon><Bell /></el-icon> 广告管理
+            </el-dropdown-item>
+            <el-dropdown-item @click="goToCouponManagement">
+              <el-icon><Discount /></el-icon> 促销券管理
+            </el-dropdown-item>
+            <el-dropdown-item @click="goToBannerManagement">
+              <el-icon><Picture /></el-icon> 轮播图管理
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
       
       <!-- 个人中心下拉菜单 -->
       <el-dropdown trigger="click" class="user-center-dropdown">
@@ -277,9 +285,14 @@ defineExpose({
   margin: 0;
 }
 
-.user-center-button {
+.user-center-button,
+.admin-dropdown-button {
   display: flex;
   align-items: center;
+}
+
+.admin-dropdown {
+  margin: 0;
 }
 
 /* 美化下拉菜单 */

@@ -15,4 +15,7 @@ public interface CouponDistributionLogRepository extends JpaRepository<CouponDis
     
     // 查询某个管理员发放某张促销券的记录
     List<CouponDistributionLogPO> findByAdminIdAndCouponId(Long adminId, Long couponId);
+    
+    // 删除某张促销券的所有发放记录
+    void deleteByCouponId(Long couponId);
 } 

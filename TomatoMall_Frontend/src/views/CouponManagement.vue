@@ -302,6 +302,7 @@ import {
   getCouponDistributionLogs
 } from '../api/coupon';
 import { getAllUsers } from '../api/user';
+import { clearUrlCache } from '../api/request';
 
 // 数据定义
 const loading = ref(false);
@@ -400,6 +401,8 @@ const distributeRules = {
 
 // 生命周期钩子
 onMounted(() => {
+  // 清除促销券相关的缓存
+  clearUrlCache('/api/coupons');
   fetchCoupons();
   fetchUsers();
 });
@@ -408,6 +411,9 @@ onMounted(() => {
 const fetchCoupons = async () => {
   loading.value = true;
   try {
+    // 清除促销券相关的缓存
+    clearUrlCache('/api/coupons');
+    
     const res = await getAllCoupons();
     if (res.code === '200') {
       coupons.value = res.data || [];
@@ -513,7 +519,7 @@ const showCouponDetail = (row) => {
 // 确认删除促销券
 const confirmDeleteCoupon = (row) => {
   ElMessageBox.confirm(
-    '确定要删除该促销券吗？如果已有用户领取，将会设置为无效状态而非物理删除。',
+    '确定要删除该促销券吗？此操作将直接删除该促销券及其所有相关记录，无法恢复。',
     '删除确认',
     {
       confirmButtonText: '确定',
@@ -535,7 +541,12 @@ const handleDeleteCoupon = async (couponId) => {
     const res = await deleteCoupon(couponId);
     if (res.code === '200') {
       ElMessage.success('删除成功');
-      fetchCoupons(); // 重新加载数据
+      
+      // 清除促销券相关的缓存
+      clearUrlCache('/api/coupons');
+      
+      // 重新加载数据
+      await fetchCoupons();
     } else {
       ElMessage.error(res.msg || '删除失败');
     }
@@ -596,14 +607,12 @@ const submitCouponForm = async () => {
       if (res.code === '200') {
         ElMessage.success(isEditing.value ? '更新成功' : '创建成功');
         couponDialogVisible.value = false;
-        fetchCoupons(); // 重新加载数据
         
-        // 如果是创建操作，执行页面刷新
-        if (!isEditing.value) {
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000); // 延迟1秒后刷新，让用户看到成功提示
-        }
+        // 清除促销券相关的缓存
+        clearUrlCache('/api/coupons');
+        
+        // 重新加载数据
+        await fetchCoupons();
       } else {
         ElMessage.error(res.msg || (isEditing.value ? '更新失败' : '创建失败'));
       }
@@ -665,12 +674,12 @@ const submitDistributeForm = async () => {
       if (res.code === '200') {
         ElMessage.success('促销券发放成功');
         distributeDialogVisible.value = false;
-        fetchCoupons(); // 重新加载数据
         
-        // 发放成功后自动刷新页面
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000); // 延迟1秒后刷新，让用户看到成功提示
+        // 清除促销券相关的缓存
+        clearUrlCache('/api/coupons');
+        
+        // 重新加载数据
+        await fetchCoupons();
       } else {
         ElMessage.error(res.msg || '促销券发放失败');
       }

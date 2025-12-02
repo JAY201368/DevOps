@@ -119,6 +119,7 @@ import { ElMessage } from 'element-plus';
 import { useRouter } from 'vue-router';
 import { getUserCoupons } from '../api/coupon';
 import { getUserInfo } from '../api/user';
+import { clearUrlCache } from '../api/request';
 
 const router = useRouter();
 const loading = ref(false);
@@ -183,6 +184,9 @@ const viewOrder = (orderId) => {
 const fetchUserCoupons = async () => {
   loading.value = true;
   try {
+    // 清除促销券相关的缓存
+    clearUrlCache('/api/coupons');
+    
     // 尝试从localStorage获取用户ID
     userId.value = localStorage.getItem('userId');
     
@@ -229,6 +233,8 @@ const fetchUserCoupons = async () => {
 
 // 生命周期钩子
 onMounted(() => {
+  // 清除促销券相关的缓存
+  clearUrlCache('/api/coupons');
   fetchUserCoupons();
 });
 </script>

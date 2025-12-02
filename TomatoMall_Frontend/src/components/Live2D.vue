@@ -24,7 +24,7 @@ const checkLoginStatus = () => {
 };
 
 // 显示消息
-const showMessage = (message, duration = 3000) => {
+const showMessage = (message, duration = 5000) => {
   try {
     if (modelLoaded.value && live2d && typeof live2d.setMessageBox === 'function') {
       live2d.setMessageBox(message, duration);
@@ -77,7 +77,7 @@ const getPageMessage = (path) => {
 // 点击Live2D时的处理
 const handleLive2DClick = () => {
   setRandomExpression();
-  showMessage('你好！有什么可以帮助你的吗？', 3000);
+  showMessage('你好！有什么可以帮助你的吗？', 5000);
 };
 
 // 初始化Live2D
@@ -129,7 +129,7 @@ const initLive2D = async () => {
     
     // 初始化完成后显示欢迎消息
     setTimeout(() => {
-      showMessage('欢迎来到番茄书城！', 3000);
+      
     }, 1000);
   } catch (error) {
     console.error('Live2D 加载失败:', error);
@@ -146,7 +146,7 @@ watch(() => route.path, (newPath, oldPath) => {
     // 路径变化时，设置随机表情并显示页面相关消息
     setTimeout(() => {
       setRandomExpression();
-      showMessage(getPageMessage(newPath), 4000);
+      showMessage(getPageMessage(newPath), 5000);
     }, 500); // 延迟500ms，确保页面已经加载
   }
 });
@@ -157,7 +157,7 @@ const handlePageChanged = (event) => {
     const path = event.detail.newPath;
     setTimeout(() => {
       setRandomExpression();
-      showMessage(getPageMessage(path), 4000);
+      showMessage(getPageMessage(path), 5000);
     }, 500);
   }
 };
@@ -172,7 +172,7 @@ onMounted(() => {
     
     // 初始显示当前页面消息
     setTimeout(() => {
-      showMessage(getPageMessage(route.path), 4000);
+      showMessage(getPageMessage(route.path), 5000);
     }, 2000);
   }
   

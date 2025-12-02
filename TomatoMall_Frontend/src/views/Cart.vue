@@ -358,6 +358,7 @@ import {
 } from "../api/cart";
 import { getProductById, getStockpile } from "../api/product";
 import { getUserUnusedCoupons } from "../api/coupon";
+import { clearUrlCache } from "../api/request";
 import {
   PictureFilled,
   ArrowRight,
@@ -435,6 +436,9 @@ export default {
       try {
         const userId = localStorage.getItem('userId');
         if (!userId) return;
+        
+        // 清除促销券相关的缓存
+        clearUrlCache('/api/coupons');
         
         const response = await getUserUnusedCoupons(userId);
         if (response.code === '200') {
@@ -685,6 +689,9 @@ export default {
       discountAmount.value = 0;
       selectedCoupon.value = null;
       
+      // 清除促销券相关的缓存
+      clearUrlCache('/api/coupons');
+      
       // 获取可用促销券
       fetchAvailableCoupons();
       
@@ -738,6 +745,10 @@ export default {
       // 你可以根据实际项目获取用户名
       username.value = localStorage.getItem("username") || "未登录用户";
       fetchCartItems();
+      
+      // 清除促销券相关的缓存
+      clearUrlCache('/api/coupons');
+      
       // 添加：初始化时获取可用促销券
       fetchAvailableCoupons();
     });

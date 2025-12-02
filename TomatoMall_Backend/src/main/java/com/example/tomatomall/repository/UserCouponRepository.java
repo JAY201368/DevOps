@@ -29,4 +29,7 @@ public interface UserCouponRepository extends JpaRepository<UserCouponPO, Long> 
     // 统计某张促销券的使用数量
     @Query("SELECT COUNT(uc) FROM UserCouponPO uc WHERE uc.couponId = :couponId AND uc.isUsed = 1")
     long countByCouponIdAndIsUsed(@Param("couponId") Long couponId);
+    
+    // 删除某张促销券的所有领取记录
+    void deleteByCouponId(Long couponId);
 } 

@@ -50,7 +50,6 @@
 /home/chen/Desktop/SE2-Project/TomatoMall_Backend/src/main/java/com/example/tomatomall/po/CartItemPO.java
 /home/chen/Desktop/SE2-Project/TomatoMall_Backend/src/main/java/com/example/tomatomall/repository/ProductRepository.java
 /home/chen/Desktop/SE2-Project/TomatoMall_Backend/src/main/java/com/example/tomatomall/vo/OrderItemVO.java
-/home/chen/Desktop/SE2-Project/TomatoMall_Backend/src/main/java/com/example/tomatomall/repository/WishListItemRepository.java
 /home/chen/Desktop/SE2-Project/TomatoMall_Backend/src/main/java/com/example/tomatomall/repository/CouponDistributionLogRepository.java
 /home/chen/Desktop/SE2-Project/TomatoMall_Backend/src/main/java/com/example/tomatomall/task/OrderExpirationTask.java
 /home/chen/Desktop/SE2-Project/TomatoMall_Backend/src/main/java/com/example/tomatomall/vo/OrderVO.java

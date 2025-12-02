@@ -112,29 +112,33 @@
       style.textContent = `
         .ai-chat-icon {
           position: fixed;
-          bottom: 20px;
+          bottom: 10px;
           right: 5px;
-          width: 60px;
-          height: 60px;
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
-          background-color:rgb(2, 175, 255);
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+          background-color: transparent;
+          border: 1.5px solid rgba(255, 126, 179, 0.6);
+          box-shadow: 0 2px 8px rgba(255, 126, 179, 0.2);
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
           z-index: 10001;
           transition: all 0.3s;
+          backdrop-filter: blur(2px);
         }
         
         .ai-chat-icon:hover {
           transform: scale(1.1);
+          border-color: rgba(255, 126, 179, 0.8);
+          box-shadow: 0 2px 12px rgba(255, 126, 179, 0.4);
         }
         
         .ai-chat-icon svg {
-          width: 30px;
-          height: 30px;
-          fill: white;
+          width: 24px;
+          height: 24px;
+          fill: rgba(255, 126, 179, 1);
         }
         
         .ai-chat-container {
@@ -143,7 +147,7 @@
           right: 300px;
           width: 350px;
           height: 500px;
-          background-color: rgba(255, 245, 247, 0.95);
+          background-color: rgba(255, 245, 250, 0.95);
           border-radius: 10px;
           box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
           display: flex;
@@ -192,7 +196,7 @@
         
         .ai-chat-message-user {
           align-self: flex-end;
-          background-color: white;
+          background-color: #ffe6f0;
           padding: 10px;
           border-radius: 10px 10px 0 10px;
         }
@@ -205,7 +209,7 @@
         }
         
         .ai-chat-message-error {
-          color: #ff4d4f;
+          color: #ff4d7e;
           font-size: 0.9em;
           margin-top: 5px;
         }
@@ -224,14 +228,23 @@
           outline: none;
         }
         
+        .ai-chat-input:focus {
+          border-color: #ff7eb3;
+          box-shadow: 0 0 0 2px rgba(255, 126, 179, 0.2);
+        }
+        
         .ai-chat-send {
           margin-left: 10px;
           padding: 10px 15px;
-          background-color: rgb(2, 175, 255);
+          background-color: #ff7eb3;
           color: white;
           border: none;
           border-radius: 20px;
           cursor: pointer;
+        }
+        
+        .ai-chat-send:hover {
+          background-color: #ff69b4;
         }
 
         .ai-chat-loading {
@@ -240,7 +253,7 @@
           height: 20px;
           border: 2px solid #f3f3f3;
           border-radius: 50%;
-          border-top: 2px solid #1890ff;
+          border-top: 2px solid #ff7eb3;
           animation: ai-spin 1s linear infinite;
           margin-right: 10px;
         }
@@ -293,6 +306,39 @@
         
         .ai-chat-message em {
           font-style: italic;
+        }
+
+        /* 修改下拉菜单样式 */
+        .el-dropdown-menu {
+          border-radius: 8px !important;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+          padding: 8px 0 !important;
+          background: rgba(255, 255, 255, 0.95) !important;
+          backdrop-filter: blur(10px) !important;
+        }
+        
+        .el-dropdown-menu__item {
+          display: flex !important;
+          align-items: center !important;
+          padding: 10px 20px !important;
+          transition: all 0.3s ease !important;
+        }
+        
+        .el-dropdown-menu__item:hover {
+          background: linear-gradient(to right, rgba(255, 126, 179, 0.1), rgba(255, 182, 193, 0.1)) !important;
+          color: #ff7eb3 !important;
+        }
+        
+        .el-dropdown-menu__item .el-icon {
+          margin-right: 10px !important;
+          font-size: 18px !important;
+        }
+
+        @media (max-width: 768px) {
+          .ai-chat-container {
+            right: 10px;
+            width: calc(100% - 20px);
+          }
         }
       `;
       document.head.appendChild(style);
