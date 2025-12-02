@@ -1167,8 +1167,15 @@ const handleSubmitComment = async () => {
           ElMessage.success('评价成功');
           showCommentDialog.value = false;
           commentForm.value = { rating: 0, content: '' };
+          
+          // 清除评论相关的缓存
+          clearUrlCache(`/api/comments/list`);
+          clearUrlCache(`/api/products/${route.params.id}`);
+          
           // 重新获取评论列表
           await fetchComments();
+          // 重新获取商品信息以更新评分
+          await fetchProduct();
         } else {
           throw new Error(res.msg || '评价失败');
         }
@@ -1194,6 +1201,11 @@ const handleDeleteComment = async (commentId) => {
     const res = await deleteComment(commentId, currentUserId.value);
     if (res.code === 200 || res.code === "200") {
       ElMessage.success('删除成功');
+      
+      // 清除评论相关的缓存
+      clearUrlCache(`/api/comments/list`);
+      clearUrlCache(`/api/products/${route.params.id}`);
+      
       // 重新获取评论列表和商品信息以更新评分
       await Promise.all([
         fetchComments(),
@@ -1366,6 +1378,10 @@ const calculateSubtotal = (item) => {
 };
 
 onMounted(async () => {
+  // 清除评论相关的缓存
+  clearUrlCache(`/api/comments/list`);
+  clearUrlCache(`/api/products/${route.params.id}`);
+  
   await fetchUserInfo(); // 获取用户角色信息
   await checkCanComment(); // 获取当前用户ID和评论权限
   await fetchProduct();
@@ -1879,11 +1895,6 @@ onMounted(async () => {
 
 :deep(.comment-dialog .el-dialog__body) {
   padding: 25px;
-}
-
-:deep(.comment-dialog .el-dialog__footer) {
-  padding: 15px 20px;
-  border-top: 1px solid #ebeef5;
 }
 
 :deep(.comment-dialog .el-form-item__label) {
