@@ -39,3 +39,6 @@
 .env
 .env.local
 .env.*.local
+*.txt
+
+TomatoMall_Backend/target/
